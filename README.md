@@ -1,3 +1,4 @@
+ HEAD
 # Booktibus — Hệ Thống Quản Lý Thư Viện Hiện Đại (Library Management System)
 
 > **Ứng dụng Desktop C# WPF (.NET 10) | Kiến trúc MVVM | Cơ sở dữ liệu SQL Server**  
@@ -328,4 +329,5 @@ git push -u origin main
 ---
 
 *Dự án được xây dựng và hoàn thiện bởi nhóm phát triển Booktibus — Sẵn sàng cho giai đoạn phát triển mở rộng và cộng tác nhóm.*
+
 
