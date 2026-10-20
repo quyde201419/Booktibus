@@ -1,0 +1,339 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Application Brand & Window Title -->
+    <sys:String x:Key="Str.WindowTitle">Booktibus — Library Management System (Premium Library)</sys:String>
+    <sys:String x:Key="Str.AppBrand">BOOKTIBUS</sys:String>
+    <sys:String x:Key="Str.AppTagline">LIBRARY MANAGEMENT SYSTEM</sys:String>
+    <sys:String x:Key="Str.CurrentLangBadge">EN • English</sys:String>
+    <sys:String x:Key="Str.SwitchLanguageBtn">VI • Tiếng Việt</sys:String>
+
+    <!-- Stage 4: Login & Registration View Strings -->
+    <sys:String x:Key="Str.Login.BrandHeadline">Elegant Knowledge &amp; Library Administration Platform</sys:String>
+    <sys:String x:Key="Str.Login.BrandDescription">Powered by SQL Server (BooktibusDB) authentication and strict service-layer role authorization for Readers, Librarians, and Administrators.</sys:String>
+    <sys:String x:Key="Str.Login.SecurityBullet1">• Passwords hashed with PBKDF2-SHA256 and 16-byte random salts (Never stored in plaintext).</sys:String>
+    <sys:String x:Key="Str.Login.SecurityBullet2">• Automated protection: Persistent 15-minute account lockout after 5 consecutive failed attempts.</sys:String>
+    <sys:String x:Key="Str.Login.SecurityBullet3">• Self-registered accounts are strictly assigned the Reader role with an auto-generated card ID.</sys:String>
+
+    <!-- Mode Tabs -->
+    <sys:String x:Key="Str.Auth.TabSignIn">Sign In</sys:String>
+    <sys:String x:Key="Str.Auth.TabRegisterReader">Register Reader Account</sys:String>
+    <sys:String x:Key="Str.Auth.TabInitialAdmin">Initial Admin Setup</sys:String>
+
+    <!-- Database Connection Verification Bar -->
+    <sys:String x:Key="Str.Db.CardTitle">SQL SERVER DATABASE CONNECTION STATUS (BooktibusDB)</sys:String>
+    <sys:String x:Key="Str.Db.ServerLabel">SQL Server Name:</sys:String>
+    <sys:String x:Key="Str.Db.ProbeBtn">Verify &amp; Connect BooktibusDB</sys:String>
+
+    <!-- Login Form -->
+    <sys:String x:Key="Str.Login.FormTitle">Sign In to Booktibus</sys:String>
+    <sys:String x:Key="Str.Login.FormSubtitle">Enter your account credentials to start an authenticated session.</sys:String>
+    <sys:String x:Key="Str.Login.UsernameLabel">Username:</sys:String>
+    <sys:String x:Key="Str.Login.PasswordLabel">Password:</sys:String>
+    <sys:String x:Key="Str.Login.SignInBtn">Sign In to Booktibus</sys:String>
+    <sys:String x:Key="Str.Login.ClearBtn">Clear</sys:String>
+
+    <!-- Reader Registration Form -->
+    <sys:String x:Key="Str.Reg.FormTitle">Register a New Reader Account</sys:String>
+    <sys:String x:Key="Str.Reg.FormSubtitle">New accounts are strictly created with the Reader role and receive an official Reader Card ID.</sys:String>
+    <sys:String x:Key="Str.Reg.FixedRoleNotice">Assigned Role: READER — Self-registration as Librarian or Administrator is strictly prohibited.</sys:String>
+    <sys:String x:Key="Str.Reg.FullNameLabel">Full Name (*):</sys:String>
+    <sys:String x:Key="Str.Reg.UsernameLabel">Username (*, min 4 alphanumeric characters):</sys:String>
+    <sys:String x:Key="Str.Reg.EmailLabel">Email Address (*):</sys:String>
+    <sys:String x:Key="Str.Reg.PhoneLabel">Phone Number (Optional):</sys:String>
+    <sys:String x:Key="Str.Reg.PasswordLabel">Password (*, min 8 chars with letters &amp; digits):</sys:String>
+    <sys:String x:Key="Str.Reg.ConfirmPasswordLabel">Confirm Password (*):</sys:String>
+    <sys:String x:Key="Str.Reg.SubmitBtn">Complete Reader Registration</sys:String>
+
+    <!-- Initial Administrator Bootstrap Form -->
+    <sys:String x:Key="Str.AdminInit.FormTitle">One-Time Initial Administrator Setup</sys:String>
+    <sys:String x:Key="Str.AdminInit.FormSubtitle">BooktibusDB currently has no Administrator account. Create the initial Administrator with your own strong password (hashed via PBKDF2-SHA256).</sys:String>
+    <sys:String x:Key="Str.AdminInit.SubmitBtn">Initialize First Administrator</sys:String>
+
+    <sys:String x:Key="Str.Login.TestProviderBadge">[FALLBACK TEMPORARY TEST AUTHENTICATION (SQL SERVER NOT CONNECTED YET)]</sys:String>
+    <sys:String x:Key="Str.Login.TestProviderNotice">The application automatically switches to SqlAuthenticationService once BooktibusDB is verified. While SQL Server is not yet connected, you may use these fallback test accounts:</sys:String>
+    <sys:String x:Key="Str.Login.FillCredBtn">Fill Credentials</sys:String>
+    <sys:String x:Key="Str.Login.ResetLockoutBtn">Reset Test Lockout Counters</sys:String>
+
+    <!-- Stage 4: Header Session & Logout -->
+    <sys:String x:Key="Str.Header.LogoutBtn">Sign Out</sys:String>
+    <sys:String x:Key="Str.Header.SignedInAs">Active Session:</sys:String>
+
+    <!-- Stage 4: Service-Layer Authorization & Reader Isolation Verification -->
+    <sys:String x:Key="Str.AuthCheck.SectionTitle">Service-Layer Authorization &amp; Data Isolation Verification</sys:String>
+    <sys:String x:Key="Str.AuthCheck.SectionSubtitle">Invoke service-layer operations directly to verify that unauthorized calls and cross-reader data access are blocked regardless of UI state:</sys:String>
+    <sys:String x:Key="Str.AuthCheck.BtnOwnRecord">Access Own Reader Card</sys:String>
+    <sys:String x:Key="Str.AuthCheck.BtnOtherReaderRecord">Attempt Access to Another Reader (RD-2026-999)</sys:String>
+    <sys:String x:Key="Str.AuthCheck.BtnLibrarianAction">Invoke Librarian Operation (Manage Catalog)</sys:String>
+    <sys:String x:Key="Str.AuthCheck.BtnAdminAction">Invoke Admin Operation (System Settings)</sys:String>
+
+    <!-- Stage 3: Sidebar Navigation Items -->
+    <sys:String x:Key="Str.Nav.SectionTitle">NAVIGATION MENU</sys:String>
+    <sys:String x:Key="Str.Nav.Dashboard">Dashboard</sys:String>
+    <sys:String x:Key="Str.Nav.Books">Books Catalog</sys:String>
+    <sys:String x:Key="Str.Nav.Readers">Readers Directory</sys:String>
+    <sys:String x:Key="Str.Nav.BorrowingReturns">Borrowing &amp; Returns</sys:String>
+    <sys:String x:Key="Str.Nav.Fines">Overdue &amp; Fines</sys:String>
+    <sys:String x:Key="Str.Nav.Reports">Reports &amp; Analytics</sys:String>
+    <sys:String x:Key="Str.Nav.Settings">System Settings</sys:String>
+    <sys:String x:Key="Str.Nav.Favorites">Favorite Books</sys:String>
+    <sys:String x:Key="Str.Nav.ReaderProfile">My Reader Profile</sys:String>
+    <sys:String x:Key="Str.Sidebar.RoleFilterLabel">ROLE MENU PREVIEW MODE</sys:String>
+    <sys:String x:Key="Str.SidebarFooter">Booktibus Desktop • Stage 6 (Librarian, Administrator &amp; SQL Server)</sys:String>
+
+    <!-- Header & Account Area -->
+    <sys:String x:Key="Str.Header.RoleSelectorLabel">Active Role View:</sys:String>
+    <sys:String x:Key="Str.Header.AccountStatus">Authenticated Session</sys:String>
+    <sys:String x:Key="Str.Header.SampleDataBadge">LIVE SQL DB</sys:String>
+
+    <!-- Page Titles & Subtitles -->
+    <sys:String x:Key="Str.Page.Dashboard.Title">Library Overview Dashboard</sys:String>
+    <sys:String x:Key="Str.Page.Dashboard.Subtitle">Monitor live SQL Server (BooktibusDB) indicators, recent circulation transactions, and verify session permissions.</sys:String>
+
+    <sys:String x:Key="Str.Page.Books.Title">Book Catalog Search &amp; Management</sys:String>
+    <sys:String x:Key="Str.Page.Books.Subtitle">Search, filter by category and availability, and manage book titles and copy counts in BooktibusDB.</sys:String>
+
+    <sys:String x:Key="Str.Page.Favorites.Title">My Personal Favorite Books</sys:String>
+    <sys:String x:Key="Str.Page.Favorites.Subtitle">Manage your personal saved books list (Strictly isolated by UserId in SQL Server).</sys:String>
+
+    <sys:String x:Key="Str.Page.Readers.Title">Readers Directory &amp; History Management</sys:String>
+    <sys:String x:Key="Str.Page.Readers.Subtitle">Search readers by name, username, email, or card ID; inspect borrowing history and update membership status.</sys:String>
+
+    <sys:String x:Key="Str.Page.BorrowingReturns.Title">Borrowing &amp; Returns Circulation</sys:String>
+    <sys:String x:Key="Str.Page.BorrowingReturns.Subtitle">Issue book loans, record returns, auto-detect overdue transactions, and track circulation history in BooktibusDB.</sys:String>
+
+    <sys:String x:Key="Str.Page.ReaderProfile.Title">My Personal Reader Profile</sys:String>
+    <sys:String x:Key="Str.Page.ReaderProfile.Subtitle">View your immutable library card identity and update your personal contact information.</sys:String>
+
+    <sys:String x:Key="Str.Page.Fines.Title">Overdue &amp; Damage Fines Management</sys:String>
+    <sys:String x:Key="Str.Page.Fines.Subtitle">Track overdue penalties, lost/damaged book assessments, and fine resolution records.</sys:String>
+
+    <sys:String x:Key="Str.Page.Reports.Title">Library Reports &amp; Live Statistics</sys:String>
+    <sys:String x:Key="Str.Page.Reports.Subtitle">Analyze live SQL Server collection inventory by category and monthly circulation trends.</sys:String>
+
+    <sys:String x:Key="Str.Page.Settings.Title">System Account &amp; Role Administration</sys:String>
+    <sys:String x:Key="Str.Page.Settings.Subtitle">Manage user accounts, assign roles, protect the last active Administrator, and perform PBKDF2-SHA256 password resets.</sys:String>
+
+    <!-- Dashboard Content Strings -->
+    <sys:String x:Key="Str.Dash.SampleBannerTitle">[Live SQL Server Statistics — BooktibusDB (Stage 6)]</sys:String>
+    <sys:String x:Key="Str.Dash.SampleBannerText">Dashboard metric cards and recent activity records are queried directly from SQL Server (dbo.Books, dbo.Readers, dbo.BorrowRecords) scoped to the active session.</sys:String>
+
+    <sys:String x:Key="Str.Dash.RecentActivitiesTitle">Recent Circulation Activities (Live from dbo.BorrowRecords)</sys:String>
+    <sys:String x:Key="Str.Dash.RecentActivitiesSubtitle">Readers see only their own records; Librarians and Administrators view system-wide circulation transactions.</sys:String>
+    <sys:String x:Key="Str.Dash.ColRefCode">Record Code</sys:String>
+    <sys:String x:Key="Str.Dash.ColType">Loan Status</sys:String>
+    <sys:String x:Key="Str.Dash.ColSubject">Borrowed Book / Status</sys:String>
+    <sys:String x:Key="Str.Dash.ColActor">Card / Account</sys:String>
+    <sys:String x:Key="Str.Dash.ColTime">Date</sys:String>
+    <sys:String x:Key="Str.Dash.ColStatus">Data Source</sys:String>
+    <sys:String x:Key="Str.Dash.BtnInspectActivity">Inspect Selected Row</sys:String>
+    <sys:String x:Key="Str.Dash.BtnRefreshSample">Refresh from SQL Server</sys:String>
+
+    <sys:String x:Key="Str.Dash.NoticesTitle">Session Permissions &amp; System Notices</sys:String>
+    <sys:String x:Key="Str.Dash.NoticesSubtitle">Active role scope and quick module shortcuts.</sys:String>
+    <sys:String x:Key="Str.Dash.QuickNavTitle">Quick Module Shortcuts (Enforced by Service Layer)</sys:String>
+
+    <!-- Stage 5.1 & 5.2: Book Catalog Search & Book Details -->
+    <sys:String x:Key="Str.Catalog.FilterCardTitle">Search &amp; Filter Library Catalog (BooktibusDB)</sys:String>
+    <sys:String x:Key="Str.Catalog.KeywordLabel">Keyword (Title, Author, Code, ISBN):</sys:String>
+    <sys:String x:Key="Str.Catalog.CategoryLabel">Category:</sys:String>
+    <sys:String x:Key="Str.Catalog.AvailabilityLabel">Availability:</sys:String>
+    <sys:String x:Key="Str.Catalog.BtnSearch">Search</sys:String>
+    <sys:String x:Key="Str.Catalog.BtnClear">Reset</sys:String>
+    <sys:String x:Key="Str.Catalog.BtnOpenFavorites">★ Open My Favorites</sys:String>
+    <sys:String x:Key="Str.Catalog.SampleNotice">[Data Transparency] Initial catalog rows seeded by the SQL script are explicitly badged as [SAMPLE DATA] to distinguish them from operational library acquisitions.</sys:String>
+    <sys:String x:Key="Str.Catalog.ColCode">Code</sys:String>
+    <sys:String x:Key="Str.Catalog.ColTitle">Book Title</sys:String>
+    <sys:String x:Key="Str.Catalog.ColAuthor">Author</sys:String>
+    <sys:String x:Key="Str.Catalog.ColCategory">Category</sys:String>
+    <sys:String x:Key="Str.Catalog.ColAvailability">Availability</sys:String>
+    <sys:String x:Key="Str.Catalog.ColFavorite">Favorite</sys:String>
+    <sys:String x:Key="Str.Catalog.EmptyStateTitle">No Matching Books Found</sys:String>
+    <sys:String x:Key="Str.Catalog.EmptyStateDesc">No book titles matched your current search keyword or filter criteria. Try another keyword or click 'Reset'.</sys:String>
+
+    <sys:String x:Key="Str.Catalog.DetailTitle">Selected Book Details</sys:String>
+    <sys:String x:Key="Str.Catalog.DetailSubtitle">Select a book from the catalog table on the left to inspect its publication metadata, shelf location, and synopsis.</sys:String>
+    <sys:String x:Key="Str.Catalog.LblBookCode">Book Code:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblAuthor">Author:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblCategory">Category:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblPublisher">Publisher &amp; Year:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblIsbn">ISBN:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblShelf">Shelf Location:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblCopies">Available / Total Copies:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblDescription">Description / Synopsis:</sys:String>
+
+    <!-- Stage 5.3: Reader Personal Favorites -->
+    <sys:String x:Key="Str.Fav.SectionTitle">Personal Favorite Books for Active Account</sys:String>
+    <sys:String x:Key="Str.Fav.IsolationNotice">Each account (UserId) maintains a strictly isolated Favorites list in dbo.ReaderFavorites. Even when multiple accounts share the same email address, their favorites remain completely separate.</sys:String>
+    <sys:String x:Key="Str.Fav.BtnRefresh">Refresh List</sys:String>
+    <sys:String x:Key="Str.Fav.BtnBrowseCatalog">+ Browse &amp; Add Books</sys:String>
+    <sys:String x:Key="Str.Fav.BtnRemoveSelected">Remove from Favorites</sys:String>
+    <sys:String x:Key="Str.Fav.ColAddedAt">Saved On</sys:String>
+    <sys:String x:Key="Str.Fav.EmptyStateTitle">Your Favorites List is Empty</sys:String>
+    <sys:String x:Key="Str.Fav.EmptyStateDesc">You haven't added any books to your personal Favorites list yet. Open 'Books Catalog' and click '♡ Add to Favorites'.</sys:String>
+
+    <!-- Stage 5.4: Borrowing & Return Tracking -->
+    <sys:String x:Key="Str.Borrow.MetricActiveTitle">CURRENTLY BORROWED (DB)</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricActiveSub">Records with Borrowed status</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricReturnedTitle">RETURNED BOOKS (DB)</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricReturnedSub">Records with Returned status</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricOverdueTitle">OVERDUE LOANS (DB)</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricOverdueSub">Records with Overdue status</sys:String>
+    <sys:String x:Key="Str.Borrow.FilterStatusLabel">Filter by Loan Status:</sys:String>
+    <sys:String x:Key="Str.Borrow.BtnRefresh">Reload from SQL Server</sys:String>
+    <sys:String x:Key="Str.Borrow.ColRecordCode">Record Code</sys:String>
+    <sys:String x:Key="Str.Borrow.ColReaderCard">Reader Card</sys:String>
+    <sys:String x:Key="Str.Borrow.ColBookCode">Book Code</sys:String>
+    <sys:String x:Key="Str.Borrow.ColBookTitle">Book Title</sys:String>
+    <sys:String x:Key="Str.Borrow.ColBorrowDate">Borrowed Date</sys:String>
+    <sys:String x:Key="Str.Borrow.ColDueDate">Due Date</sys:String>
+    <sys:String x:Key="Str.Borrow.ColReturnDate">Returned Date</sys:String>
+    <sys:String x:Key="Str.Borrow.ColStatus">Status</sys:String>
+    <sys:String x:Key="Str.Borrow.ColNotes">Notes</sys:String>
+    <sys:String x:Key="Str.Borrow.EmptyStateTitle">No Circulation Transactions Found in BooktibusDB</sys:String>
+    <sys:String x:Key="Str.Borrow.EmptyStateDesc">Your account currently has no borrowing records in dbo.BorrowRecords. Librarian checkout and return processing workflows will be connected in the upcoming stage (No fake transactions are shown).</sys:String>
+
+    <!-- Stage 5.5: Reader Personal Profile -->
+    <sys:String x:Key="Str.Profile.IdentityCardTitle">Account Identity &amp; Library Card (Read-Only)</sys:String>
+    <sys:String x:Key="Str.Profile.IdentityCardSubtitle">These security and membership identifiers are managed by the system and cannot be modified by Readers.</sys:String>
+    <sys:String x:Key="Str.Profile.LblUserId">Account UserId:</sys:String>
+    <sys:String x:Key="Str.Profile.LblUsername">Username:</sys:String>
+    <sys:String x:Key="Str.Profile.LblRole">Assigned Role:</sys:String>
+    <sys:String x:Key="Str.Profile.LblReaderCard">Reader Card ID:</sys:String>
+    <sys:String x:Key="Str.Profile.LblStatus">Membership Status:</sys:String>
+    <sys:String x:Key="Str.Profile.LblRegisteredAt">Registered On:</sys:String>
+
+    <sys:String x:Key="Str.Profile.EditCardTitle">Update Personal Contact Information</sys:String>
+    <sys:String x:Key="Str.Profile.EditCardSubtitle">You may update your Full Name, Email Address (shared email across accounts is supported), and Phone Number for this specific account.</sys:String>
+    <sys:String x:Key="Str.Profile.LblFullName">Full Name (*):</sys:String>
+    <sys:String x:Key="Str.Profile.LblEmail">Email Address (*):</sys:String>
+    <sys:String x:Key="Str.Profile.LblPhone">Phone Number:</sys:String>
+    <sys:String x:Key="Str.Profile.BtnSave">Save Changes to BooktibusDB</sys:String>
+    <sys:String x:Key="Str.Profile.BtnReload">Revert / Reload from DB</sys:String>
+
+    <!-- Placeholder Module View Strings -->
+    <sys:String x:Key="Str.Placeholder.StageBadge">MODULE SHELL PREVIEW — STAGE 6</sys:String>
+    <sys:String x:Key="Str.Placeholder.NotImplementedNotice">Detailed capabilities for this module will be completed in the upcoming stage.</sys:String>
+    <sys:String x:Key="Str.Placeholder.AllowedRolesLabel">Roles authorized to access this module:</sys:String>
+    <sys:String x:Key="Str.Placeholder.CurrentScopeLabel">Data access scope enforced for the current session:</sys:String>
+    <sys:String x:Key="Str.Placeholder.PlannedFeaturesLabel">Planned module capabilities:</sys:String>
+    <sys:String x:Key="Str.Placeholder.BackToDashboardBtn">← Return to Dashboard</sys:String>
+    <sys:String x:Key="Str.Placeholder.TestActionBtn">Verify Service-Layer Permission Guard</sys:String>
+
+    <!-- Stage 6.3.1: Librarian Book Catalog Management -->
+    <sys:String x:Key="Str.StaffBook.CardTitle">Librarian &amp; Admin Catalog Management</sys:String>
+    <sys:String x:Key="Str.StaffBook.CardSubtitle">Add new titles, edit publication metadata, update total copy counts (automatically recalculating available copies from active loans), or delete books with zero circulation history.</sys:String>
+    <sys:String x:Key="Str.StaffBook.BtnNewMode">+ Switch to Add New Book</sys:String>
+    <sys:String x:Key="Str.StaffBook.BtnEditMode">✎ Load Selected Book to Edit</sys:String>
+    <sys:String x:Key="Str.StaffBook.BtnDelete">✕ Delete Selected Book</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblCode">Book Code (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblTitle">Book Title (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblAuthor">Author (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblCategory">Category (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblPublisher">Publisher:</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblYear">Publish Year:</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblIsbn">ISBN:</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblTotalCopies">Total Copies (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblShelf">Shelf Location:</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblDesc">Synopsis / Description:</sys:String>
+
+    <!-- Stage 6.3.2: Librarian Circulation Management -->
+    <sys:String x:Key="Str.StaffBorrow.LoanFormTitle">Issue New Book Loan (Librarian Checkout)</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LoanFormSubtitle">Select an active reader card and an available book title. Automatically decrements available copies by 1 and prevents duplicate active loans of the same book.</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblSelectReader">Select Reader (*):</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblSelectBook">Select Available Book (*):</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblLoanDays">Loan Days (1–60 days):</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblLoanNotes">Checkout Notes:</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.BtnCreateLoan">+ Issue Book Loan</sys:String>
+
+    <sys:String x:Key="Str.StaffBorrow.ReturnFormTitle">Record Book Return for Selected Transaction</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.ReturnFormSubtitle">Select an active or overdue loan in the table below to record its return and restore 1 copy to inventory (Prevents duplicate return processing).</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblReturnNotes">Return Condition / Notes:</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.BtnProcessReturn">✓ Record Book Returned</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.SearchKeywordLabel">Search Transactions (Record Code, Reader Card, Name, Book Code/Title):</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.ColReaderName">Reader Name</sys:String>
+
+    <!-- Stage 6.3.3: Librarian Reader Directory Management -->
+    <sys:String x:Key="Str.StaffReader.FilterCardTitle">Search &amp; Manage Readers Directory (BooktibusDB)</sys:String>
+    <sys:String x:Key="Str.StaffReader.KeywordLabel">Keyword (Full Name, Username, Email, Card RD-...):</sys:String>
+    <sys:String x:Key="Str.StaffReader.StatusLabel">Card Status:</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColCardId">Card ID</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColUsername">Username</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColFullName">Full Name</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColEmail">Email</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColPhone">Phone</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColStatus">Status</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColActiveLoans">Active Loans</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColOverdueLoans">Overdue</sys:String>
+    <sys:String x:Key="Str.StaffReader.DetailTitle">Selected Reader Profile &amp; Circulation History</sys:String>
+    <sys:String x:Key="Str.StaffReader.EditCardStatusLabel">Membership Card Status:</sys:String>
+    <sys:String x:Key="Str.StaffReader.BtnSaveReader">Save Reader Changes</sys:String>
+    <sys:String x:Key="Str.StaffReader.HistorySectionTitle">Borrowing &amp; Return History of Selected Reader</sys:String>
+
+    <!-- Stage 6.4.1: Administrator Account & Role Management -->
+    <sys:String x:Key="Str.AdminUser.FilterTitle">System Account &amp; Role Administration (Administrator Only)</sys:String>
+    <sys:String x:Key="Str.AdminUser.KeywordLabel">Search Accounts (Username, Full Name, Email, Card ID):</sys:String>
+    <sys:String x:Key="Str.AdminUser.RoleFilterLabel">Filter by Role:</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColUserId">UserId</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColUsername">Username</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColFullName">Full Name</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColEmail">Email</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColRole">Role</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColCard">Reader Card</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColActive">Status</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColLockout">Lockout State</sys:String>
+
+    <sys:String x:Key="Str.AdminUser.ManageSelectedTitle">Manage Selected Account (Role Assignment, Status &amp; Password Reset)</sys:String>
+    <sys:String x:Key="Str.AdminUser.SafeguardNotice">Protects the last active Administrator account and hashes reset passwords with PBKDF2-SHA256 and fresh 16-byte random salts.</sys:String>
+    <sys:String x:Key="Str.AdminUser.LblTargetRole">Assign Role:</sys:String>
+    <sys:String x:Key="Str.AdminUser.BtnApplyRole">Apply Role</sys:String>
+    <sys:String x:Key="Str.AdminUser.BtnUnlock">Clear 15-Min Lockout</sys:String>
+    <sys:String x:Key="Str.AdminUser.ResetPwdTitle">Secure Password Reset (PBKDF2-SHA256)</sys:String>
+    <sys:String x:Key="Str.AdminUser.LblNewPwd">New Password (*, min 8 chars with letters + digits):</sys:String>
+    <sys:String x:Key="Str.AdminUser.LblConfirmPwd">Confirm New Password (*):</sys:String>
+    <sys:String x:Key="Str.AdminUser.BtnResetPwd">Update Password</sys:String>
+
+    <sys:String x:Key="Str.AdminUser.CreateTitle">Create New Staff / Reader Account</sys:String>
+    <sys:String x:Key="Str.AdminUser.CreateSubtitle">Allows Administrators to provision new Librarian, Administrator, or Reader accounts directly in BooktibusDB.</sys:String>
+    <sys:String x:Key="Str.AdminUser.BtnCreateAccount">+ Create New Account</sys:String>
+
+    <!-- Stage 6.4.2: Library Reports & Statistics -->
+    <sys:String x:Key="Str.Reports.BannerTitle">[Live SQL Server Library Reports &amp; Analytics — BooktibusDB]</sys:String>
+    <sys:String x:Key="Str.Reports.BannerDesc">All book title counts, copy inventories, registered readers, and circulation metrics below are queried live from SQL Server (Zero fake metrics).</sys:String>
+    <sys:String x:Key="Str.Reports.BtnRefresh">Refresh Live DB Statistics</sys:String>
+    <sys:String x:Key="Str.Reports.CategoryCardTitle">Collection Inventory by Category (dbo.Books)</sys:String>
+    <sys:String x:Key="Str.Reports.ColCategory">Category</sys:String>
+    <sys:String x:Key="Str.Reports.ColTitleCount">Book Titles</sys:String>
+    <sys:String x:Key="Str.Reports.ColTotalCopies">Total Copies</sys:String>
+    <sys:String x:Key="Str.Reports.ColAvailCopies">Available Copies</sys:String>
+    <sys:String x:Key="Str.Reports.MonthlyCardTitle">Monthly Circulation Breakdown (dbo.BorrowRecords)</sys:String>
+    <sys:String x:Key="Str.Reports.ColPeriod">Period (YYYY-MM)</sys:String>
+    <sys:String x:Key="Str.Reports.ColTotalLoans">Total Loans</sys:String>
+    <sys:String x:Key="Str.Reports.ColActiveLoans">Active / Overdue</sys:String>
+    <sys:String x:Key="Str.Reports.ColReturnedLoans">Completed Returns</sys:String>
+
+    <!-- Forgot Password -->
+    <sys:String x:Key="Str.Forgot.LinkText">Forgot password?</sys:String>
+    <sys:String x:Key="Str.Forgot.FormTitle">Account Password Recovery</sys:String>
+    <sys:String x:Key="Str.Forgot.FormSubtitle">Verify your identity using a single-use 6-digit OTP (valid for 5 minutes, PBKDF2-SHA256 hashed) sent to the email registered for your Username.</sys:String>
+    <sys:String x:Key="Str.Forgot.Step1Badge">STEP 1 / 3 — IDENTIFY ACCOUNT BY USERNAME</sys:String>
+    <sys:String x:Key="Str.Forgot.Step2Badge">STEP 2 / 3 — VERIFY 6-DIGIT OTP CODE</sys:String>
+    <sys:String x:Key="Str.Forgot.Step3Badge">STEP 3 / 3 — SET NEW SECURE PASSWORD</sys:String>
+    <sys:String x:Key="Str.Forgot.UsernameLabel">Username to recover (*):</sys:String>
+    <sys:String x:Key="Str.Forgot.UsernameHint">The system resolves the registered email strictly by Username, ensuring isolation even when multiple accounts share the same email address.</sys:String>
+    <sys:String x:Key="Str.Forgot.SendOtpBtn">Send OTP Verification Code</sys:String>
+    <sys:String x:Key="Str.Forgot.OtpLabel">6-Digit OTP Verification Code (*):</sys:String>
+    <sys:String x:Key="Str.Forgot.VerifyOtpBtn">Verify OTP Code</sys:String>
+    <sys:String x:Key="Str.Forgot.ResendOtpBtn">Resend OTP Code</sys:String>
+    <sys:String x:Key="Str.Forgot.ChangeUsernameBtn">Change Username</sys:String>
+    <sys:String x:Key="Str.Forgot.NewPasswordLabel">New Password (*, min 8 chars with letters &amp; digits):</sys:String>
+    <sys:String x:Key="Str.Forgot.ConfirmPasswordLabel">Confirm New Password (*):</sys:String>
+    <sys:String x:Key="Str.Forgot.SaveNewPasswordBtn">Confirm Password Reset</sys:String>
+    <sys:String x:Key="Str.Forgot.BackToSignInBtn">← Back to Sign In</sys:String>
+    <sys:String x:Key="Str.Forgot.SimInboxTitle">[Simulated Email Sandbox — Testing Without Live SMTP]</sys:String>
+    <sys:String x:Key="Str.Forgot.SimInboxToggleBtn">Show / Hide Simulated Email Inbox</sys:String>
+    <sys:String x:Key="Str.Forgot.SimInboxEmpty">No simulated email has been generated in the current test session.</sys:String>
+
+</ResourceDictionary>
+

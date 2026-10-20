@@ -1,0 +1,20 @@
+## Ignore Visual Studio & VS Code temporary files, build results, and local secret configuration
+.vs/
+.vscode/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Tt]est[Rr]esults/
+
+## Local database & secret configuration files (NEVER commit to GitHub)
+appsettings.local.json
+*.local.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## SQL Server database backups
+*.bak
+

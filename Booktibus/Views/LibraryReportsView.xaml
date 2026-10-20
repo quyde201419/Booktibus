@@ -1,0 +1,200 @@
+<UserControl x:Class="Booktibus.Views.LibraryReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:LibraryReportsViewModel}"
+             d:DesignWidth="1120"
+             d:DesignHeight="780">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="28,20,28,24">
+        <StackPanel>
+
+            <!-- 1. HEADER BANNER -->
+            <Border Style="{StaticResource InfoNotificationBannerStyle}"
+                    Margin="0,0,0,18">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{DynamicResource Str.Reports.BannerTitle}"
+                                   FontWeight="Bold"
+                                   FontSize="13.5"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                        <TextBlock Text="{DynamicResource Str.Reports.BannerDesc}"
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   Margin="0,3,0,0" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="{DynamicResource Str.Reports.BtnRefresh}"
+                            Command="{Binding RefreshReportsCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- 2. REAL-TIME SQL SERVER KPI CARDS -->
+            <UniformGrid Columns="3" Rows="2" Margin="0,0,0,18">
+                <Border Style="{StaticResource MetricSummaryCardStyle}" Margin="0,0,14,14">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Reports.ColTitleCount}"
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding TotalBookTitles}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   Margin="0,6,0,2" />
+                        <TextBlock Text="dbo.Books (COUNT)"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricSummaryCardStyle}" Margin="0,0,14,14">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Reports.ColAvailCopies}"
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding CopiesBreakdownDisplay}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                   Margin="0,6,0,2" />
+                        <TextBlock Text="SUM(AvailableCopies) / SUM(TotalCopies)"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricSummaryCardStyle}" Margin="0,0,0,14">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Nav.Readers}"
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding TotalRegisteredReaders}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   Margin="0,6,0,2" />
+                        <TextBlock Text="dbo.Readers (COUNT)"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricSummaryCardStyle}" Margin="0,0,14,0">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Reports.ColActiveLoans}"
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding ActiveBorrowedLoans}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   Margin="0,6,0,2" />
+                        <TextBlock Text="dbo.BorrowRecords (Borrowed + Overdue)"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricSummaryCardStyle}" Margin="0,0,14,0">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.StaffReader.ColOverdueLoans}"
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding OverdueLoans}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.Status.Danger}"
+                                   Margin="0,6,0,2" />
+                        <TextBlock Text="dbo.BorrowRecords (Status = Overdue)"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricSummaryCardStyle}" Margin="0,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Reports.ColReturnedLoans}"
+                                   Style="{StaticResource CaptionTextStyle}"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding ReturnedLoans}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.Status.Success}"
+                                   Margin="0,6,0,2" />
+                        <TextBlock Text="dbo.BorrowRecords (Status = Returned)"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- 3. BREAKDOWN TABLES: BOOKS BY CATEGORY + MONTHLY CIRCULATION -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.15*" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Category Statistics -->
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Reports.CategoryCardTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}"
+                                   Margin="0,0,0,10" />
+
+                        <DataGrid ItemsSource="{Binding CategoryStats}"
+                                  MinHeight="280">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Str.Reports.ColCategory}"
+                                                    Binding="{Binding CategoryName}"
+                                                    Width="*" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Reports.ColTitleCount}"
+                                                    Binding="{Binding TitleCount}"
+                                                    Width="115" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Reports.ColTotalCopies}"
+                                                    Binding="{Binding TotalCopiesSum}"
+                                                    Width="115" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Reports.ColAvailCopies}"
+                                                    Binding="{Binding AvailableCopiesSum}"
+                                                    Width="125" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Right: Monthly Circulation Breakdown -->
+                <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Reports.MonthlyCardTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}"
+                                   Margin="0,0,0,10" />
+
+                        <DataGrid ItemsSource="{Binding MonthlyLoanStats}"
+                                  MinHeight="280">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Str.Reports.ColPeriod}"
+                                                    Binding="{Binding PeriodLabel}"
+                                                    Width="*" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Reports.ColTotalLoans}"
+                                                    Binding="{Binding TotalLoansInPeriod}"
+                                                    Width="125" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Reports.ColActiveLoans}"
+                                                    Binding="{Binding ActiveOrOverdueInPeriod}"
+                                                    Width="135" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Reports.ColReturnedLoans}"
+                                                    Binding="{Binding ReturnedInPeriod}"
+                                                    Width="120" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

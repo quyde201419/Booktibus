@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Booktibus/Booktibus.csproj" />
+  <Project Path="Booktibus.VerificationTests/Booktibus.VerificationTests.csproj" />
+</Solution>

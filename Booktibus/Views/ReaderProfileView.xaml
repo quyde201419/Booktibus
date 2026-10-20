@@ -1,0 +1,220 @@
+<UserControl x:Class="Booktibus.Views.ReaderProfileView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:ReaderProfileViewModel}"
+             d:DesignHeight="700"
+             d:DesignWidth="1020">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="28,20,28,24">
+        <StackPanel>
+
+            <!-- FEEDBACK BANNER (SUCCESS / ERROR) -->
+            <Border Visibility="{Binding HasFeedback, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,0,0,18">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource InfoNotificationBannerStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFeedbackSuccess}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource Brush.Status.SuccessBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Success}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsFeedbackSuccess}" Value="False">
+                                <Setter Property="Background" Value="{StaticResource Brush.Status.DangerBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Danger}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding FeedbackMessage}"
+                           FontWeight="SemiBold"
+                           FontSize="13"
+                           Foreground="{StaticResource Brush.Text.Primary}"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <!-- TWO-COLUMN LAYOUT: READ-ONLY IDENTITY CARD (LEFT) & EDITABLE PERSONAL CONTACT FORM (RIGHT) -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="1.25*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- LEFT: READ-ONLY LIBRARY CARD & ACCOUNT IDENTITY -->
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Profile.IdentityCardTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}" />
+                        <TextBlock Text="{DynamicResource Str.Profile.IdentityCardSubtitle}"
+                                   Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                        <!-- Visual Library Card Header -->
+                        <Border Background="{StaticResource Brush.PrimaryNavy.Main}"
+                                CornerRadius="8"
+                                Padding="18,16"
+                                Margin="0,0,0,18">
+                            <StackPanel>
+                                <TextBlock Text="BOOKTIBUS OFFICIAL LIBRARY CARD"
+                                           Foreground="{StaticResource Brush.AccentGold.Light}"
+                                           FontSize="10"
+                                           FontWeight="Bold" />
+                                <TextBlock Text="{Binding ReaderCardId}"
+                                           FontFamily="{StaticResource Font.Monospace}"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.Text.OnDark}"
+                                           Margin="0,6,0,4" />
+                                <TextBlock Text="{Binding Username}"
+                                           Foreground="{StaticResource Brush.Text.OnDarkMuted}"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Read-only security fields -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{DynamicResource Str.Profile.LblUserId}"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding UserId}"
+                                       FontFamily="{StaticResource Font.Monospace}"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{DynamicResource Str.Profile.LblUsername}"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Username}"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{DynamicResource Str.Profile.LblRole}"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Role}"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.AccentTeal.Main}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{DynamicResource Str.Profile.LblReaderCard}"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding ReaderCardId}"
+                                       FontFamily="{StaticResource Font.Monospace}"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{DynamicResource Str.Profile.LblStatus}"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding MembershipStatus}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource Brush.Status.Success}" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="{DynamicResource Str.Profile.LblRegisteredAt}"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding RegisteredAtDisplay}"
+                                       Foreground="{StaticResource Brush.Text.Primary}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- RIGHT: EDITABLE PERSONAL CONTACT FORM -->
+                <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Profile.EditCardTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}" />
+                        <TextBlock Text="{DynamicResource Str.Profile.EditCardSubtitle}"
+                                   Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                        <!-- Full Name -->
+                        <StackPanel Margin="{StaticResource Spacing.FieldMargin}">
+                            <TextBlock Text="{DynamicResource Str.Profile.LblFullName}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding FullNameInput, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <!-- Email Address -->
+                        <StackPanel Margin="{StaticResource Spacing.FieldMargin}">
+                            <TextBlock Text="{DynamicResource Str.Profile.LblEmail}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding EmailInput, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <!-- Phone Number -->
+                        <StackPanel Margin="0,0,0,22">
+                            <TextBlock Text="{DynamicResource Str.Profile.LblPhone}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding PhoneNumberInput, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <!-- Save & Reload Buttons -->
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="{DynamicResource Str.Profile.BtnSave}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding SaveProfileCommand}"
+                                    Margin="0,0,12,0" />
+                            <Button Content="{DynamicResource Str.Profile.BtnReload}"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding ReloadProfileCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

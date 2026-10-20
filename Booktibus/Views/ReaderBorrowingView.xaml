@@ -1,0 +1,410 @@
+<UserControl x:Class="Booktibus.Views.ReaderBorrowingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:ReaderBorrowingViewModel}"
+             d:DesignHeight="820"
+             d:DesignWidth="1060">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="28,20,28,24">
+        <StackPanel>
+
+            <!-- 1. ACTIVE READER CARD / STAFF CIRCULATION MODE BANNER -->
+            <Border Style="{StaticResource InfoNotificationBannerStyle}"
+                    Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding ActiveReaderCardBanner}"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               FontWeight="Bold"
+                               FontSize="13"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap" />
+
+                    <Button Grid.Column="1"
+                            Content="{DynamicResource Str.Borrow.BtnRefresh}"
+                            Style="{StaticResource SecondaryOutlineButtonStyle}"
+                            Command="{Binding RefreshCommand}"
+                            Margin="16,0,0,0"
+                            VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- ERROR BANNER IF ANY -->
+            <Border Style="{StaticResource DangerNotificationBannerStyle}"
+                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,0,0,16">
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="{StaticResource Brush.Status.Danger}"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <!-- STAFF ACTION FEEDBACK BANNER -->
+            <Border Visibility="{Binding HasStaffFeedback, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,0,0,16">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource InfoNotificationBannerStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsStaffFeedbackSuccess}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource Brush.Status.SuccessBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Success}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsStaffFeedbackSuccess}" Value="False">
+                                <Setter Property="Background" Value="{StaticResource Brush.Status.DangerBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Danger}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding StaffActionFeedback}"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <!-- 2. THREE LIVE METRIC CARDS FROM dbo.BorrowRecords -->
+            <UniformGrid Columns="3" Margin="0,0,0,18">
+                <!-- Active Borrowed -->
+                <Border Style="{StaticResource MetricSummaryCardStyle}"
+                        BorderBrush="{StaticResource Brush.AccentTeal.Main}"
+                        Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Borrow.MetricActiveTitle}"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.Text.Secondary}" />
+                        <TextBlock Text="{Binding ActiveBorrowedCount}"
+                                   FontFamily="{StaticResource Font.Display}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   Margin="0,8,0,6" />
+                        <TextBlock Text="{DynamicResource Str.Borrow.MetricActiveSub}"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Returned -->
+                <Border Style="{StaticResource MetricSummaryCardStyle}"
+                        BorderBrush="{StaticResource Brush.AccentGold.Main}"
+                        Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Borrow.MetricReturnedTitle}"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.Text.Secondary}" />
+                        <TextBlock Text="{Binding ReturnedCount}"
+                                   FontFamily="{StaticResource Font.Display}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   Margin="0,8,0,6" />
+                        <TextBlock Text="{DynamicResource Str.Borrow.MetricReturnedSub}"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Overdue -->
+                <Border Style="{StaticResource MetricSummaryCardStyle}"
+                        BorderBrush="{StaticResource Brush.Status.Warning}"
+                        Margin="0">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.Borrow.MetricOverdueTitle}"
+                                   FontSize="11"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.Text.Secondary}" />
+                        <TextBlock Text="{Binding OverdueCount}"
+                                   FontFamily="{StaticResource Font.Display}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   Margin="0,8,0,6" />
+                        <TextBlock Text="{DynamicResource Str.Borrow.MetricOverdueSub}"
+                                   Style="{StaticResource CaptionTextStyle}" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- 3. STAGE 6.3.2: STAFF LOAN CHECKOUT & RETURN PROCESSING CARDS -->
+            <Grid Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}}"
+                  Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.25*" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- LEFT: CREATE NEW BOOK LOAN (CHECKOUT) -->
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.StaffBorrow.LoanFormTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}" />
+                        <TextBlock Text="{DynamicResource Str.StaffBorrow.LoanFormSubtitle}"
+                                   Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="1.2*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{DynamicResource Str.StaffBorrow.LblSelectReader}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <ComboBox ItemsSource="{Binding AvailableReadersForLoan}"
+                                          SelectedItem="{Binding SelectedLoanReader}"
+                                          DisplayMemberPath="PickerDisplay" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{DynamicResource Str.StaffBorrow.LblSelectBook}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <ComboBox ItemsSource="{Binding AvailableBooksForLoan}"
+                                          SelectedItem="{Binding SelectedLoanBook}"
+                                          DisplayMemberPath="Title" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{DynamicResource Str.StaffBorrow.LblLoanDays}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <TextBox Text="{Binding LoanDaysInput, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{DynamicResource Str.StaffBorrow.LblLoanNotes}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <TextBox Text="{Binding LoanNotesInput, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <Button Grid.Column="4"
+                                    Content="{DynamicResource Str.StaffBorrow.BtnCreateLoan}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding CreateLoanCommand}"
+                                    VerticalAlignment="Bottom" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- RIGHT: RECORD BOOK RETURN FOR SELECTED TRANSACTION -->
+                <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.StaffBorrow.ReturnFormTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}" />
+                        <TextBlock Text="{DynamicResource Str.StaffBorrow.ReturnFormSubtitle}"
+                                   Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                        <Border Background="{StaticResource Brush.Background.App}"
+                                BorderBrush="{StaticResource Brush.Border.Subtle}"
+                                BorderThickness="1"
+                                CornerRadius="5"
+                                Padding="12,8"
+                                Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}">
+                                    <Run Text="{Binding SelectedStaffBorrowRecord.RecordCode, Mode=OneWay}" />
+                                    <Run Text=" — " />
+                                    <Run Text="{Binding SelectedStaffBorrowRecord.BookTitle, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock FontSize="12"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           Margin="0,2,0,0">
+                                    <Run Text="{Binding SelectedStaffBorrowRecord.ReaderCardId, Mode=OneWay}" />
+                                    <Run Text=" (" /><Run Text="{Binding SelectedStaffBorrowRecord.ReaderFullName, Mode=OneWay}" /><Run Text=") • " />
+                                    <Run Text="{Binding SelectedStaffBorrowRecord.LocalizedStatusDisplay, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{DynamicResource Str.StaffBorrow.LblReturnNotes}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <TextBox Text="{Binding ReturnNotesInput, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <Button Grid.Column="2"
+                                    Content="{DynamicResource Str.StaffBorrow.BtnProcessReturn}"
+                                    Style="{StaticResource TealButtonStyle}"
+                                    Command="{Binding ProcessReturnCommand}"
+                                    IsEnabled="{Binding CanReturnSelectedStaffRecord}"
+                                    VerticalAlignment="Bottom" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 4. BORROWING TRANSACTIONS CARD -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel>
+                    <!-- Filter Header -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="230" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource Str.Borrow.FilterStatusLabel}"
+                                   Style="{StaticResource FieldLabelTextStyle}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,10,0" />
+
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding StatusFilterOptions}"
+                                  SelectedItem="{Binding SelectedStatusFilter}"
+                                  DisplayMemberPath="DisplayText" />
+
+                        <!-- Staff keyword search -->
+                        <TextBox Grid.Column="3"
+                                 Text="{Binding StaffSearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                 Margin="0,0,8,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding StaffSearchCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+
+                        <Button Grid.Column="4"
+                                Content="{DynamicResource Str.Catalog.BtnSearch}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding StaffSearchCommand}"
+                                Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </Grid>
+
+                    <!-- STAFF DATAGRID (All readers' transactions) -->
+                    <DataGrid ItemsSource="{Binding StaffBorrowRecords}"
+                              SelectedItem="{Binding SelectedStaffBorrowRecord}"
+                              Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}}"
+                              MinHeight="280">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColRecordCode}"
+                                                Binding="{Binding RecordCode}"
+                                                Width="115" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReaderCard}"
+                                                Binding="{Binding ReaderCardId}"
+                                                Width="120" />
+                            <DataGridTextColumn Header="{DynamicResource Str.StaffBorrow.ColReaderName}"
+                                                Binding="{Binding ReaderFullName}"
+                                                Width="140" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookCode}"
+                                                Binding="{Binding BookCode}"
+                                                Width="95" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookTitle}"
+                                                Binding="{Binding BookTitle}"
+                                                Width="1.5*" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBorrowDate}"
+                                                Binding="{Binding BorrowedDateDisplay}"
+                                                Width="125" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColDueDate}"
+                                                Binding="{Binding DueDateDisplay}"
+                                                Width="100" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReturnDate}"
+                                                Binding="{Binding ReturnedDateDisplay}"
+                                                Width="125" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColStatus}"
+                                                Binding="{Binding LocalizedStatusDisplay}"
+                                                Width="135" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColNotes}"
+                                                Binding="{Binding Notes}"
+                                                Width="1*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- READER PERSONAL DATAGRID (Stage 5.4) -->
+                    <DataGrid ItemsSource="{Binding BorrowRecords}"
+                              SelectedItem="{Binding SelectedBorrowRecord}"
+                              Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"
+                              MinHeight="260">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColRecordCode}"
+                                                Binding="{Binding RecordCode}"
+                                                Width="120" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReaderCard}"
+                                                Binding="{Binding ReaderCardId}"
+                                                Width="125" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookCode}"
+                                                Binding="{Binding BookCode}"
+                                                Width="95" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookTitle}"
+                                                Binding="{Binding BookTitle}"
+                                                Width="1.6*" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBorrowDate}"
+                                                Binding="{Binding BorrowedDateDisplay}"
+                                                Width="110" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColDueDate}"
+                                                Binding="{Binding DueDateDisplay}"
+                                                Width="110" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReturnDate}"
+                                                Binding="{Binding ReturnedDateDisplay}"
+                                                Width="125" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColStatus}"
+                                                Binding="{Binding LocalizedStatusDisplay}"
+                                                Width="115" />
+                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColNotes}"
+                                                Binding="{Binding Notes}"
+                                                Width="1.1*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Transparent Empty State when no records exist yet -->
+                    <Border Visibility="{Binding IsRecordsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="{StaticResource Brush.Background.App}"
+                            BorderBrush="{StaticResource Brush.Border.Subtle}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="28"
+                            Margin="0,12,0,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="⇄"
+                                       FontSize="30"
+                                       Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,8" />
+                            <TextBlock Text="{DynamicResource Str.Borrow.EmptyStateTitle}"
+                                       Style="{StaticResource SectionHeaderTextStyle}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{DynamicResource Str.Borrow.EmptyStateDesc}"
+                                       Style="{StaticResource BodyTextStyle}"
+                                       Foreground="{StaticResource Brush.Text.Secondary}"
+                                       TextAlignment="Center"
+                                       MaxWidth="560"
+                                       Margin="0,6,0,14" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

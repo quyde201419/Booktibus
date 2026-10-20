@@ -1,0 +1,114 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- =======================================================================
+         BOOKTIBUS — TYPOGRAPHY, SPACING, CORNER RADIUS & SHADOW METRICS
+         ======================================================================= -->
+
+    <!-- 1. Font Families (Full Vietnamese Unicode support) -->
+    <FontFamily x:Key="Font.Primary">Segoe UI</FontFamily>
+    <FontFamily x:Key="Font.Display">Georgia, Segoe UI</FontFamily>
+    <FontFamily x:Key="Font.Monospace">Consolas, Segoe UI</FontFamily>
+
+    <!-- 2. Font Sizes -->
+    <sys:Double x:Key="FontSize.Display">22</sys:Double>
+    <sys:Double x:Key="FontSize.PageTitle">19</sys:Double>
+    <sys:Double x:Key="FontSize.SectionHeader">15.5</sys:Double>
+    <sys:Double x:Key="FontSize.Subheader">14</sys:Double>
+    <sys:Double x:Key="FontSize.Body">13</sys:Double>
+    <sys:Double x:Key="FontSize.Caption">11.5</sys:Double>
+
+    <!-- 3. Corner Radii -->
+    <CornerRadius x:Key="Radius.Small">4</CornerRadius>
+    <CornerRadius x:Key="Radius.Control">5</CornerRadius>
+    <CornerRadius x:Key="Radius.Card">8</CornerRadius>
+    <CornerRadius x:Key="Radius.Dialog">10</CornerRadius>
+    <CornerRadius x:Key="Radius.Badge">12</CornerRadius>
+
+    <!-- 4. Standard Spacing & Padding -->
+    <Thickness x:Key="Spacing.CardPadding">20,18</Thickness>
+    <Thickness x:Key="Spacing.CompactCardPadding">14,12</Thickness>
+    <Thickness x:Key="Spacing.ControlPadding">10,7</Thickness>
+    <Thickness x:Key="Spacing.ButtonPadding">16,8</Thickness>
+    <Thickness x:Key="Spacing.SectionMargin">0,0,0,18</Thickness>
+    <Thickness x:Key="Spacing.FieldMargin">0,0,0,14</Thickness>
+
+    <!-- 5. Control Heights -->
+    <sys:Double x:Key="Metric.InputHeight">34</sys:Double>
+    <sys:Double x:Key="Metric.ButtonHeight">34</sys:Double>
+    <sys:Double x:Key="Metric.SidebarWidth">235</sys:Double>
+
+    <!-- 6. Subtle Desktop Shadows (Restrained, low-opacity) -->
+    <DropShadowEffect x:Key="Shadow.CardSubtle"
+                      Color="#14284B"
+                      Direction="270"
+                      ShadowDepth="2"
+                      BlurRadius="8"
+                      Opacity="0.06" />
+
+    <DropShadowEffect x:Key="Shadow.DialogElevated"
+                      Color="#0D1B33"
+                      Direction="270"
+                      ShadowDepth="4"
+                      BlurRadius="18"
+                      Opacity="0.18" />
+
+    <!-- =======================================================================
+         REUSABLE TEXTBLOCK STYLES
+         ======================================================================= -->
+
+    <Style x:Key="BrandDisplayTitleStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Display}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.AccentGold.Light}" />
+    </Style>
+
+    <Style x:Key="PageTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.PageTitle}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.PrimaryNavy.Main}" />
+    </Style>
+
+    <Style x:Key="SectionHeaderTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.SectionHeader}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.PrimaryNavy.Main}" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+
+    <Style x:Key="SectionSubtitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Caption}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
+        <Setter Property="Margin" Value="0,0,0,14" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="FieldLabelTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Body}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+        <Setter Property="Margin" Value="0,0,0,5" />
+    </Style>
+
+    <Style x:Key="BodyTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Body}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="CaptionTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Primary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Caption}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Muted}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+</ResourceDictionary>
+

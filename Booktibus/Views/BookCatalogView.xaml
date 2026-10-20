@@ -1,0 +1,513 @@
+<UserControl x:Class="Booktibus.Views.BookCatalogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:BookCatalogViewModel}"
+             d:DesignHeight="850"
+             d:DesignWidth="1060">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="28,20,28,24">
+        <StackPanel>
+
+            <!-- 1. SAMPLE DATA TRANSPARENCY NOTICE -->
+            <Border Style="{StaticResource InfoNotificationBannerStyle}"
+                    Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{DynamicResource Str.Catalog.SampleNotice}"
+                               Foreground="{StaticResource Brush.Text.Primary}"
+                               FontSize="12.5"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap" />
+                    <Button Grid.Column="1"
+                            Content="{DynamicResource Str.Catalog.BtnOpenFavorites}"
+                            Style="{StaticResource GoldAccentButtonStyle}"
+                            Command="{Binding OpenFavoritesPageCommand}"
+                            Visibility="{Binding CanOpenReaderFavorites, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Margin="16,0,0,0"
+                            VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- ERROR BANNER IF ANY -->
+            <Border Style="{StaticResource DangerNotificationBannerStyle}"
+                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,0,0,16">
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="{StaticResource Brush.Status.Danger}"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <!-- 2. SEARCH & FILTER TOOLBAR CARD -->
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Margin="0,0,0,18">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource Str.Catalog.FilterCardTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding ResultSummaryText}"
+                                   Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                   FontWeight="SemiBold"
+                                   FontSize="12.5"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.6*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Keyword Input -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Str.Catalog.KeywordLabel}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Return" Command="{Binding SearchCommand}" />
+                                </TextBox.InputBindings>
+                            </TextBox>
+                        </StackPanel>
+
+                        <!-- Category Filter -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{DynamicResource Str.Catalog.CategoryLabel}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <ComboBox ItemsSource="{Binding CategoryOptions}"
+                                      SelectedItem="{Binding SelectedCategoryOption}"
+                                      DisplayMemberPath="DisplayText" />
+                        </StackPanel>
+
+                        <!-- Availability Filter -->
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="{DynamicResource Str.Catalog.AvailabilityLabel}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <ComboBox ItemsSource="{Binding AvailabilityOptions}"
+                                      SelectedItem="{Binding SelectedAvailabilityOption}"
+                                      DisplayMemberPath="DisplayText" />
+                        </StackPanel>
+
+                        <!-- Search & Clear Buttons -->
+                        <StackPanel Grid.Column="6"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Bottom">
+                            <Button Content="{DynamicResource Str.Catalog.BtnSearch}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding SearchCommand}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="{DynamicResource Str.Catalog.BtnClear}"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding ClearFiltersCommand}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. MAIN SPLIT: CATALOG TABLE (LEFT) & BOOK DETAILS PANEL (RIGHT) -->
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.55*" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="1.05*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- LEFT: BOOK CATALOG LIST / DATAGRID -->
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <Grid>
+                        <!-- DataGrid when results exist -->
+                        <DataGrid ItemsSource="{Binding Books}"
+                                  SelectedItem="{Binding SelectedBook}"
+                                  Visibility="{Binding IsCatalogEmpty, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"
+                                  MinHeight="340">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColCode}"
+                                                    Binding="{Binding BookCode}"
+                                                    Width="95" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColTitle}"
+                                                    Binding="{Binding Title}"
+                                                    Width="1.6*" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColAuthor}"
+                                                    Binding="{Binding Author}"
+                                                    Width="1.1*" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColCategory}"
+                                                    Binding="{Binding Category}"
+                                                    Width="125" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColAvailability}"
+                                                    Binding="{Binding AvailabilityDisplay}"
+                                                    Width="135" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColFavorite}"
+                                                    Binding="{Binding FavoriteBadgeText}"
+                                                    Width="105" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Empty State when no books match filter -->
+                        <Border Visibility="{Binding IsCatalogEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Background="{StaticResource Brush.Background.App}"
+                                BorderBrush="{StaticResource Brush.Border.Subtle}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="28"
+                                VerticalAlignment="Center">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="▤"
+                                           FontSize="32"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,8" />
+                                <TextBlock Text="{DynamicResource Str.Catalog.EmptyStateTitle}"
+                                           Style="{StaticResource SectionHeaderTextStyle}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource Str.Catalog.EmptyStateDesc}"
+                                           Style="{StaticResource BodyTextStyle}"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           TextAlignment="Center"
+                                           MaxWidth="420"
+                                           Margin="0,4,0,14" />
+                                <Button Content="{DynamicResource Str.Catalog.BtnClear}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding ClearFiltersCommand}"
+                                        HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- RIGHT: SELECTED BOOK DETAILS CARD (Stage 5.2) -->
+                <Border Grid.Column="2"
+                        Style="{StaticResource CardBorderStyle}"
+                        Visibility="{Binding HasSelectedBook, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel DataContext="{Binding SelectedBook}">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0"
+                                    Background="{StaticResource Brush.PrimaryNavy.Main}"
+                                    CornerRadius="4"
+                                    Padding="8,3"
+                                    HorizontalAlignment="Left">
+                                <TextBlock Text="{Binding BookCode}"
+                                           Foreground="{StaticResource Brush.AccentGold.Light}"
+                                           FontFamily="{StaticResource Font.Monospace}"
+                                           FontSize="11.5"
+                                           FontWeight="Bold" />
+                            </Border>
+
+                            <Border Grid.Column="1"
+                                    Background="{StaticResource Brush.AccentGold.Soft}"
+                                    BorderBrush="{StaticResource Brush.AccentGold.Main}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="8,2">
+                                <TextBlock Text="{Binding SampleDataBadge}"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Dark}"
+                                           FontSize="10"
+                                           FontWeight="Bold" />
+                            </Border>
+                        </Grid>
+
+                        <!-- Book Title & Author -->
+                        <TextBlock Text="{Binding Title}"
+                                   FontFamily="{StaticResource Font.Display}"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,4,0,4" />
+
+                        <TextBlock Text="{Binding Author}"
+                                   FontSize="13.5"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                   Margin="0,0,0,14" />
+
+                        <!-- Favorite Action Button -->
+                        <Button Content="{Binding FavoriteButtonLabel}"
+                                Style="{StaticResource TealButtonStyle}"
+                                Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                HorizontalAlignment="Stretch"
+                                Margin="0,0,0,16" />
+
+                        <Border BorderBrush="{StaticResource Brush.Border.Subtle}"
+                                BorderThickness="0,1,0,0"
+                                Padding="0,12,0,0">
+                            <StackPanel>
+                                <!-- Category -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="155" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{DynamicResource Str.Catalog.LblCategory}"
+                                               Foreground="{StaticResource Brush.Text.Secondary}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Category}"
+                                               Foreground="{StaticResource Brush.Text.Primary}"
+                                               FontWeight="Medium"
+                                               TextWrapping="Wrap" />
+                                </Grid>
+
+                                <!-- Publisher & Year -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="155" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{DynamicResource Str.Catalog.LblPublisher}"
+                                               Foreground="{StaticResource Brush.Text.Secondary}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1"
+                                               Foreground="{StaticResource Brush.Text.Primary}"
+                                               TextWrapping="Wrap">
+                                        <Run Text="{Binding Publisher, Mode=OneWay}" />
+                                        <Run Text=" (" /><Run Text="{Binding PublishYear, Mode=OneWay}" /><Run Text=")" />
+                                    </TextBlock>
+                                </Grid>
+
+                                <!-- ISBN -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="155" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{DynamicResource Str.Catalog.LblIsbn}"
+                                               Foreground="{StaticResource Brush.Text.Secondary}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Isbn}"
+                                               FontFamily="{StaticResource Font.Monospace}"
+                                               Foreground="{StaticResource Brush.Text.Primary}" />
+                                </Grid>
+
+                                <!-- Shelf Location -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="155" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{DynamicResource Str.Catalog.LblShelf}"
+                                               Foreground="{StaticResource Brush.Text.Secondary}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding ShelfLocation}"
+                                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                               FontWeight="Bold" />
+                                </Grid>
+
+                                <!-- Available / Total Copies -->
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="155" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{DynamicResource Str.Catalog.LblCopies}"
+                                               Foreground="{StaticResource Brush.Text.Secondary}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding AvailabilityDisplay}"
+                                               Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                               FontWeight="Bold" />
+                                </Grid>
+
+                                <!-- Description / Synopsis -->
+                                <TextBlock Text="{DynamicResource Str.Catalog.LblDescription}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <Border Background="{StaticResource Brush.Background.App}"
+                                        BorderBrush="{StaticResource Brush.Border.Subtle}"
+                                        BorderThickness="1"
+                                        CornerRadius="5"
+                                        Padding="12,10">
+                                    <TextBlock Text="{Binding Description}"
+                                               Style="{StaticResource BodyTextStyle}"
+                                               LineHeight="20" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 4. STAGE 6.3.1: LIBRARIAN & ADMIN BOOK CATALOG CRUD PANEL -->
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Visibility="{Binding IsStaffCatalogManager, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Str.StaffBook.CardTitle}"
+                                       Style="{StaticResource SectionHeaderTextStyle}" />
+                            <TextBlock Text="{DynamicResource Str.StaffBook.CardSubtitle}"
+                                       Style="{StaticResource SectionSubtitleTextStyle}"
+                                       Margin="0,2,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Top">
+                            <Button Content="{DynamicResource Str.StaffBook.BtnNewMode}"
+                                    Style="{StaticResource GoldAccentButtonStyle}"
+                                    Command="{Binding StartAddNewBookCommand}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="{DynamicResource Str.StaffBook.BtnEditMode}"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding LoadSelectedBookToEditCommand}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="{DynamicResource Str.StaffBook.BtnDelete}"
+                                    Style="{StaticResource DangerButtonStyle}"
+                                    Command="{Binding DeleteSelectedBookCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Staff Action Feedback Banner -->
+                    <Border Visibility="{Binding HasStaffFeedback, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Margin="0,0,0,14">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource InfoNotificationBannerStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsStaffFeedbackSuccess}" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource Brush.Status.SuccessBg}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Success}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsStaffFeedbackSuccess}" Value="False">
+                                        <Setter Property="Background" Value="{StaticResource Brush.Status.DangerBg}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Danger}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding StaffActionFeedback}"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Mode Badge -->
+                    <Border Background="{StaticResource Brush.PrimaryNavy.Main}"
+                            CornerRadius="4"
+                            Padding="10,4"
+                            HorizontalAlignment="Left"
+                            Margin="0,0,0,14">
+                        <TextBlock Text="{Binding StaffFormModeTitle}"
+                                   Foreground="{StaticResource Brush.AccentGold.Light}"
+                                   FontWeight="Bold"
+                                   FontSize="11.5" />
+                    </Border>
+
+                    <!-- 3-Column Book Form -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Column 1 -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Str.StaffBook.LblCode}" Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding FormBookCode, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+
+                            <TextBlock Text="{DynamicResource Str.StaffBook.LblTitle}" Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding FormTitle, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+
+                            <TextBlock Text="{DynamicResource Str.StaffBook.LblAuthor}" Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding FormAuthor, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                        </StackPanel>
+
+                        <!-- Column 2 -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{DynamicResource Str.StaffBook.LblCategory}" Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding FormCategory, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+
+                            <TextBlock Text="{DynamicResource Str.StaffBook.LblPublisher}" Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding FormPublisher, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{DynamicResource Str.StaffBook.LblYear}" Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding FormPublishYear, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{DynamicResource Str.StaffBook.LblIsbn}" Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding FormIsbn, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Column 3 -->
+                        <StackPanel Grid.Column="4">
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{DynamicResource Str.StaffBook.LblTotalCopies}" Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding FormTotalCopies, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{DynamicResource Str.StaffBook.LblShelf}" Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding FormShelfLocation, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="{DynamicResource Str.StaffBook.LblDesc}" Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding FormDescription, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     Height="68"
+                                     VerticalContentAlignment="Top"
+                                     Margin="0,0,0,12" />
+
+                            <Button Content="{Binding SaveButtonLabel}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding SaveBookCommand}"
+                                    HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

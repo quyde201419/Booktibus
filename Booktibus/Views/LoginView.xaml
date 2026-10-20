@@ -1,0 +1,779 @@
+<UserControl x:Class="Booktibus.Views.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             xmlns:helpers="clr-namespace:Booktibus.Helpers"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:LoginViewModel}"
+             d:DesignHeight="780"
+             d:DesignWidth="1260">
+
+    <Grid Background="{StaticResource Brush.Background.App}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="400" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ===================================================================
+             LEFT COLUMN: PREMIUM LIBRARY BRANDING & SECURITY OVERVIEW
+             =================================================================== -->
+        <Border Grid.Column="0"
+                Background="{StaticResource Brush.PrimaryNavy.Dark}"
+                BorderBrush="{StaticResource Brush.AccentGold.Main}"
+                BorderThickness="0,0,3,0"
+                Padding="34,38">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Brand Emblem -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                    <Border Width="44"
+                            Height="44"
+                            CornerRadius="8"
+                            Background="{StaticResource Brush.AccentGold.Main}"
+                            Margin="0,0,14,0"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="B"
+                                   FontFamily="{StaticResource Font.Display}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Dark}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{DynamicResource Str.AppBrand}"
+                                   Style="{StaticResource BrandDisplayTitleStyle}"
+                                   FontSize="24" />
+                        <TextBlock Text="{DynamicResource Str.AppTagline}"
+                                   Foreground="{StaticResource Brush.Text.OnDarkMuted}"
+                                   FontSize="10.5"
+                                   FontWeight="SemiBold"
+                                   Margin="0,3,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Security & Role Highlights -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,24">
+                    <TextBlock Text="{DynamicResource Str.Login.BrandHeadline}"
+                               FontFamily="{StaticResource Font.Display}"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource Brush.Text.OnDark}"
+                               TextWrapping="Wrap"
+                               LineHeight="27"
+                               Margin="0,0,0,14" />
+
+                    <TextBlock Text="{DynamicResource Str.Login.BrandDescription}"
+                               Foreground="{StaticResource Brush.Text.OnDarkMuted}"
+                               FontSize="13"
+                               TextWrapping="Wrap"
+                               LineHeight="20"
+                               Margin="0,0,0,22" />
+
+                    <Border Background="{StaticResource Brush.PrimaryNavy.Main}"
+                            BorderBrush="{StaticResource Brush.PrimaryNavy.Hover}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource Radius.Card}"
+                            Padding="18,16">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.Login.SecurityBullet1}"
+                                       Foreground="{StaticResource Brush.AccentGold.Light}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,10" />
+                            <TextBlock Text="{DynamicResource Str.Login.SecurityBullet2}"
+                                       Foreground="{StaticResource Brush.Text.OnDark}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,10" />
+                            <TextBlock Text="{DynamicResource Str.Login.SecurityBullet3}"
+                                       Foreground="{StaticResource Brush.Text.OnDarkMuted}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Footer -->
+                <TextBlock Grid.Row="2"
+                           Text="{DynamicResource Str.SidebarFooter}"
+                           Foreground="{StaticResource Brush.Text.OnDarkMuted}"
+                           FontSize="11.5"
+                           TextWrapping="Wrap" />
+            </Grid>
+        </Border>
+
+        <!-- ===================================================================
+             RIGHT COLUMN: SQL SERVER PROBE, LOGIN, READER REGISTRATION & ADMIN INIT
+             =================================================================== -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top Mode Switcher & Language Bar -->
+            <Border Grid.Row="0" Padding="32,16,32,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Mode Switch Buttons: Sign In | Register Reader | Initial Admin Setup -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="{DynamicResource Str.Auth.TabSignIn}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding SwitchModeCommand}"
+                                CommandParameter="SignIn"
+                                Margin="0,0,8,0" />
+
+                        <Button Content="{DynamicResource Str.Auth.TabRegisterReader}"
+                                Style="{StaticResource TealButtonStyle}"
+                                Command="{Binding SwitchModeCommand}"
+                                CommandParameter="RegisterReader"
+                                Margin="0,0,8,0" />
+
+                        <Button Content="{DynamicResource Str.Auth.TabInitialAdmin}"
+                                Style="{StaticResource GoldAccentButtonStyle}"
+                                Command="{Binding SwitchModeCommand}"
+                                CommandParameter="InitialAdminSetup"
+                                Visibility="{Binding CanShowInitialAdminTab, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+
+                    <!-- Language Switcher -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="{StaticResource Brush.PrimaryNavy.Light}"
+                                CornerRadius="{StaticResource Radius.Control}"
+                                Padding="12,6"
+                                Margin="0,0,10,0"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{DynamicResource Str.CurrentLangBadge}"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold" />
+                        </Border>
+                        <Button Content="{DynamicResource Str.SwitchLanguageBtn}"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding ToggleLanguageCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Center Scrollable Content -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Padding="32,8,32,24">
+                <StackPanel MaxWidth="680" VerticalAlignment="Center" HorizontalAlignment="Center">
+
+                    <!-- 1. SQL SERVER CONNECTION VERIFICATION BAR -->
+                    <Border Style="{StaticResource CardBorderStyle}"
+                            Padding="18,14"
+                            Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.Db.CardTitle}"
+                                       FontSize="11"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                       Margin="0,0,0,6" />
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Db.ServerLabel}"
+                                           Style="{StaticResource FieldLabelTextStyle}"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,10,0" />
+
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding ServerNameInput, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,10,0" />
+
+                                <Button Grid.Column="2"
+                                        Content="{DynamicResource Str.Db.ProbeBtn}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding ProbeDatabaseCommand}" />
+                            </Grid>
+
+                            <TextBlock Text="{Binding DatabaseStatusMessage}"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Shared Feedback Banners -->
+                    <Border Style="{StaticResource DangerNotificationBannerStyle}"
+                            Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Margin="0,0,0,14">
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   Foreground="{StaticResource Brush.Status.Danger}"
+                                   FontWeight="SemiBold"
+                                   FontSize="12.5"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <Border Style="{StaticResource InfoNotificationBannerStyle}"
+                            Visibility="{Binding HasInfo, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Margin="0,0,0,14">
+                        <TextBlock Text="{Binding InfoMessage}"
+                                   Foreground="{StaticResource Brush.Status.Info}"
+                                   FontWeight="Medium"
+                                   FontSize="12.5"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- ===========================================================
+                         2A. SIGN-IN CARD
+                         =========================================================== -->
+                    <Border Style="{StaticResource CardBorderStyle}"
+                            Padding="28,22"
+                            Margin="0,0,0,16"
+                            Visibility="{Binding IsSignInMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.Login.FormTitle}"
+                                       Style="{StaticResource PageTitleTextStyle}"
+                                       FontSize="20" />
+                            <TextBlock Text="{DynamicResource Str.Login.FormSubtitle}"
+                                       Style="{StaticResource SectionSubtitleTextStyle}"
+                                       Margin="0,4,0,16" />
+
+                            <TextBlock Text="{DynamicResource Str.Login.UsernameLabel}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,12" />
+
+                            <Grid Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Login.PasswordLabel}"
+                                           Style="{StaticResource FieldLabelTextStyle}"
+                                           Margin="0" />
+                                <Button Grid.Column="1"
+                                        Content="{DynamicResource Str.Forgot.LinkText}"
+                                        Command="{Binding OpenForgotPasswordCommand}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="4,0"
+                                        MinHeight="18"
+                                        Cursor="Hand"
+                                        Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                        FontWeight="SemiBold"
+                                        FontSize="12.5">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <TextBlock x:Name="LinkTextBlock"
+                                                       Text="{TemplateBinding Content}"
+                                                       Foreground="{TemplateBinding Foreground}"
+                                                       FontWeight="{TemplateBinding FontWeight}"
+                                                       FontSize="{TemplateBinding FontSize}"
+                                                       TextDecorations="Underline" />
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="LinkTextBlock" Property="Foreground" Value="{StaticResource Brush.PrimaryNavy.Main}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+                            <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                         helpers:PasswordBoxAssistant.BoundPassword="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,0,18" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button Grid.Column="0"
+                                        Content="{DynamicResource Str.Login.SignInBtn}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding LoginCommand}"
+                                        IsDefault="True"
+                                        Margin="0,0,10,0" />
+
+                                <Button Grid.Column="1"
+                                        Content="{DynamicResource Str.Login.ClearBtn}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding ClearFormCommand}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ===========================================================
+                         2B. READER REGISTRATION CARD (Strictly Role = Reader)
+                         =========================================================== -->
+                    <Border Style="{StaticResource CardBorderStyle}"
+                            Padding="28,22"
+                            Margin="0,0,0,16"
+                            Visibility="{Binding IsRegisterReaderMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.Reg.FormTitle}"
+                                       Style="{StaticResource PageTitleTextStyle}"
+                                       FontSize="20" />
+                            <TextBlock Text="{DynamicResource Str.Reg.FormSubtitle}"
+                                       Style="{StaticResource SectionSubtitleTextStyle}"
+                                       Margin="0,4,0,12" />
+
+                            <!-- Fixed Role Notice (No Role Dropdown Allowed) -->
+                            <Border Style="{StaticResource SuccessNotificationBannerStyle}"
+                                    Margin="0,0,0,14">
+                                <TextBlock Text="{DynamicResource Str.Reg.FixedRoleNotice}"
+                                           Foreground="{StaticResource Brush.Status.Success}"
+                                           FontWeight="SemiBold"
+                                           FontSize="12"
+                                           TextWrapping="Wrap" />
+                            </Border>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="14" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Reg.FullNameLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding RegFullName, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Reg.UsernameLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding RegUsername, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Reg.EmailLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding RegEmail, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Reg.PhoneLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding RegPhone, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,18">
+                                    <TextBlock Text="{DynamicResource Str.Reg.PasswordLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding RegPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,18">
+                                    <TextBlock Text="{DynamicResource Str.Reg.ConfirmPasswordLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding RegConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button Grid.Column="0"
+                                        Content="{DynamicResource Str.Reg.SubmitBtn}"
+                                        Style="{StaticResource TealButtonStyle}"
+                                        Command="{Binding RegisterReaderCommand}"
+                                        Margin="0,0,10,0" />
+
+                                <Button Grid.Column="1"
+                                        Content="{DynamicResource Str.Login.ClearBtn}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding ClearFormCommand}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ===========================================================
+                         2C. ONE-TIME INITIAL ADMINISTRATOR BOOTSTRAP CARD
+                         (Only visible when BooktibusDB is connected and has 0 Admins)
+                         =========================================================== -->
+                    <Border Style="{StaticResource CardBorderStyle}"
+                            BorderBrush="{StaticResource Brush.AccentGold.Main}"
+                            Padding="28,22"
+                            Margin="0,0,0,16"
+                            Visibility="{Binding IsInitialAdminMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.AdminInit.FormTitle}"
+                                       Style="{StaticResource PageTitleTextStyle}"
+                                       FontSize="19" />
+                            <TextBlock Text="{DynamicResource Str.AdminInit.FormSubtitle}"
+                                       Style="{StaticResource SectionSubtitleTextStyle}"
+                                       Margin="0,4,0,14" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="14" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Reg.FullNameLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding RegFullName, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Reg.UsernameLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding RegUsername, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Reg.EmailLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <TextBox Text="{Binding RegEmail, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,18">
+                                    <TextBlock Text="{DynamicResource Str.Reg.PasswordLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding RegPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,18">
+                                    <TextBlock Text="{DynamicResource Str.Reg.ConfirmPasswordLabel}"
+                                               Style="{StaticResource FieldLabelTextStyle}" />
+                                    <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding RegConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Button Content="{DynamicResource Str.AdminInit.SubmitBtn}"
+                                    Style="{StaticResource GoldAccentButtonStyle}"
+                                    Command="{Binding SetupInitialAdminCommand}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ===========================================================
+                         2D. FORGOT PASSWORD CARD (8-Step OTP Password Recovery)
+                         =========================================================== -->
+                    <Border Style="{StaticResource CardBorderStyle}"
+                            Padding="28,22"
+                            Margin="0,0,0,16"
+                            Visibility="{Binding IsForgotPasswordMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Forgot.FormTitle}"
+                                           Style="{StaticResource PageTitleTextStyle}"
+                                           FontSize="20" />
+                                <Button Grid.Column="1"
+                                        Content="{DynamicResource Str.Forgot.BackToSignInBtn}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding SwitchModeCommand}"
+                                        CommandParameter="SignIn"
+                                        Padding="12,5"
+                                        MinHeight="28"
+                                        FontSize="12" />
+                            </Grid>
+
+                            <TextBlock Text="{DynamicResource Str.Forgot.FormSubtitle}"
+                                       Style="{StaticResource SectionSubtitleTextStyle}"
+                                       Margin="0,2,0,14" />
+
+                            <!-- STEP 1: Enter Username & Request OTP -->
+                            <StackPanel Visibility="{Binding IsForgotStep1EnterUsername, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border Background="{StaticResource Brush.PrimaryNavy.Light}"
+                                        CornerRadius="{StaticResource Radius.Small}"
+                                        Padding="12,7"
+                                        Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Forgot.Step1Badge}"
+                                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                               FontSize="11.5"
+                                               FontWeight="Bold" />
+                                </Border>
+
+                                <TextBlock Text="{DynamicResource Str.Forgot.UsernameLabel}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <TextBox Text="{Binding ForgotUsername, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,0,8" />
+
+                                <TextBlock Text="{DynamicResource Str.Forgot.UsernameHint}"
+                                           Style="{StaticResource CaptionTextStyle}"
+                                           Margin="0,0,0,16" />
+
+                                <Button Content="{DynamicResource Str.Forgot.SendOtpBtn}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding RequestPasswordResetOtpCommand}" />
+                            </StackPanel>
+
+                            <!-- STEP 2: Enter & Verify 6-Digit OTP -->
+                            <StackPanel Visibility="{Binding IsForgotStep2VerifyOtp, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border Background="{StaticResource Brush.AccentTeal.Soft}"
+                                        BorderBrush="{StaticResource Brush.AccentTeal.Main}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource Radius.Small}"
+                                        Padding="12,7"
+                                        Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Forgot.Step2Badge}"
+                                               Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                               FontSize="11.5"
+                                               FontWeight="Bold" />
+                                </Border>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource Str.Login.UsernameLabel}"
+                                                   Foreground="{StaticResource Brush.Text.Secondary}"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Text="{Binding ForgotUsername}"
+                                                   FontFamily="{StaticResource Font.Monospace}"
+                                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                                   FontWeight="Bold" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Content="{DynamicResource Str.Forgot.ChangeUsernameBtn}"
+                                            Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                            Command="{Binding ChangeForgotUsernameCommand}"
+                                            Padding="10,4"
+                                            MinHeight="26"
+                                            FontSize="11.5" />
+                                </Grid>
+
+                                <TextBlock Text="{DynamicResource Str.Forgot.OtpLabel}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <TextBox Text="{Binding ForgotOtpCode, UpdateSourceTrigger=PropertyChanged}"
+                                         MaxLength="6"
+                                         FontFamily="{StaticResource Font.Monospace}"
+                                         FontSize="16"
+                                         FontWeight="Bold"
+                                         Margin="0,0,0,16" />
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0"
+                                            Content="{DynamicResource Str.Forgot.VerifyOtpBtn}"
+                                            Style="{StaticResource TealButtonStyle}"
+                                            Command="{Binding VerifyResetOtpCommand}"
+                                            Margin="0,0,10,0" />
+                                    <Button Grid.Column="1"
+                                            Content="{DynamicResource Str.Forgot.ResendOtpBtn}"
+                                            Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                            Command="{Binding RequestPasswordResetOtpCommand}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- STEP 3: Enter & Confirm New Password -->
+                            <StackPanel Visibility="{Binding IsForgotStep3SetPassword, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border Background="{StaticResource Brush.Status.SuccessBg}"
+                                        BorderBrush="{StaticResource Brush.Status.Success}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource Radius.Small}"
+                                        Padding="12,7"
+                                        Margin="0,0,0,12">
+                                    <TextBlock Text="{DynamicResource Str.Forgot.Step3Badge}"
+                                               Foreground="{StaticResource Brush.Status.Success}"
+                                               FontSize="11.5"
+                                               FontWeight="Bold" />
+                                </Border>
+
+                                <TextBlock Text="{DynamicResource Str.Forgot.NewPasswordLabel}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                             helpers:PasswordBoxAssistant.BoundPassword="{Binding ForgotNewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,0,12" />
+
+                                <TextBlock Text="{DynamicResource Str.Forgot.ConfirmPasswordLabel}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                             helpers:PasswordBoxAssistant.BoundPassword="{Binding ForgotConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             Margin="0,0,0,16" />
+
+                                <Button Content="{DynamicResource Str.Forgot.SaveNewPasswordBtn}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding ConfirmPasswordResetCommand}" />
+                            </StackPanel>
+
+                            <!-- SIMULATED EMAIL SANDBOX PANEL (Only visible when Live SMTP is not configured) -->
+                            <Border Background="{StaticResource Brush.AccentGold.Soft}"
+                                    BorderBrush="{StaticResource Brush.AccentGold.Main}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource Radius.Control}"
+                                    Padding="14,12"
+                                    Margin="0,18,0,0"
+                                    Visibility="{Binding IsEmailSimulationMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{DynamicResource Str.Forgot.SimInboxTitle}"
+                                                   Foreground="{StaticResource Brush.Status.Warning}"
+                                                   FontWeight="Bold"
+                                                   FontSize="11.5"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="1"
+                                                Content="{DynamicResource Str.Forgot.SimInboxToggleBtn}"
+                                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                                Command="{Binding ToggleSimulatedInboxCommand}"
+                                                Padding="10,4"
+                                                MinHeight="26"
+                                                FontSize="11.5" />
+                                    </Grid>
+
+                                    <TextBlock Text="{Binding EmailDeliveryModeNotice}"
+                                               Style="{StaticResource CaptionTextStyle}"
+                                               Foreground="{StaticResource Brush.Text.Primary}"
+                                               Margin="0,6,0,0" />
+
+                                    <Border Background="{StaticResource Brush.Background.Surface}"
+                                            BorderBrush="{StaticResource Brush.Border.Subtle}"
+                                            BorderThickness="1"
+                                            CornerRadius="{StaticResource Radius.Small}"
+                                            Padding="12,10"
+                                            Margin="0,10,0,0"
+                                            Visibility="{Binding IsSimulatedInboxExpanded, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <TextBox Text="{Binding SimulatedEmailPreviewText, Mode=OneWay}"
+                                                 IsReadOnly="True"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 FontFamily="{StaticResource Font.Monospace}"
+                                                 FontSize="11.5"
+                                                 TextWrapping="Wrap" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 3. FALLBACK TEMPORARY TEST CREDENTIALS CARD (Only shown when SQL Server is not yet connected) -->
+                    <Border Style="{StaticResource CardBorderStyle}"
+                            Background="{StaticResource Brush.AccentGold.Soft}"
+                            BorderBrush="{StaticResource Brush.AccentGold.Main}"
+                            Padding="20,16"
+                            Visibility="{Binding IsTemporaryTestProvider, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Login.TestProviderBadge}"
+                                           Foreground="{StaticResource Brush.Status.Warning}"
+                                           FontSize="11.5"
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center" />
+                                <Button Grid.Column="1"
+                                        Content="{DynamicResource Str.Login.ResetLockoutBtn}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding ResetTestLockoutCommand}"
+                                        Padding="10,4"
+                                        MinHeight="26"
+                                        FontSize="11.5" />
+                            </Grid>
+
+                            <TextBlock Text="{DynamicResource Str.Login.TestProviderNotice}"
+                                       Style="{StaticResource CaptionTextStyle}"
+                                       Foreground="{StaticResource Brush.Text.Primary}"
+                                       Margin="0,0,0,10" />
+
+                            <ItemsControl ItemsSource="{Binding TestCredentialGuides}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource Brush.Background.Surface}"
+                                                BorderBrush="{StaticResource Brush.Border.Subtle}"
+                                                BorderThickness="1"
+                                                CornerRadius="{StaticResource Radius.Control}"
+                                                Padding="12,8"
+                                                Margin="0,0,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding RoleName}"
+                                                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                                                   FontWeight="Bold"
+                                                                   FontSize="12"
+                                                                   Margin="0,0,10,0" />
+                                                        <TextBlock Text="{Binding Username, StringFormat='User: {0}'}"
+                                                                   FontFamily="{StaticResource Font.Monospace}"
+                                                                   Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                                                   FontWeight="SemiBold"
+                                                                   FontSize="12" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding ScopeDescription}"
+                                                               Style="{StaticResource CaptionTextStyle}"
+                                                               Margin="0,2,0,0" />
+                                                </StackPanel>
+
+                                                <Button Grid.Column="1"
+                                                        Content="{DynamicResource Str.Login.FillCredBtn}"
+                                                        Style="{StaticResource TealButtonStyle}"
+                                                        Command="{Binding DataContext.FillTestCredentialCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        VerticalAlignment="Center"
+                                                        Padding="12,5"
+                                                        MinHeight="26"
+                                                        FontSize="11.5" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>
+

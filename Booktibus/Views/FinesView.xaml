@@ -1,0 +1,494 @@
+<UserControl x:Class="Booktibus.Views.FinesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:FinesViewModel}"
+             d:DesignHeight="850"
+             d:DesignWidth="1100">
+
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="28,20,28,24">
+            <StackPanel>
+
+                <!-- 1. ROLE & STATUS BANNER -->
+                <Border Style="{StaticResource InfoNotificationBannerStyle}"
+                        Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding ActiveRoleSummaryBadge}"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   FontWeight="Bold"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap" />
+
+                        <Button Grid.Column="1"
+                                Content="Cấu hình Mức phạt (Admin)"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding OpenRateDialogCommand}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center" />
+
+                        <Button Grid.Column="2"
+                                Content="Làm mới Dữ liệu"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding RefreshCommand}"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- FEEDBACK BANNER IF ANY -->
+                <Border Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Style="{StaticResource DangerNotificationBannerStyle}"
+                        Margin="0,0,0,16">
+                    <TextBlock Text="{Binding FeedbackMessage}"
+                               Foreground="{StaticResource Brush.Status.Danger}"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                </Border>
+
+                <Border Visibility="{Binding HasSuccess, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Background="{StaticResource Brush.Status.SuccessBg}"
+                        BorderBrush="{StaticResource Brush.Status.Success}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="14,10"
+                        Margin="0,0,0,16">
+                    <TextBlock Text="{Binding FeedbackMessage}"
+                               Foreground="{StaticResource Brush.Status.Success}"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                </Border>
+
+                <!-- 2. SUMMARY STATISTICS CARDS (4 CARDS) -->
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Card 1: Recorded Unpaid Fines -->
+                    <Border Grid.Column="0"
+                            Style="{StaticResource PremiumCardBorderStyle}"
+                            Background="#FFFDF0F0"
+                            BorderBrush="#FFDE9A9A">
+                        <StackPanel>
+                            <TextBlock Text="PHẠT CHƯA THANH TOÁN"
+                                       FontSize="11"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.Status.Danger}" />
+                            <TextBlock Text="(Đã ghi nhận chính thức)"
+                                       FontSize="10"
+                                       Foreground="{StaticResource Brush.Text.Muted}"
+                                       Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding TotalRecordedUnpaidDisplay}"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.Status.Danger}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 2: Estimated Overdue Fines -->
+                    <Border Grid.Column="2"
+                            Style="{StaticResource PremiumCardBorderStyle}"
+                            Background="#FFFFFBF0"
+                            BorderBrush="#FFE3C36B">
+                        <StackPanel>
+                            <TextBlock Text="TIỀN PHẠT DỰ KIẾN"
+                                       FontSize="11"
+                                       FontWeight="Bold"
+                                       Foreground="#FF9A6800" />
+                            <TextBlock Text="(Sách đang quá hạn chưa trả)"
+                                       FontSize="10"
+                                       Foreground="{StaticResource Brush.Text.Muted}"
+                                       Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding TotalEstimatedOverdueDisplay}"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       Foreground="#FF9A6800" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 3: Total Outstanding (Recorded + Estimated) -->
+                    <Border Grid.Column="4"
+                            Style="{StaticResource PremiumCardBorderStyle}"
+                            Background="{StaticResource Brush.Background.Input}">
+                        <StackPanel>
+                            <TextBlock Text="TỔNG NGHĨA VỤ PHẠT TÍCH LŨY"
+                                       FontSize="11"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                            <TextBlock Text="(Chưa thanh toán + Dự kiến)"
+                                       FontSize="10"
+                                       Foreground="{StaticResource Brush.Text.Muted}"
+                                       Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding TotalCombinedOutstandingDisplay}"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card 4: Rate & Waived/Paid Info -->
+                    <Border Grid.Column="6"
+                            Style="{StaticResource PremiumCardBorderStyle}"
+                            Background="#FFF3F8F5"
+                            BorderBrush="#FFA3D5B9">
+                        <StackPanel>
+                            <TextBlock Text="MỨC PHẠT ÁP DỤNG"
+                                       FontSize="11"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.Status.Success}" />
+                            <TextBlock Text="{Binding CurrentDailyRateDisplay}"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                       Margin="0,4,0,4" />
+                            <TextBlock Text="{Binding TotalWaivedDisplay, StringFormat='{}Đã miễn: {0}'}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource Brush.Text.Muted}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 3. SEARCH & FILTER TOOLBAR (FOR STAFF) -->
+                <Border Style="{StaticResource PremiumCardBorderStyle}"
+                        Visibility="{Binding IsStaffMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Tìm kiếm khoản phạt (Mã phiếu, Mã phạt, Độc giả, Tên sách):"
+                                       Style="{StaticResource FormLabelStyle}" />
+                            <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FormTextBoxStyle}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Lọc trạng thái khoản phạt:"
+                                       Style="{StaticResource FormLabelStyle}" />
+                            <ComboBox SelectedValue="{Binding SelectedStatusFilter}"
+                                      SelectedValuePath="Tag"
+                                      Height="36">
+                                <ComboBoxItem Content="Tất cả trạng thái" Tag="ALL" IsSelected="True" />
+                                <ComboBoxItem Content="Tạm tính (Đang quá hạn chưa trả)" Tag="ESTIMATED" />
+                                <ComboBoxItem Content="Chưa thanh toán (Đã ghi nhận)" Tag="Unpaid" />
+                                <ComboBoxItem Content="Được miễn phạt" Tag="Waived" />
+                                <ComboBoxItem Content="Đã thanh toán" Tag="Paid" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <Button Grid.Column="4"
+                                Content="Xóa bộ lọc"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding ClearFiltersCommand}"
+                                VerticalAlignment="Bottom"
+                                Height="36" />
+                    </Grid>
+                </Border>
+
+                <!-- 4. MAIN FINES LIST TABLE -->
+                <Border Style="{StaticResource PremiumCardBorderStyle}"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <TextBlock Text="DANH SÁCH CÁC KHOẢN TIỀN PHẠT"
+                                       FontSize="14"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                            <TextBlock Text="{Binding FinesList.Count, StringFormat='{}({0} bản ghi)'}"
+                                       FontSize="12"
+                                       Foreground="{StaticResource Brush.Text.Muted}"
+                                       HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <DataGrid ItemsSource="{Binding FinesList}"
+                                  SelectedItem="{Binding SelectedFine, Mode=TwoWay}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  SelectionMode="Single"
+                                  MinHeight="240"
+                                  MaxHeight="360"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  Background="Transparent"
+                                  BorderThickness="1"
+                                  BorderBrush="{StaticResource Brush.Border.Main}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Mã phạt" Binding="{Binding FineCode}" Width="110" />
+                                <DataGridTextColumn Header="Phiếu mượn" Binding="{Binding BorrowRecordCode}" Width="100" />
+                                <DataGridTextColumn Header="Độc giả" Binding="{Binding ReaderFullName}" Width="150" />
+                                <DataGridTextColumn Header="Thẻ độc giả" Binding="{Binding ReaderCardId}" Width="110" />
+                                <DataGridTextColumn Header="Tên sách" Binding="{Binding BookTitle}" Width="*" />
+                                <DataGridTextColumn Header="Hạn trả" Binding="{Binding DueDateDisplay}" Width="90" />
+                                <DataGridTextColumn Header="Ngày trả thực tế" Binding="{Binding ReturnedDateDisplay}" Width="140" />
+                                <DataGridTextColumn Header="Quá hạn" Binding="{Binding DaysOverdue, StringFormat='{}{0} ngày'}" Width="80" />
+                                <DataGridTextColumn Header="Số tiền phạt" Binding="{Binding FormattedAmount}" Width="110">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontWeight" Value="Bold" />
+                                            <Setter Property="Foreground" Value="{StaticResource Brush.Status.Danger}" />
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Tính chất" Binding="{Binding RecordNatureBadgeText}" Width="140" />
+                                <DataGridTextColumn Header="Trạng thái" Binding="{Binding StatusDisplayText}" Width="150" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="* Ghi chú: Nhấp chọn một dòng trong bảng trên để xem chi tiết nguyên nhân phát sinh và thực hiện các thao tác xử lý."
+                                   FontSize="11"
+                                   FontStyle="Italic"
+                                   Foreground="{StaticResource Brush.Text.Muted}"
+                                   Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- 5. SELECTED FINE DETAILS & ACTION PANEL -->
+                <Border Style="{StaticResource PremiumCardBorderStyle}"
+                        Visibility="{Binding HasSelectedFine, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Background="#FFFBFDFE">
+                    <StackPanel>
+                        <TextBlock Text="CHI TIẾT KHOẢN PHẠT ĐANG CHỌN"
+                                   FontSize="13"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                   Margin="0,0,0,10" />
+
+                        <!-- Explanation banner -->
+                        <Border Background="{StaticResource Brush.Background.App}"
+                                BorderBrush="{StaticResource Brush.Border.Main}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="14,10"
+                                Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedFine.CauseExplanationText}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding SelectedFine.Notes, StringFormat='{}Ghi chú: {0}'}"
+                                           FontSize="12"
+                                           Foreground="{StaticResource Brush.Text.Muted}"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Action buttons (Staff Only) -->
+                        <StackPanel Orientation="Horizontal"
+                                    Visibility="{Binding IsStaffMode, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    HorizontalAlignment="Right">
+
+                            <!-- Confirm provisional overdue fine -->
+                            <Button Content="Xác nhận Ghi nhận Phạt"
+                                    Style="{StaticResource PrimaryActionButtonStyle}"
+                                    Command="{Binding ConfirmOverdueFineCommand}"
+                                    Visibility="{Binding SelectedFine.CanBeConfirmed, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Margin="0,0,10,0" />
+
+                            <!-- Adjust fine amount -->
+                            <Button Content="Điều chỉnh Số tiền"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding OpenAdjustDialogCommand}"
+                                    Visibility="{Binding SelectedFine.CanBeAdjustedOrWaived, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Margin="0,0,10,0" />
+
+                            <!-- Waive fine -->
+                            <Button Content="Miễn Khoản Phạt"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding OpenWaiveDialogCommand}"
+                                    Visibility="{Binding SelectedFine.CanBeAdjustedOrWaived, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Margin="0,0,10,0" />
+
+                            <!-- View audit logs -->
+                            <Button Content="Xem Lịch sử Thay đổi"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding OpenAuditLogsCommand}"
+                                    Visibility="{Binding SelectedFine.IsOfficiallyRecorded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ===================================================================
+             MODAL DIALOGS OVERLAY (ADJUST, WAIVE, RATE, AUDIT)
+             =================================================================== -->
+
+        <!-- 1. ADJUST FINE MODAL -->
+        <Border Background="#80000000"
+                Visibility="{Binding IsAdjustDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource PremiumCardBorderStyle}"
+                    Width="460"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="ĐIỀU CHỈNH SỐ TIỀN PHẠT"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,12" />
+
+                    <TextBlock Text="Số tiền phạt mới (VNĐ) (*):"
+                               Style="{StaticResource FormLabelStyle}" />
+                    <TextBox Text="{Binding AdjustAmountInput, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             Margin="0,0,0,12" />
+
+                    <TextBlock Text="Lý do điều chỉnh (Bắt buộc) (*):"
+                               Style="{StaticResource FormLabelStyle}" />
+                    <TextBox Text="{Binding AdjustReasonInput, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             Height="60"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Hủy bỏ"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding CloseAdjustDialogCommand}"
+                                Margin="0,0,10,0" />
+                        <Button Content="Lưu Điều Chỉnh"
+                                Style="{StaticResource PrimaryActionButtonStyle}"
+                                Command="{Binding SubmitAdjustCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- 2. WAIVE FINE MODAL -->
+        <Border Background="#80000000"
+                Visibility="{Binding IsWaiveDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource PremiumCardBorderStyle}"
+                    Width="460"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="MIỄN KHOẢN TIỀN PHẠT"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,12" />
+
+                    <TextBlock Text="Lý do miễn phạt (Bắt buộc theo quy chế thư viện) (*):"
+                               Style="{StaticResource FormLabelStyle}" />
+                    <TextBox Text="{Binding WaiveReasonInput, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             Height="70"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Hủy bỏ"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding CloseWaiveDialogCommand}"
+                                Margin="0,0,10,0" />
+                        <Button Content="Xác Nhận Miễn Phạt"
+                                Style="{StaticResource PrimaryActionButtonStyle}"
+                                Command="{Binding SubmitWaiveCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- 3. CONFIG RATE MODAL (ADMIN ONLY) -->
+        <Border Background="#80000000"
+                Visibility="{Binding IsRateDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource PremiumCardBorderStyle}"
+                    Width="440"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="CẤU HÌNH MỨC PHẠT QUÁ HẠN (VNĐ/NGÀY)"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,12" />
+
+                    <TextBlock Text="Mức phạt mặc định (VNĐ / cuốn sách / ngày quá hạn) (*):"
+                               Style="{StaticResource FormLabelStyle}" />
+                    <TextBox Text="{Binding NewRateInput, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource FormTextBoxStyle}"
+                             Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Hủy bỏ"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding CloseRateDialogCommand}"
+                                Margin="0,0,10,0" />
+                        <Button Content="Lưu Cấu Hình"
+                                Style="{StaticResource PrimaryActionButtonStyle}"
+                                Command="{Binding SubmitRateUpdateCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- 4. AUDIT LOGS MODAL -->
+        <Border Background="#80000000"
+                Visibility="{Binding IsAuditLogsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource PremiumCardBorderStyle}"
+                    Width="600"
+                    MaxHeight="450"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="LỊCH SỬ THAY ĐỔI &amp; GHI NHẬN KHOẢN PHẠT"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,12" />
+
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding AuditLogsList}"
+                             DisplayMemberPath="SummaryLine"
+                             MaxHeight="300"
+                             Margin="0,0,0,14" />
+
+                    <Button Grid.Row="2"
+                            Content="Đóng Cửa Sổ"
+                            Style="{StaticResource SecondaryOutlineButtonStyle}"
+                            Command="{Binding CloseAuditLogsCommand}"
+                            HorizontalAlignment="Right" />
+                </Grid>
+            </Border>
+        </Border>
+
+    </Grid>
+</UserControl>

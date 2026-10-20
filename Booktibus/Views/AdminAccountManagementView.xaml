@@ -1,0 +1,310 @@
+<UserControl x:Class="Booktibus.Views.AdminAccountManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             xmlns:helpers="clr-namespace:Booktibus.Helpers"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:AdminAccountManagementViewModel}"
+             d:DesignWidth="1120"
+             d:DesignHeight="840">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="28,20,28,24">
+        <StackPanel>
+
+            <!-- 1. FEEDBACK BANNER -->
+            <Border Visibility="{Binding HasFeedback, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,0,0,16">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource InfoNotificationBannerStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFeedbackSuccess}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource Brush.Status.SuccessBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Success}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsFeedbackSuccess}" Value="False">
+                                <Setter Property="Background" Value="{StaticResource Brush.Status.DangerBg}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Danger}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding FeedbackMessage}"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <!-- 2. SEARCH & ROLE FILTER BAR -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,18">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{DynamicResource Str.AdminUser.FilterTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding AccountsSummaryText}"
+                                   Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                   FontWeight="SemiBold"
+                                   FontSize="12.5"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Str.AdminUser.KeywordLabel}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Return" Command="{Binding SearchCommand}" />
+                                </TextBox.InputBindings>
+                            </TextBox>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{DynamicResource Str.AdminUser.RoleFilterLabel}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <ComboBox ItemsSource="{Binding RoleFilterOptions}"
+                                      SelectedItem="{Binding SelectedRoleFilter}"
+                                      DisplayMemberPath="DisplayText" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Bottom">
+                            <Button Content="{DynamicResource Str.Catalog.BtnSearch}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding SearchCommand}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="{DynamicResource Str.Catalog.BtnClear}"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding ClearFiltersCommand}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. MASTER-DETAIL GRID: ACCOUNTS DIRECTORY + SELECTED ACCOUNT SECURITY ACTIONS -->
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.45*" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="1.05*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: User Accounts Table -->
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <DataGrid ItemsSource="{Binding ManagedUsers}"
+                              SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
+                              MinHeight="420">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Str.AdminUser.ColUserId}"
+                                                Binding="{Binding UserId}"
+                                                Width="65" />
+                            <DataGridTextColumn Header="{DynamicResource Str.AdminUser.ColUsername}"
+                                                Binding="{Binding Username}"
+                                                Width="110" />
+                            <DataGridTextColumn Header="{DynamicResource Str.AdminUser.ColFullName}"
+                                                Binding="{Binding FullName}"
+                                                Width="1.2*" />
+                            <DataGridTextColumn Header="{DynamicResource Str.AdminUser.ColEmail}"
+                                                Binding="{Binding Email}"
+                                                Width="1.3*" />
+                            <DataGridTextColumn Header="{DynamicResource Str.AdminUser.ColRole}"
+                                                Binding="{Binding Role}"
+                                                Width="110" />
+                            <DataGridTextColumn Header="{DynamicResource Str.AdminUser.ColCard}"
+                                                Binding="{Binding ReaderCardId}"
+                                                Width="115" />
+                            <DataGridTextColumn Header="{DynamicResource Str.AdminUser.ColActive}"
+                                                Binding="{Binding ActiveBadgeDisplay}"
+                                                Width="115" />
+                            <DataGridTextColumn Header="{DynamicResource Str.AdminUser.ColLockout}"
+                                                Binding="{Binding LockoutStatusDisplay}"
+                                                Width="135" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <!-- Right: Selected Account Management (Role, Active State, Lockout, Reset Password) -->
+                <Border Grid.Column="2"
+                        Style="{StaticResource CardBorderStyle}"
+                        Visibility="{Binding HasSelectedUser, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource Str.AdminUser.ManageSelectedTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}" />
+                        <TextBlock Text="{DynamicResource Str.AdminUser.SafeguardNotice}"
+                                   Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                        <!-- Summary Box -->
+                        <Border Background="{StaticResource Brush.PrimaryNavy.Main}"
+                                CornerRadius="6"
+                                Padding="14,10"
+                                Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Foreground="{StaticResource Brush.AccentGold.Light}"
+                                           FontFamily="{StaticResource Font.Monospace}"
+                                           FontSize="15"
+                                           FontWeight="Bold">
+                                    <Run Text="{Binding SelectedUser.Username, Mode=OneWay}" />
+                                    <Run Text=" (UserId=" /><Run Text="{Binding SelectedUser.UserId, Mode=OneWay}" /><Run Text=")" />
+                                </TextBlock>
+                                <TextBlock Foreground="{StaticResource Brush.Text.OnDarkMuted}"
+                                           FontSize="12"
+                                           Margin="0,3,0,0">
+                                    <Run Text="{Binding SelectedUser.Role, Mode=OneWay}" FontWeight="Bold" />
+                                    <Run Text=" • " />
+                                    <Run Text="{Binding SelectedUser.ActiveBadgeDisplay, Mode=OneWay}" />
+                                    <Run Text=" • " />
+                                    <Run Text="{Binding SelectedUser.LockoutStatusDisplay, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Role Assignment -->
+                        <TextBlock Text="{DynamicResource Str.AdminUser.LblTargetRole}"
+                                   Style="{StaticResource FieldLabelTextStyle}" />
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding RoleChoices}"
+                                      SelectedItem="{Binding SelectedTargetRole}" />
+                            <Button Grid.Column="2"
+                                    Content="{DynamicResource Str.AdminUser.BtnApplyRole}"
+                                    Command="{Binding ApplyRoleChangeCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" />
+                        </Grid>
+
+                        <!-- Active State & Unlock Lockout -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Button Content="{Binding ToggleActiveButtonLabel}"
+                                    Command="{Binding ToggleActiveStatusCommand}"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Margin="0,0,10,0" />
+                            <Button Content="{DynamicResource Str.AdminUser.BtnUnlock}"
+                                    Command="{Binding UnlockAccountCommand}"
+                                    Style="{StaticResource TealButtonStyle}" />
+                        </StackPanel>
+
+                        <Border BorderBrush="{StaticResource Brush.Border.Subtle}"
+                                BorderThickness="0,1,0,0"
+                                Margin="0,0,0,14" />
+
+                        <!-- Password Reset (PBKDF2-SHA256) -->
+                        <TextBlock Text="{DynamicResource Str.AdminUser.ResetPwdTitle}"
+                                   Style="{StaticResource SectionHeaderTextStyle}"
+                                   Margin="0,0,0,10" />
+
+                        <TextBlock Text="{DynamicResource Str.AdminUser.LblNewPwd}"
+                                   Style="{StaticResource FieldLabelTextStyle}" />
+                        <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                     helpers:PasswordBoxAssistant.BoundPassword="{Binding ResetPasswordInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,10" />
+
+                        <TextBlock Text="{DynamicResource Str.AdminUser.LblConfirmPwd}"
+                                   Style="{StaticResource FieldLabelTextStyle}" />
+                        <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                     helpers:PasswordBoxAssistant.BoundPassword="{Binding ResetConfirmPasswordInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="0,0,0,12" />
+
+                        <Button Content="{DynamicResource Str.AdminUser.BtnResetPwd}"
+                                Command="{Binding ResetPasswordCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                HorizontalAlignment="Left" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 4. CREATE NEW ACCOUNT PANEL (Reader / Librarian / Administrator) -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource Str.AdminUser.CreateTitle}"
+                               Style="{StaticResource SectionHeaderTextStyle}" />
+                    <TextBlock Text="{DynamicResource Str.AdminUser.CreateSubtitle}"
+                               Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="16" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Str.AdminUser.ColUsername}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Text="{DynamicResource Str.Profile.LblFullName}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding NewFullName, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="4">
+                            <TextBlock Text="{DynamicResource Str.AdminUser.ColRole}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <ComboBox ItemsSource="{Binding RoleChoices}"
+                                      SelectedItem="{Binding NewRole}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0">
+                            <TextBlock Text="{DynamicResource Str.Profile.LblEmail}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding NewEmail, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="2">
+                            <TextBlock Text="{DynamicResource Str.AdminUser.LblNewPwd}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                         helpers:PasswordBoxAssistant.BoundPassword="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="4">
+                            <TextBlock Text="{DynamicResource Str.AdminUser.LblConfirmPwd}"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
+                                         helpers:PasswordBoxAssistant.BoundPassword="{Binding NewConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="5" Orientation="Horizontal">
+                            <Button Content="{DynamicResource Str.AdminUser.BtnCreateAccount}"
+                                    Command="{Binding CreateUserAccountCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

@@ -1,0 +1,276 @@
+<UserControl x:Class="Booktibus.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:DashboardViewModel}"
+             d:DesignHeight="700"
+             d:DesignWidth="980">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Padding="28,20,28,24">
+        <StackPanel>
+
+            <!-- 1. SAMPLE DATA TRANSPARENCY BANNER -->
+            <Border Style="{StaticResource WarningNotificationBannerStyle}"
+                    Margin="0,0,0,18">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{DynamicResource Str.Dash.SampleBannerTitle}"
+                                   Foreground="{StaticResource Brush.Status.Warning}"
+                                   FontWeight="Bold"
+                                   FontSize="12.5"
+                                   Margin="0,0,0,2" />
+                        <TextBlock Text="{DynamicResource Str.Dash.SampleBannerText}"
+                                   Foreground="{StaticResource Brush.Text.Primary}"
+                                   FontSize="12.5"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="{DynamicResource Str.Dash.BtnRefreshSample}"
+                            Style="{StaticResource SecondaryOutlineButtonStyle}"
+                            Command="{Binding RefreshSampleDataCommand}"
+                            VerticalAlignment="Center"
+                            Margin="16,0,0,0" />
+                </Grid>
+            </Border>
+
+            <!-- 2. STATISTIC SUMMARY CARDS (4 Responsive Columns) -->
+            <ItemsControl ItemsSource="{Binding MetricCards}" Margin="0,0,0,18">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="4" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource MetricSummaryCardStyle}"
+                                BorderBrush="{Binding AccentHex}"
+                                Margin="0,0,12,0">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Title}"
+                                               FontSize="11"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.Text.Secondary}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" />
+                                    <Border Grid.Column="1"
+                                            Background="{StaticResource Brush.AccentGold.Soft}"
+                                            BorderBrush="{StaticResource Brush.AccentGold.Main}"
+                                            BorderThickness="1"
+                                            CornerRadius="3"
+                                            Padding="6,2"
+                                            Margin="6,0,0,0">
+                                        <TextBlock Text="{Binding SampleTag}"
+                                                   FontSize="9.5"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource Brush.AccentGold.Hover}" />
+                                    </Border>
+                                </Grid>
+
+                                <TextBlock Text="{Binding SampleValue}"
+                                           FontFamily="{StaticResource Font.Display}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                           Margin="0,8,0,6" />
+
+                                <TextBlock Text="{Binding Subtitle}"
+                                           Style="{StaticResource CaptionTextStyle}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- 3. MAIN CONTENT SPLIT: RECENT ACTIVITIES & NOTICES/SHORTCUTS -->
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.65*" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Column: Recent Activities Table -->
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{DynamicResource Str.Dash.RecentActivitiesTitle}"
+                                           Style="{StaticResource SectionHeaderTextStyle}" />
+                                <TextBlock Text="{DynamicResource Str.Dash.RecentActivitiesSubtitle}"
+                                           Style="{StaticResource CaptionTextStyle}" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="{DynamicResource Str.Dash.BtnInspectActivity}"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding InspectActivityCommand}"
+                                    VerticalAlignment="Top" />
+                        </Grid>
+
+                        <DataGrid ItemsSource="{Binding RecentActivities}"
+                                  SelectedItem="{Binding SelectedActivityRow}"
+                                  MinHeight="200">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Str.Dash.ColRefCode}"
+                                                    Binding="{Binding ReferenceCode}"
+                                                    Width="105" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Dash.ColType}"
+                                                    Binding="{Binding ActivityType}"
+                                                    Width="140" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Dash.ColSubject}"
+                                                    Binding="{Binding SubjectSummary}"
+                                                    Width="1.5*" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Dash.ColActor}"
+                                                    Binding="{Binding ActorDisplay}"
+                                                    Width="125" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Dash.ColTime}"
+                                                    Binding="{Binding TimeDisplay}"
+                                                    Width="115" />
+                                <DataGridTextColumn Header="{DynamicResource Str.Dash.ColStatus}"
+                                                    Binding="{Binding DataStatusBadge}"
+                                                    Width="115" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Right Column: System Notices & Quick Module Navigation -->
+                <StackPanel Grid.Column="2">
+                    <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,18">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.Dash.NoticesTitle}"
+                                       Style="{StaticResource SectionHeaderTextStyle}" />
+                            <TextBlock Text="{DynamicResource Str.Dash.NoticesSubtitle}"
+                                       Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                            <ItemsControl ItemsSource="{Binding SystemNotices}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource InfoNotificationBannerStyle}"
+                                                Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding CategoryBadge}"
+                                                           FontSize="10"
+                                                           FontWeight="Bold"
+                                                           Foreground="{StaticResource Brush.AccentTeal.Main}"
+                                                           Margin="0,0,0,2" />
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                                           Margin="0,0,0,3" />
+                                                <TextBlock Text="{Binding Description}"
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Quick Navigation Card -->
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.Dash.QuickNavTitle}"
+                                       Style="{StaticResource SectionHeaderTextStyle}"
+                                       Margin="0,0,0,12" />
+
+                            <UniformGrid Columns="2">
+                                <Button Content="{DynamicResource Str.Nav.Books}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding QuickNavigateCommand}"
+                                        CommandParameter="Books"
+                                        Margin="0,0,6,8" />
+
+                                <Button Content="{DynamicResource Str.Nav.Favorites}"
+                                        Style="{StaticResource GoldAccentButtonStyle}"
+                                        Command="{Binding QuickNavigateCommand}"
+                                        CommandParameter="Favorites"
+                                        Margin="6,0,0,8" />
+
+                                <Button Content="{DynamicResource Str.Nav.BorrowingReturns}"
+                                        Style="{StaticResource TealButtonStyle}"
+                                        Command="{Binding QuickNavigateCommand}"
+                                        CommandParameter="BorrowingReturns"
+                                        Margin="0,0,6,8" />
+
+                                <Button Content="{DynamicResource Str.Nav.ReaderProfile}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding QuickNavigateCommand}"
+                                        CommandParameter="ReaderProfile"
+                                        Margin="6,0,0,8" />
+
+                                <Button Content="{DynamicResource Str.Nav.Readers}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding QuickNavigateCommand}"
+                                        CommandParameter="Readers"
+                                        Margin="0,0,6,0" />
+
+                                <Button Content="{DynamicResource Str.Nav.Settings}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding QuickNavigateCommand}"
+                                        CommandParameter="Settings"
+                                        Margin="6,0,0,0" />
+                            </UniformGrid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- 4. SERVICE-LAYER AUTHORIZATION & READER DATA ISOLATION VERIFICATION CARD -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource Str.AuthCheck.SectionTitle}"
+                               Style="{StaticResource SectionHeaderTextStyle}" />
+                    <TextBlock Text="{DynamicResource Str.AuthCheck.SectionSubtitle}"
+                               Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                    <WrapPanel>
+                        <Button Content="{DynamicResource Str.AuthCheck.BtnOwnRecord}"
+                                Style="{StaticResource TealButtonStyle}"
+                                Command="{Binding TestOwnReaderAccessCommand}"
+                                Margin="0,0,10,8" />
+
+                        <Button Content="{DynamicResource Str.AuthCheck.BtnOtherReaderRecord}"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding TestOtherReaderAccessCommand}"
+                                Margin="0,0,10,8" />
+
+                        <Button Content="{DynamicResource Str.AuthCheck.BtnLibrarianAction}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding TestLibrarianPermissionCommand}"
+                                Margin="0,0,10,8" />
+
+                        <Button Content="{DynamicResource Str.AuthCheck.BtnAdminAction}"
+                                Style="{StaticResource GoldAccentButtonStyle}"
+                                Command="{Binding TestAdminPermissionCommand}"
+                                Margin="0,0,0,8" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

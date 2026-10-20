@@ -1,0 +1,339 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Application Brand & Window Title -->
+    <sys:String x:Key="Str.WindowTitle">Booktibus — Hệ thống Quản lý Thư viện (Premium Library)</sys:String>
+    <sys:String x:Key="Str.AppBrand">BOOKTIBUS</sys:String>
+    <sys:String x:Key="Str.AppTagline">HỆ THỐNG QUẢN LÝ THƯ VIỆN</sys:String>
+    <sys:String x:Key="Str.CurrentLangBadge">VI • Tiếng Việt</sys:String>
+    <sys:String x:Key="Str.SwitchLanguageBtn">EN • English</sys:String>
+
+    <!-- Stage 4: Login & Registration View Strings -->
+    <sys:String x:Key="Str.Login.BrandHeadline">Không gian Tri thức &amp; Quản trị Thư viện Chuyên nghiệp</sys:String>
+    <sys:String x:Key="Str.Login.BrandDescription">Hệ thống hỗ trợ xác thực SQL Server (BooktibusDB) và phân quyền chặt chẽ ở tầng nghiệp vụ cho Độc giả (Reader), Thủ thư (Librarian) và Quản trị viên (Administrator).</sys:String>
+    <sys:String x:Key="Str.Login.SecurityBullet1">• Mật khẩu được băm an toàn bằng PBKDF2-SHA256 kèm Salt ngẫu nhiên 16 bytes (Không lưu văn bản thuần).</sys:String>
+    <sys:String x:Key="Str.Login.SecurityBullet2">• Bảo vệ tự động: Khóa tài khoản 15 phút sau 5 lần đăng nhập sai liên tiếp (Lưu bền vững trong SQL Server).</sys:String>
+    <sys:String x:Key="Str.Login.SecurityBullet3">• Tài khoản tự đăng ký mới luôn mặc định cố định vai trò Độc giả (Reader) và cấp mã thẻ riêng.</sys:String>
+
+    <!-- Mode Tabs -->
+    <sys:String x:Key="Str.Auth.TabSignIn">Đăng nhập (Sign In)</sys:String>
+    <sys:String x:Key="Str.Auth.TabRegisterReader">Đăng ký Độc giả (Register Reader)</sys:String>
+    <sys:String x:Key="Str.Auth.TabInitialAdmin">Khởi tạo Admin đầu tiên</sys:String>
+
+    <!-- Database Connection Verification Bar -->
+    <sys:String x:Key="Str.Db.CardTitle">TRẠNG THÁI KẾT NỐI CƠ SỞ DỮ LIỆU SQL SERVER (BooktibusDB)</sys:String>
+    <sys:String x:Key="Str.Db.ServerLabel">Máy chủ SQL (Server Name):</sys:String>
+    <sys:String x:Key="Str.Db.ProbeBtn">Kiểm tra &amp; Kết nối BooktibusDB</sys:String>
+
+    <!-- Login Form -->
+    <sys:String x:Key="Str.Login.FormTitle">Đăng nhập Hệ thống</sys:String>
+    <sys:String x:Key="Str.Login.FormSubtitle">Nhập tên đăng nhập và mật khẩu của bạn để mở phiên làm việc.</sys:String>
+    <sys:String x:Key="Str.Login.UsernameLabel">Tên đăng nhập (Username):</sys:String>
+    <sys:String x:Key="Str.Login.PasswordLabel">Mật khẩu (Password):</sys:String>
+    <sys:String x:Key="Str.Login.SignInBtn">Đăng nhập vào Booktibus</sys:String>
+    <sys:String x:Key="Str.Login.ClearBtn">Xóa trống</sys:String>
+
+    <!-- Reader Registration Form -->
+    <sys:String x:Key="Str.Reg.FormTitle">Đăng ký Tài khoản Độc giả Mới</sys:String>
+    <sys:String x:Key="Str.Reg.FormSubtitle">Tài khoản đăng ký mới được gán cố định vai trò Độc giả (Reader) và cấp mã thẻ thư viện tự động.</sys:String>
+    <sys:String x:Key="Str.Reg.FixedRoleNotice">Vai trò tài khoản: READER (Độc giả) — Hệ thống không cho phép tự đăng ký làm Thủ thư hoặc Quản trị viên.</sys:String>
+    <sys:String x:Key="Str.Reg.FullNameLabel">Họ và tên đầy đủ (*):</sys:String>
+    <sys:String x:Key="Str.Reg.UsernameLabel">Tên đăng nhập (*, tối thiểu 4 ký tự chữ/số):</sys:String>
+    <sys:String x:Key="Str.Reg.EmailLabel">Địa chỉ Email (*):</sys:String>
+    <sys:String x:Key="Str.Reg.PhoneLabel">Số điện thoại (Tùy chọn):</sys:String>
+    <sys:String x:Key="Str.Reg.PasswordLabel">Mật khẩu (*, tối thiểu 8 ký tự gồm cả chữ và số):</sys:String>
+    <sys:String x:Key="Str.Reg.ConfirmPasswordLabel">Xác nhận lại mật khẩu (*):</sys:String>
+    <sys:String x:Key="Str.Reg.SubmitBtn">Hoàn tất Đăng ký Độc giả</sys:String>
+
+    <!-- Initial Administrator Bootstrap Form -->
+    <sys:String x:Key="Str.AdminInit.FormTitle">Thiết lập Quản trị viên Ban đầu (Chạy 1 lần duy nhất)</sys:String>
+    <sys:String x:Key="Str.AdminInit.FormSubtitle">Database BooktibusDB hiện chưa có tài khoản Administrator nào. Hãy khởi tạo tài khoản Quản trị viên đầu tiên với mật khẩu bảo mật của riêng bạn (PBKDF2-SHA256).</sys:String>
+    <sys:String x:Key="Str.AdminInit.SubmitBtn">Khởi tạo Administrator Đầu tiên</sys:String>
+
+    <sys:String x:Key="Str.Login.TestProviderBadge">[CHẾ ĐỘ XÁC THỰC THỬ NGHIỆM DỰ PHÒNG (KHI CHƯA KẾT NỐI SQL SERVER)]</sys:String>
+    <sys:String x:Key="Str.Login.TestProviderNotice">Ứng dụng sẽ tự động chuyển sang SqlAuthenticationService ngay khi kết nối thành công tới BooktibusDB. Trong lúc chưa kết nối SQL Server, bạn vẫn có thể dùng các tài khoản thử nghiệm dưới đây:</sys:String>
+    <sys:String x:Key="Str.Login.FillCredBtn">Điền vào biểu mẫu</sys:String>
+    <sys:String x:Key="Str.Login.ResetLockoutBtn">Đặt lại bộ đếm khóa thử nghiệm (Reset Lockout)</sys:String>
+
+    <!-- Stage 4: Header Session & Logout -->
+    <sys:String x:Key="Str.Header.LogoutBtn">Đăng xuất</sys:String>
+    <sys:String x:Key="Str.Header.SignedInAs">Phiên đăng nhập:</sys:String>
+
+    <!-- Stage 4: Service-Layer Authorization & Reader Isolation Verification -->
+    <sys:String x:Key="Str.AuthCheck.SectionTitle">Kiểm chứng Phân quyền Tầng Nghiệp vụ (Service-Layer Authorization Guard)</sys:String>
+    <sys:String x:Key="Str.AuthCheck.SectionSubtitle">Thử gọi trực tiếp các phương thức ở tầng Service để kiểm tra hệ thống chặn truy cập trái phép ngay cả khi không qua nút ẩn trên UI:</sys:String>
+    <sys:String x:Key="Str.AuthCheck.BtnOwnRecord">Xem dữ liệu thẻ của chính mình</sys:String>
+    <sys:String x:Key="Str.AuthCheck.BtnOtherReaderRecord">Thử truy cập thẻ độc giả khác (RD-2026-999)</sys:String>
+    <sys:String x:Key="Str.AuthCheck.BtnLibrarianAction">Thử gọi nghiệp vụ Thủ thư (Quản lý danh mục)</sys:String>
+    <sys:String x:Key="Str.AuthCheck.BtnAdminAction">Thử gọi nghiệp vụ Admin (Cấu hình hệ thống)</sys:String>
+
+    <!-- Stage 3: Sidebar Navigation Items -->
+    <sys:String x:Key="Str.Nav.SectionTitle">DANH MỤC ĐIỀU HƯỚNG</sys:String>
+    <sys:String x:Key="Str.Nav.Dashboard">Tổng quan (Dashboard)</sys:String>
+    <sys:String x:Key="Str.Nav.Books">Quản lý Sách (Books)</sys:String>
+    <sys:String x:Key="Str.Nav.Readers">Độc giả (Readers)</sys:String>
+    <sys:String x:Key="Str.Nav.BorrowingReturns">Mượn &amp; Trả sách (Borrowing &amp; Returns)</sys:String>
+    <sys:String x:Key="Str.Nav.Fines">Tiền phạt (Fines)</sys:String>
+    <sys:String x:Key="Str.Nav.Reports">Báo cáo thống kê (Reports)</sys:String>
+    <sys:String x:Key="Str.Nav.Settings">Cài đặt hệ thống (Settings)</sys:String>
+    <sys:String x:Key="Str.Nav.Favorites">Sách yêu thích (Favorites)</sys:String>
+    <sys:String x:Key="Str.Nav.ReaderProfile">Hồ sơ cá nhân (My Profile)</sys:String>
+    <sys:String x:Key="Str.Sidebar.RoleFilterLabel">CHẾ ĐỘ XEM MENU THEO VAI TRÒ</sys:String>
+    <sys:String x:Key="Str.SidebarFooter">Booktibus Desktop • Giai đoạn 6 (Thủ thư, Quản trị viên &amp; SQL Server)</sys:String>
+
+    <!-- Header & Account Area -->
+    <sys:String x:Key="Str.Header.RoleSelectorLabel">Vai trò hiển thị:</sys:String>
+    <sys:String x:Key="Str.Header.AccountStatus">Phiên làm việc đã xác thực</sys:String>
+    <sys:String x:Key="Str.Header.SampleDataBadge">CSDL THỰC TẾ</sys:String>
+
+    <!-- Page Titles & Subtitles -->
+    <sys:String x:Key="Str.Page.Dashboard.Title">Bảng điều khiển Tổng quan (Dashboard)</sys:String>
+    <sys:String x:Key="Str.Page.Dashboard.Subtitle">Theo dõi số liệu thống kê thực tế từ SQL Server (BooktibusDB), hoạt động lưu thông gần đây và kiểm chứng phân quyền.</sys:String>
+
+    <sys:String x:Key="Str.Page.Books.Title">Tra cứu &amp; Quản lý Danh mục Sách (Books)</sys:String>
+    <sys:String x:Key="Str.Page.Books.Subtitle">Tra cứu, lọc theo thể loại/tình trạng và quản lý đầu sách, bản sao trực tiếp trong BooktibusDB.</sys:String>
+
+    <sys:String x:Key="Str.Page.Favorites.Title">Danh sách Sách Yêu thích Cá nhân (Favorites)</sys:String>
+    <sys:String x:Key="Str.Page.Favorites.Subtitle">Quản lý danh sách đầu sách yêu thích của riêng tài khoản đang đăng nhập (Lưu trữ độc lập theo UserId trong SQL Server).</sys:String>
+
+    <sys:String x:Key="Str.Page.Readers.Title">Quản lý Hồ sơ &amp; Lịch sử Độc giả (Readers)</sys:String>
+    <sys:String x:Key="Str.Page.Readers.Subtitle">Tra cứu độc giả theo tên, username, email hoặc mã thẻ; xem lịch sử mượn trả và cập nhật trạng thái thẻ.</sys:String>
+
+    <sys:String x:Key="Str.Page.BorrowingReturns.Title">Quản lý &amp; Theo dõi Mượn / Trả sách (Borrowing &amp; Returns)</sys:String>
+    <sys:String x:Key="Str.Page.BorrowingReturns.Subtitle">Xử lý lập phiếu mượn, ghi nhận trả sách, phát hiện quá hạn và theo dõi lịch sử lưu thông thực tế trong BooktibusDB.</sys:String>
+
+    <sys:String x:Key="Str.Page.ReaderProfile.Title">Hồ sơ Độc giả Cá nhân (My Reader Profile)</sys:String>
+    <sys:String x:Key="Str.Page.ReaderProfile.Subtitle">Xem thông tin thẻ thư viện cố định và cập nhật họ tên, email, số điện thoại liên hệ của riêng tài khoản bạn.</sys:String>
+
+    <sys:String x:Key="Str.Page.Fines.Title">Quản lý Phí phạt Quá hạn &amp; Hư hỏng (Fines)</sys:String>
+    <sys:String x:Key="Str.Page.Fines.Subtitle">Theo dõi các khoản phạt quá hạn, làm mất hoặc hư hỏng tài liệu thư viện.</sys:String>
+
+    <sys:String x:Key="Str.Page.Reports.Title">Báo cáo &amp; Thống kê Thư viện (Reports)</sys:String>
+    <sys:String x:Key="Str.Page.Reports.Subtitle">Tổng hợp số liệu thực tế từ BooktibusDB về kho sách theo thể loại và lưu thông mượn trả theo kỳ.</sys:String>
+
+    <sys:String x:Key="Str.Page.Settings.Title">Quản trị Tài khoản &amp; Vai trò Hệ thống (Admin Settings)</sys:String>
+    <sys:String x:Key="Str.Page.Settings.Subtitle">Quản lý tài khoản người dùng, phân quyền vai trò, bảo vệ Admin cuối cùng và đặt lại mật khẩu an toàn PBKDF2-SHA256.</sys:String>
+
+    <!-- Dashboard Content Strings -->
+    <sys:String x:Key="Str.Dash.SampleBannerTitle">[Số liệu Trực tiếp từ SQL Server — BooktibusDB (Giai đoạn 6)]</sys:String>
+    <sys:String x:Key="Str.Dash.SampleBannerText">Các thẻ thống kê và bảng hoạt động trên Dashboard hiện được truy vấn trực tiếp từ SQL Server (dbo.Books, dbo.Readers, dbo.BorrowRecords) theo đúng quyền của phiên đăng nhập.</sys:String>
+
+    <sys:String x:Key="Str.Dash.RecentActivitiesTitle">Hoạt động Lưu thông Gần đây (Truy vấn trực tiếp từ dbo.BorrowRecords)</sys:String>
+    <sys:String x:Key="Str.Dash.RecentActivitiesSubtitle">Đối với Reader chỉ hiển thị giao dịch của chính mình; đối với Librarian và Administrator hiển thị giao dịch toàn hệ thống.</sys:String>
+    <sys:String x:Key="Str.Dash.ColRefCode">Mã phiếu</sys:String>
+    <sys:String x:Key="Str.Dash.ColType">Trạng thái</sys:String>
+    <sys:String x:Key="Str.Dash.ColSubject">Sách mượn / Trạng thái</sys:String>
+    <sys:String x:Key="Str.Dash.ColActor">Thẻ / Tài khoản</sys:String>
+    <sys:String x:Key="Str.Dash.ColTime">Thời gian</sys:String>
+    <sys:String x:Key="Str.Dash.ColStatus">Nguồn dữ liệu</sys:String>
+    <sys:String x:Key="Str.Dash.BtnInspectActivity">Xem thông tin dòng đang chọn</sys:String>
+    <sys:String x:Key="Str.Dash.BtnRefreshSample">Làm mới từ SQL Server</sys:String>
+
+    <sys:String x:Key="Str.Dash.NoticesTitle">Thông báo &amp; Quyền hạn Phiên hiện tại</sys:String>
+    <sys:String x:Key="Str.Dash.NoticesSubtitle">Cập nhật trạng thái phân quyền và hướng dẫn thao tác nhanh.</sys:String>
+    <sys:String x:Key="Str.Dash.QuickNavTitle">Chuyển nhanh đến Phân hệ (Có kiểm tra quyền ở Service)</sys:String>
+
+    <!-- Stage 5.1 & 5.2: Book Catalog Search & Book Details -->
+    <sys:String x:Key="Str.Catalog.FilterCardTitle">Bộ lọc &amp; Tìm kiếm Danh mục Sách (BooktibusDB)</sys:String>
+    <sys:String x:Key="Str.Catalog.KeywordLabel">Từ khóa (Tên sách, Tác giả, Mã sách, ISBN):</sys:String>
+    <sys:String x:Key="Str.Catalog.CategoryLabel">Thể loại (Category):</sys:String>
+    <sys:String x:Key="Str.Catalog.AvailabilityLabel">Tình trạng bản sao:</sys:String>
+    <sys:String x:Key="Str.Catalog.BtnSearch">Tìm kiếm</sys:String>
+    <sys:String x:Key="Str.Catalog.BtnClear">Đặt lại</sys:String>
+    <sys:String x:Key="Str.Catalog.BtnOpenFavorites">★ Mở Sách Yêu thích của tôi</sys:String>
+    <sys:String x:Key="Str.Catalog.SampleNotice">[Minh bạch dữ liệu] Các đầu sách khởi tạo ban đầu từ script SQL được gắn nhãn [DỮ LIỆU MẪU] rõ ràng để phân biệt với sách nghiệp vụ phát sinh sau này.</sys:String>
+    <sys:String x:Key="Str.Catalog.ColCode">Mã sách</sys:String>
+    <sys:String x:Key="Str.Catalog.ColTitle">Tên sách</sys:String>
+    <sys:String x:Key="Str.Catalog.ColAuthor">Tác giả</sys:String>
+    <sys:String x:Key="Str.Catalog.ColCategory">Thể loại</sys:String>
+    <sys:String x:Key="Str.Catalog.ColAvailability">Tình trạng</sys:String>
+    <sys:String x:Key="Str.Catalog.ColFavorite">Yêu thích</sys:String>
+    <sys:String x:Key="Str.Catalog.EmptyStateTitle">Không tìm thấy sách phù hợp</sys:String>
+    <sys:String x:Key="Str.Catalog.EmptyStateDesc">Không có đầu sách nào khớp với từ khóa hoặc bộ lọc hiện tại. Vui lòng thử từ khóa khác hoặc bấm 'Đặt lại'.</sys:String>
+
+    <sys:String x:Key="Str.Catalog.DetailTitle">Chi tiết Đầu sách (Book Details)</sys:String>
+    <sys:String x:Key="Str.Catalog.DetailSubtitle">Chọn một đầu sách trong bảng bên trái để xem thông tin xuất bản, vị trí kệ và mô tả chi tiết.</sys:String>
+    <sys:String x:Key="Str.Catalog.LblBookCode">Mã tài liệu:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblAuthor">Tác giả:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblCategory">Thể loại:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblPublisher">Nhà xuất bản &amp; Năm:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblIsbn">Mã ISBN:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblShelf">Vị trí kệ sách:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblCopies">Số bản còn / Tổng số:</sys:String>
+    <sys:String x:Key="Str.Catalog.LblDescription">Tóm tắt nội dung:</sys:String>
+
+    <!-- Stage 5.3: Reader Personal Favorites -->
+    <sys:String x:Key="Str.Fav.SectionTitle">Danh sách Sách Yêu thích của Tài khoản Đang đăng nhập</sys:String>
+    <sys:String x:Key="Str.Fav.IsolationNotice">Mỗi tài khoản (UserId) có danh sách yêu thích độc lập trong bảng dbo.ReaderFavorites. Ngay cả khi nhiều tài khoản dùng chung địa chỉ email, danh sách yêu thích vẫn hoàn toàn tách biệt.</sys:String>
+    <sys:String x:Key="Str.Fav.BtnRefresh">Làm mới danh sách</sys:String>
+    <sys:String x:Key="Str.Fav.BtnBrowseCatalog">+ Tra cứu &amp; Thêm sách mới</sys:String>
+    <sys:String x:Key="Str.Fav.BtnRemoveSelected">Bỏ khỏi danh sách yêu thích</sys:String>
+    <sys:String x:Key="Str.Fav.ColAddedAt">Ngày lưu</sys:String>
+    <sys:String x:Key="Str.Fav.EmptyStateTitle">Danh sách Sách Yêu thích đang trống</sys:String>
+    <sys:String x:Key="Str.Fav.EmptyStateDesc">Bạn chưa lưu cuốn sách nào vào danh sách yêu thích. Hãy chuyển sang trang 'Tra cứu &amp; Danh mục Sách' và bấm '♡ Thêm vào Yêu thích'.</sys:String>
+
+    <!-- Stage 5.4: Borrowing & Return Tracking -->
+    <sys:String x:Key="Str.Borrow.MetricActiveTitle">SÁCH ĐANG MƯỢN (CSDL)</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricActiveSub">Giao dịch trạng thái Borrowed</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricReturnedTitle">ĐÃ TRẢ HOÀN TẤT (CSDL)</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricReturnedSub">Giao dịch trạng thái Returned</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricOverdueTitle">PHIẾU QUÁ HẠN (CSDL)</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricOverdueSub">Giao dịch trạng thái Overdue</sys:String>
+    <sys:String x:Key="Str.Borrow.FilterStatusLabel">Lọc theo trạng thái phiếu:</sys:String>
+    <sys:String x:Key="Str.Borrow.BtnRefresh">Tải lại từ SQL Server</sys:String>
+    <sys:String x:Key="Str.Borrow.ColRecordCode">Mã phiếu</sys:String>
+    <sys:String x:Key="Str.Borrow.ColReaderCard">Mã thẻ độc giả</sys:String>
+    <sys:String x:Key="Str.Borrow.ColBookCode">Mã sách</sys:String>
+    <sys:String x:Key="Str.Borrow.ColBookTitle">Tên sách</sys:String>
+    <sys:String x:Key="Str.Borrow.ColBorrowDate">Ngày mượn</sys:String>
+    <sys:String x:Key="Str.Borrow.ColDueDate">Hạn trả</sys:String>
+    <sys:String x:Key="Str.Borrow.ColReturnDate">Ngày trả thực tế</sys:String>
+    <sys:String x:Key="Str.Borrow.ColStatus">Trạng thái</sys:String>
+    <sys:String x:Key="Str.Borrow.ColNotes">Ghi chú</sys:String>
+    <sys:String x:Key="Str.Borrow.EmptyStateTitle">Chưa có giao dịch mượn/trả sách thực tế trong BooktibusDB</sys:String>
+    <sys:String x:Key="Str.Borrow.EmptyStateDesc">Tài khoản của bạn hiện chưa có bản ghi nào trong bảng dbo.BorrowRecords. Nghiệp vụ lập phiếu mượn và ghi nhận trả sách do Thủ thư thực hiện sẽ được kết nối ở giai đoạn tiếp theo (Không tạo số liệu giả).</sys:String>
+
+    <!-- Stage 5.5: Reader Personal Profile -->
+    <sys:String x:Key="Str.Profile.IdentityCardTitle">Thông tin Định danh &amp; Thẻ Thư viện (Chỉ đọc)</sys:String>
+    <sys:String x:Key="Str.Profile.IdentityCardSubtitle">Các thông tin định danh bảo mật dưới đây do hệ thống quản lý cố định, Độc giả không thể tự thay đổi.</sys:String>
+    <sys:String x:Key="Str.Profile.LblUserId">Mã tài khoản (UserId):</sys:String>
+    <sys:String x:Key="Str.Profile.LblUsername">Tên đăng nhập (Username):</sys:String>
+    <sys:String x:Key="Str.Profile.LblRole">Vai trò phân quyền (Role):</sys:String>
+    <sys:String x:Key="Str.Profile.LblReaderCard">Mã thẻ độc giả (ReaderCardId):</sys:String>
+    <sys:String x:Key="Str.Profile.LblStatus">Trạng thái thẻ:</sys:String>
+    <sys:String x:Key="Str.Profile.LblRegisteredAt">Ngày đăng ký thẻ:</sys:String>
+
+    <sys:String x:Key="Str.Profile.EditCardTitle">Cập nhật Thông tin Liên hệ Cá nhân</sys:String>
+    <sys:String x:Key="Str.Profile.EditCardSubtitle">Bạn có thể cập nhật Họ tên, Địa chỉ Email (hỗ trợ dùng chung email giữa nhiều tài khoản) và Số điện thoại của riêng tài khoản này.</sys:String>
+    <sys:String x:Key="Str.Profile.LblFullName">Họ và tên đầy đủ (*):</sys:String>
+    <sys:String x:Key="Str.Profile.LblEmail">Địa chỉ Email (*):</sys:String>
+    <sys:String x:Key="Str.Profile.LblPhone">Số điện thoại liên hệ:</sys:String>
+    <sys:String x:Key="Str.Profile.BtnSave">Lưu thay đổi vào BooktibusDB</sys:String>
+    <sys:String x:Key="Str.Profile.BtnReload">Hoàn tác / Tải lại từ CSDL</sys:String>
+
+    <!-- Placeholder Module View Strings -->
+    <sys:String x:Key="Str.Placeholder.StageBadge">KHUNG GIAO DIỆN PHÂN HỆ — GIAI ĐOẠN 6</sys:String>
+    <sys:String x:Key="Str.Placeholder.NotImplementedNotice">Chức năng chi tiết của phân hệ này sẽ được hoàn thiện ở giai đoạn tiếp theo.</sys:String>
+    <sys:String x:Key="Str.Placeholder.AllowedRolesLabel">Các vai trò được phép truy cập phân hệ này:</sys:String>
+    <sys:String x:Key="Str.Placeholder.CurrentScopeLabel">Phạm vi dữ liệu áp dụng cho phiên đăng nhập hiện tại:</sys:String>
+    <sys:String x:Key="Str.Placeholder.PlannedFeaturesLabel">Các hạng mục nghiệp vụ của phân hệ:</sys:String>
+    <sys:String x:Key="Str.Placeholder.BackToDashboardBtn">← Quay lại Bảng điều khiển (Dashboard)</sys:String>
+    <sys:String x:Key="Str.Placeholder.TestActionBtn">Kiểm tra quyền thực thi nghiệp vụ tại tầng Service</sys:String>
+
+    <!-- Stage 6.3.1: Librarian Book Catalog Management -->
+    <sys:String x:Key="Str.StaffBook.CardTitle">Nghiệp vụ Quản lý Danh mục Sách (Thủ thư &amp; Quản trị viên)</sys:String>
+    <sys:String x:Key="Str.StaffBook.CardSubtitle">Thêm đầu sách mới, chỉnh sửa thông tin xuất bản, cập nhật tổng số bản sao (tự động tính số bản còn lại theo số phiếu đang mượn) hoặc xóa sách chưa phát sinh giao dịch.</sys:String>
+    <sys:String x:Key="Str.StaffBook.BtnNewMode">+ Chuyển sang Thêm Sách Mới</sys:String>
+    <sys:String x:Key="Str.StaffBook.BtnEditMode">✎ Nạp Sách đang chọn để Sửa</sys:String>
+    <sys:String x:Key="Str.StaffBook.BtnDelete">✕ Xóa Đầu sách đang chọn</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblCode">Mã sách (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblTitle">Tên sách (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblAuthor">Tác giả (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblCategory">Thể loại (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblPublisher">Nhà xuất bản:</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblYear">Năm xuất bản:</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblIsbn">Mã ISBN:</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblTotalCopies">Tổng số bản sao (*):</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblShelf">Vị trí kệ:</sys:String>
+    <sys:String x:Key="Str.StaffBook.LblDesc">Mô tả nội dung:</sys:String>
+
+    <!-- Stage 6.3.2: Librarian Circulation Management -->
+    <sys:String x:Key="Str.StaffBorrow.LoanFormTitle">Lập Phiếu Mượn Sách Mới (Librarian Checkout)</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LoanFormSubtitle">Chọn thẻ độc giả đang hoạt động và đầu sách còn bản sao trong kho. Hệ thống tự động trừ 1 bản sao có sẵn và chặn mượn trùng cuốn chưa trả.</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblSelectReader">Độc giả mượn sách (*):</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblSelectBook">Đầu sách còn bản sao (*):</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblLoanDays">Số ngày mượn (1–60 ngày):</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblLoanNotes">Ghi chú phiếu mượn:</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.BtnCreateLoan">+ Lập Phiếu Mượn Sách</sys:String>
+
+    <sys:String x:Key="Str.StaffBorrow.ReturnFormTitle">Ghi nhận Trả sách cho Phiếu Đang chọn</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.ReturnFormSubtitle">Chọn một phiếu đang mượn hoặc quá hạn trong bảng bên dưới để ghi nhận trả sách và cộng lại 1 bản sao vào kho (Chặn xử lý trả trùng lặp).</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.LblReturnNotes">Ghi chú tình trạng sách khi trả:</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.BtnProcessReturn">✓ Ghi nhận Đã Trả Sách</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.SearchKeywordLabel">Tìm kiếm giao dịch (Mã phiếu, Mã thẻ, Tên độc giả, Mã/Tên sách):</sys:String>
+    <sys:String x:Key="Str.StaffBorrow.ColReaderName">Họ tên độc giả</sys:String>
+
+    <!-- Stage 6.3.3: Librarian Reader Directory Management -->
+    <sys:String x:Key="Str.StaffReader.FilterCardTitle">Tra cứu &amp; Quản lý Danh sách Độc giả (BooktibusDB)</sys:String>
+    <sys:String x:Key="Str.StaffReader.KeywordLabel">Từ khóa (Họ tên, Username, Email, Mã thẻ RD-...):</sys:String>
+    <sys:String x:Key="Str.StaffReader.StatusLabel">Trạng thái thẻ:</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColCardId">Mã thẻ</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColUsername">Username</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColFullName">Họ và tên</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColEmail">Email</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColPhone">Số điện thoại</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColStatus">Trạng thái</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColActiveLoans">Đang mượn</sys:String>
+    <sys:String x:Key="Str.StaffReader.ColOverdueLoans">Quá hạn</sys:String>
+    <sys:String x:Key="Str.StaffReader.DetailTitle">Hồ sơ Độc giả &amp; Lịch sử Mượn trả</sys:String>
+    <sys:String x:Key="Str.StaffReader.EditCardStatusLabel">Trạng thái thẻ thành viên:</sys:String>
+    <sys:String x:Key="Str.StaffReader.BtnSaveReader">Lưu thông tin Độc giả</sys:String>
+    <sys:String x:Key="Str.StaffReader.HistorySectionTitle">Lịch sử Mượn &amp; Trả sách của Độc giả đang chọn</sys:String>
+
+    <!-- Stage 6.4.1: Administrator Account & Role Management -->
+    <sys:String x:Key="Str.AdminUser.FilterTitle">Quản trị Tài khoản &amp; Phân quyền Hệ thống (Chỉ dành cho Administrator)</sys:String>
+    <sys:String x:Key="Str.AdminUser.KeywordLabel">Tìm kiếm tài khoản (Username, Họ tên, Email, Mã thẻ):</sys:String>
+    <sys:String x:Key="Str.AdminUser.RoleFilterLabel">Lọc theo vai trò:</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColUserId">UserId</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColUsername">Username</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColFullName">Họ và tên</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColEmail">Email</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColRole">Vai trò</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColCard">Mã thẻ</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColActive">Trạng thái</sys:String>
+    <sys:String x:Key="Str.AdminUser.ColLockout">Khóa đăng nhập</sys:String>
+
+    <sys:String x:Key="Str.AdminUser.ManageSelectedTitle">Quản lý Tài khoản Đang chọn (Phân quyền, Trạng thái &amp; Đặt lại Mật khẩu)</sys:String>
+    <sys:String x:Key="Str.AdminUser.SafeguardNotice">Hệ thống bảo vệ tài khoản Administrator đang hoạt động cuối cùng và sử dụng băm PBKDF2-SHA256 kèm Salt ngẫu nhiên khi đặt lại mật khẩu.</sys:String>
+    <sys:String x:Key="Str.AdminUser.LblTargetRole">Chuyển đổi vai trò:</sys:String>
+    <sys:String x:Key="Str.AdminUser.BtnApplyRole">Áp dụng Vai trò</sys:String>
+    <sys:String x:Key="Str.AdminUser.BtnUnlock">Gỡ khóa 15 phút (Reset Lockout)</sys:String>
+    <sys:String x:Key="Str.AdminUser.ResetPwdTitle">Đặt lại Mật khẩu Bảo mật (PBKDF2-SHA256)</sys:String>
+    <sys:String x:Key="Str.AdminUser.LblNewPwd">Mật khẩu mới (*, tối thiểu 8 ký tự chữ + số):</sys:String>
+    <sys:String x:Key="Str.AdminUser.LblConfirmPwd">Xác nhận mật khẩu mới (*):</sys:String>
+    <sys:String x:Key="Str.AdminUser.BtnResetPwd">Cập nhật Mật khẩu Mới</sys:String>
+
+    <sys:String x:Key="Str.AdminUser.CreateTitle">Tạo Tài khoản Nhân sự / Độc giả Mới</sys:String>
+    <sys:String x:Key="Str.AdminUser.CreateSubtitle">Cho phép Administrator khởi tạo tài khoản Librarian, Administrator hoặc Reader mới trực tiếp trong BooktibusDB.</sys:String>
+    <sys:String x:Key="Str.AdminUser.BtnCreateAccount">+ Tạo Tài khoản Mới</sys:String>
+
+    <!-- Stage 6.4.2: Library Reports & Statistics -->
+    <sys:String x:Key="Str.Reports.BannerTitle">[Báo cáo &amp; Thống kê Trực tiếp từ SQL Server — BooktibusDB]</sys:String>
+    <sys:String x:Key="Str.Reports.BannerDesc">Toàn bộ số liệu đầu sách, bản sao, độc giả và lưu thông mượn trả dưới đây được truy vấn trực tiếp từ SQL Server (Không sử dụng số liệu giả).</sys:String>
+    <sys:String x:Key="Str.Reports.BtnRefresh">Làm mới Thống kê từ CSDL</sys:String>
+    <sys:String x:Key="Str.Reports.CategoryCardTitle">Thống kê Kho sách theo Thể loại (dbo.Books)</sys:String>
+    <sys:String x:Key="Str.Reports.ColCategory">Thể loại sách</sys:String>
+    <sys:String x:Key="Str.Reports.ColTitleCount">Số đầu sách</sys:String>
+    <sys:String x:Key="Str.Reports.ColTotalCopies">Tổng bản sao</sys:String>
+    <sys:String x:Key="Str.Reports.ColAvailCopies">Bản sao có sẵn</sys:String>
+    <sys:String x:Key="Str.Reports.MonthlyCardTitle">Thống kê Lưu thông Mượn &amp; Trả theo Tháng (dbo.BorrowRecords)</sys:String>
+    <sys:String x:Key="Str.Reports.ColPeriod">Kỳ thống kê (YYYY-MM)</sys:String>
+    <sys:String x:Key="Str.Reports.ColTotalLoans">Tổng lượt mượn</sys:String>
+    <sys:String x:Key="Str.Reports.ColActiveLoans">Đang mượn / Quá hạn</sys:String>
+    <sys:String x:Key="Str.Reports.ColReturnedLoans">Đã trả hoàn tất</sys:String>
+
+    <!-- Forgot Password (Quên mật khẩu) -->
+    <sys:String x:Key="Str.Forgot.LinkText">Quên mật khẩu?</sys:String>
+    <sys:String x:Key="Str.Forgot.FormTitle">Khôi phục Mật khẩu Tài khoản</sys:String>
+    <sys:String x:Key="Str.Forgot.FormSubtitle">Xác thực bằng mã OTP một lần (hiệu lực 5 phút, băm PBKDF2-SHA256) gửi tới địa chỉ email đã đăng ký của đúng Tên đăng nhập.</sys:String>
+    <sys:String x:Key="Str.Forgot.Step1Badge">BƯỚC 1 / 3 — XÁC ĐỊNH TÀI KHOẢN THEO TÊN ĐĂNG NHẬP</sys:String>
+    <sys:String x:Key="Str.Forgot.Step2Badge">BƯỚC 2 / 3 — XÁC MINH MÃ OTP (6 CHỮ SỐ)</sys:String>
+    <sys:String x:Key="Str.Forgot.Step3Badge">BƯỚC 3 / 3 — ĐẶT MẬT KHẨU MỚI BẢO MẬT</sys:String>
+    <sys:String x:Key="Str.Forgot.UsernameLabel">Tên đăng nhập cần khôi phục (*):</sys:String>
+    <sys:String x:Key="Str.Forgot.UsernameHint">Hệ thống tra cứu email theo đúng Tên đăng nhập (Username) để đảm bảo an toàn ngay cả khi nhiều tài khoản dùng chung một địa chỉ email.</sys:String>
+    <sys:String x:Key="Str.Forgot.SendOtpBtn">Gửi Mã Xác Thực OTP</sys:String>
+    <sys:String x:Key="Str.Forgot.OtpLabel">Mã xác thực OTP gồm 6 chữ số (*):</sys:String>
+    <sys:String x:Key="Str.Forgot.VerifyOtpBtn">Xác Minh Mã OTP</sys:String>
+    <sys:String x:Key="Str.Forgot.ResendOtpBtn">Gửi lại mã OTP</sys:String>
+    <sys:String x:Key="Str.Forgot.ChangeUsernameBtn">Đổi tên đăng nhập</sys:String>
+    <sys:String x:Key="Str.Forgot.NewPasswordLabel">Mật khẩu mới (*, tối thiểu 8 ký tự gồm chữ và số):</sys:String>
+    <sys:String x:Key="Str.Forgot.ConfirmPasswordLabel">Xác nhận mật khẩu mới (*):</sys:String>
+    <sys:String x:Key="Str.Forgot.SaveNewPasswordBtn">Xác Nhận Đặt Lại Mật Khẩu</sys:String>
+    <sys:String x:Key="Str.Forgot.BackToSignInBtn">← Quay lại màn hình Đăng nhập</sys:String>
+    <sys:String x:Key="Str.Forgot.SimInboxTitle">[Chế độ Giả lập Email — Kiểm thử khi chưa cấu hình SMTP]</sys:String>
+    <sys:String x:Key="Str.Forgot.SimInboxToggleBtn">Ẩn / Hiện Hộp thư Email Giả lập</sys:String>
+    <sys:String x:Key="Str.Forgot.SimInboxEmpty">Chưa có email giả lập nào được phát sinh trong phiên kiểm thử hiện tại.</sys:String>
+
+</ResourceDictionary>
+

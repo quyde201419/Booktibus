@@ -1,0 +1,135 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- =======================================================================
+         BOOKTIBUS — PREMIUM LIBRARY COLOR PALETTE & BRUSHES
+         ======================================================================= -->
+
+    <!-- 1. Primary Navy Colors -->
+    <Color x:Key="Color.PrimaryNavy.Dark">#0D1B33</Color>
+    <Color x:Key="Color.PrimaryNavy.Main">#14284B</Color>
+    <Color x:Key="Color.PrimaryNavy.Hover">#1E3A68</Color>
+    <Color x:Key="Color.PrimaryNavy.Pressed">#0F203C</Color>
+    <Color x:Key="Color.PrimaryNavy.Light">#E8EEF6</Color>
+
+    <!-- 2. Accent Colors (Warm Library Gold & Refined Teal) -->
+    <Color x:Key="Color.AccentGold.Main">#C9A24D</Color>
+    <Color x:Key="Color.AccentGold.Hover">#B88F3A</Color>
+    <Color x:Key="Color.AccentGold.Pressed">#9E792C</Color>
+    <Color x:Key="Color.AccentGold.Soft">#FBF6E9</Color>
+    <Color x:Key="Color.AccentGold.Light">#F3E5AB</Color>
+
+    <Color x:Key="Color.AccentTeal.Main">#0F766E</Color>
+    <Color x:Key="Color.AccentTeal.Hover">#115E59</Color>
+    <Color x:Key="Color.AccentTeal.Pressed">#0D4F4B</Color>
+    <Color x:Key="Color.AccentTeal.Soft">#ECFDF5</Color>
+
+    <!-- 3. Neutral Backgrounds & Surfaces (Warm Ivory & Clean Desktop Neutrals) -->
+    <Color x:Key="Color.Background.App">#F6F5F0</Color>
+    <Color x:Key="Color.Background.Surface">#FFFFFF</Color>
+    <Color x:Key="Color.Background.Subtle">#EFF2F7</Color>
+    <Color x:Key="Color.Background.RowAlternating">#F9FAFC</Color>
+    <Color x:Key="Color.Background.RowHover">#EEF3FA</Color>
+    <Color x:Key="Color.Background.RowSelected">#DCE6F5</Color>
+    <Color x:Key="Color.Background.Disabled">#E9ECEF</Color>
+
+    <!-- 4. Text & Typography Colors -->
+    <Color x:Key="Color.Text.Primary">#16243B</Color>
+    <Color x:Key="Color.Text.Secondary">#4A5B75</Color>
+    <Color x:Key="Color.Text.Muted">#7A8A9E</Color>
+    <Color x:Key="Color.Text.OnDark">#F8FAFC</Color>
+    <Color x:Key="Color.Text.OnDarkMuted">#C5D2E3</Color>
+    <Color x:Key="Color.Text.Disabled">#9AA5B4</Color>
+
+    <!-- 5. Borders & Dividers -->
+    <Color x:Key="Color.Border.Subtle">#E2E7F0</Color>
+    <Color x:Key="Color.Border.Default">#C6D1E0</Color>
+    <Color x:Key="Color.Border.Strong">#9FB0C7</Color>
+    <Color x:Key="Color.Border.Focus">#14284B</Color>
+
+    <!-- 6. Semantic Status & Validation Colors -->
+    <Color x:Key="Color.Status.Success">#15803D</Color>
+    <Color x:Key="Color.Status.SuccessBg">#ECFDF3</Color>
+    <Color x:Key="Color.Status.SuccessBorder">#86EFAC</Color>
+
+    <Color x:Key="Color.Status.Warning">#B45309</Color>
+    <Color x:Key="Color.Status.WarningBg">#FFFBEB</Color>
+    <Color x:Key="Color.Status.WarningBorder">#FCD34D</Color>
+
+    <Color x:Key="Color.Status.Danger">#B91C1C</Color>
+    <Color x:Key="Color.Status.DangerHover">#991B1B</Color>
+    <Color x:Key="Color.Status.DangerBg">#FEF2F2</Color>
+    <Color x:Key="Color.Status.DangerBorder">#FCA5A5</Color>
+
+    <Color x:Key="Color.Status.Info">#1D4ED8</Color>
+    <Color x:Key="Color.Status.InfoBg">#EFF6FF</Color>
+    <Color x:Key="Color.Status.InfoBorder">#93C5FD</Color>
+
+    <!-- =======================================================================
+         SOLID COLOR BRUSHES
+         ======================================================================= -->
+
+    <!-- Primary Navy Brushes -->
+    <SolidColorBrush x:Key="Brush.PrimaryNavy.Dark" Color="{StaticResource Color.PrimaryNavy.Dark}" />
+    <SolidColorBrush x:Key="Brush.PrimaryNavy.Main" Color="{StaticResource Color.PrimaryNavy.Main}" />
+    <SolidColorBrush x:Key="Brush.PrimaryNavy.Hover" Color="{StaticResource Color.PrimaryNavy.Hover}" />
+    <SolidColorBrush x:Key="Brush.PrimaryNavy.Pressed" Color="{StaticResource Color.PrimaryNavy.Pressed}" />
+    <SolidColorBrush x:Key="Brush.PrimaryNavy.Light" Color="{StaticResource Color.PrimaryNavy.Light}" />
+
+    <!-- Accent Gold Brushes -->
+    <SolidColorBrush x:Key="Brush.AccentGold.Main" Color="{StaticResource Color.AccentGold.Main}" />
+    <SolidColorBrush x:Key="Brush.AccentGold.Hover" Color="{StaticResource Color.AccentGold.Hover}" />
+    <SolidColorBrush x:Key="Brush.AccentGold.Pressed" Color="{StaticResource Color.AccentGold.Pressed}" />
+    <SolidColorBrush x:Key="Brush.AccentGold.Soft" Color="{StaticResource Color.AccentGold.Soft}" />
+    <SolidColorBrush x:Key="Brush.AccentGold.Light" Color="{StaticResource Color.AccentGold.Light}" />
+
+    <!-- Accent Teal Brushes -->
+    <SolidColorBrush x:Key="Brush.AccentTeal.Main" Color="{StaticResource Color.AccentTeal.Main}" />
+    <SolidColorBrush x:Key="Brush.AccentTeal.Hover" Color="{StaticResource Color.AccentTeal.Hover}" />
+    <SolidColorBrush x:Key="Brush.AccentTeal.Pressed" Color="{StaticResource Color.AccentTeal.Pressed}" />
+    <SolidColorBrush x:Key="Brush.AccentTeal.Soft" Color="{StaticResource Color.AccentTeal.Soft}" />
+
+    <!-- Background & Surface Brushes -->
+    <SolidColorBrush x:Key="Brush.Background.App" Color="{StaticResource Color.Background.App}" />
+    <SolidColorBrush x:Key="Brush.Background.Surface" Color="{StaticResource Color.Background.Surface}" />
+    <SolidColorBrush x:Key="Brush.Background.Subtle" Color="{StaticResource Color.Background.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Background.RowAlternating" Color="{StaticResource Color.Background.RowAlternating}" />
+    <SolidColorBrush x:Key="Brush.Background.RowHover" Color="{StaticResource Color.Background.RowHover}" />
+    <SolidColorBrush x:Key="Brush.Background.RowSelected" Color="{StaticResource Color.Background.RowSelected}" />
+    <SolidColorBrush x:Key="Brush.Background.Disabled" Color="{StaticResource Color.Background.Disabled}" />
+    <SolidColorBrush x:Key="Brush.Overlay.DialogBackdrop" Color="#660D1B33" />
+
+    <!-- Text Brushes -->
+    <SolidColorBrush x:Key="Brush.Text.Primary" Color="{StaticResource Color.Text.Primary}" />
+    <SolidColorBrush x:Key="Brush.Text.Secondary" Color="{StaticResource Color.Text.Secondary}" />
+    <SolidColorBrush x:Key="Brush.Text.Muted" Color="{StaticResource Color.Text.Muted}" />
+    <SolidColorBrush x:Key="Brush.Text.OnDark" Color="{StaticResource Color.Text.OnDark}" />
+    <SolidColorBrush x:Key="Brush.Text.OnDarkMuted" Color="{StaticResource Color.Text.OnDarkMuted}" />
+    <SolidColorBrush x:Key="Brush.Text.Disabled" Color="{StaticResource Color.Text.Disabled}" />
+
+    <!-- Border Brushes -->
+    <SolidColorBrush x:Key="Brush.Border.Subtle" Color="{StaticResource Color.Border.Subtle}" />
+    <SolidColorBrush x:Key="Brush.Border.Default" Color="{StaticResource Color.Border.Default}" />
+    <SolidColorBrush x:Key="Brush.Border.Strong" Color="{StaticResource Color.Border.Strong}" />
+    <SolidColorBrush x:Key="Brush.Border.Focus" Color="{StaticResource Color.Border.Focus}" />
+
+    <!-- Status & Validation Brushes -->
+    <SolidColorBrush x:Key="Brush.Status.Success" Color="{StaticResource Color.Status.Success}" />
+    <SolidColorBrush x:Key="Brush.Status.SuccessBg" Color="{StaticResource Color.Status.SuccessBg}" />
+    <SolidColorBrush x:Key="Brush.Status.SuccessBorder" Color="{StaticResource Color.Status.SuccessBorder}" />
+
+    <SolidColorBrush x:Key="Brush.Status.Warning" Color="{StaticResource Color.Status.Warning}" />
+    <SolidColorBrush x:Key="Brush.Status.WarningBg" Color="{StaticResource Color.Status.WarningBg}" />
+    <SolidColorBrush x:Key="Brush.Status.WarningBorder" Color="{StaticResource Color.Status.WarningBorder}" />
+
+    <SolidColorBrush x:Key="Brush.Status.Danger" Color="{StaticResource Color.Status.Danger}" />
+    <SolidColorBrush x:Key="Brush.Status.DangerHover" Color="{StaticResource Color.Status.DangerHover}" />
+    <SolidColorBrush x:Key="Brush.Status.DangerBg" Color="{StaticResource Color.Status.DangerBg}" />
+    <SolidColorBrush x:Key="Brush.Status.DangerBorder" Color="{StaticResource Color.Status.DangerBorder}" />
+
+    <SolidColorBrush x:Key="Brush.Status.Info" Color="{StaticResource Color.Status.Info}" />
+    <SolidColorBrush x:Key="Brush.Status.InfoBg" Color="{StaticResource Color.Status.InfoBg}" />
+    <SolidColorBrush x:Key="Brush.Status.InfoBorder" Color="{StaticResource Color.Status.InfoBorder}" />
+
+</ResourceDictionary>
+
