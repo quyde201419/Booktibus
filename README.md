@@ -1,4 +1,4 @@
- HEAD
+﻿ HEAD
 # Booktibus — Hệ Thống Quản Lý Thư Viện Hiện Đại (Library Management System)
 
 > **Ứng dụng Desktop C# WPF (.NET 10) | Kiến trúc MVVM | Cơ sở dữ liệu SQL Server**  
@@ -51,6 +51,7 @@
 - **Cơ sở dữ liệu:** Microsoft SQL Server 2019 / 2022 / Express / LocalDB.
 - **Phương thức xác thực DB:** Windows Authentication (`Integrated Security=True`), tự động kiểm tra tính sẵn sàng của kết nối và cấu trúc dữ liệu (`DatabaseConfig.ProbeDatabase`).
 - **Bảo mật:**
+  - Quy định mật khẩu an toàn cao: Bắt buộc tối thiểu 8 ký tự, có ít nhất 1 chữ in hoa (A-Z), 1 chữ in thường (a-z), 1 chữ số (0-9) và 1 ký tự đặc biệt (!@#$%^&*...).
   - Mật khẩu được băm (hash) bằng giải thuật PBKDF2 với muối ngẫu nhiên (salt) chuẩn công nghiệp (`Rfc2898DeriveBytes`).
   - Chặn hoàn toàn việc sử dụng tài khoản siêu người dùng `sa` hoặc nhúng mật khẩu dạng văn bản thô trong mã nguồn.
 
@@ -264,7 +265,7 @@ dotnet run --project Booktibus.VerificationTests/Booktibus.VerificationTests.csp
      dotnet run --project Booktibus.VerificationTests/Booktibus.VerificationTests.csproj
      ```
 
-### Các kịch bản được tự động kiểm chứng (14/14 Passed):
+### Các kịch bản được tự động kiểm chứng (16/16 Passed):
 1. **Khởi tạo môi trường kiểm thử:** Tạo dữ liệu kiểm thử độc lập có tiền tố, cô lập hoàn toàn với tài khoản gốc.
 2. **Sách trả đúng hạn:** Không phát sinh tiền phạt (`Fines = 0`).
 3. **Sách trả sớm hạn:** Không phát sinh tiền phạt.
@@ -278,7 +279,9 @@ dotnet run --project Booktibus.VerificationTests/Booktibus.VerificationTests.csp
 11. **Kiểm toán điều chỉnh & miễn phạt:** Thao tác điều chỉnh và miễn tiền phạt bắt buộc nhập lý do và được ghi nhận đầy đủ vào nhật ký `dbo.FineAuditLogs`.
 12. **Cấu hình mức phạt:** Quản trị viên cập nhật thành công mức phạt áp dụng toàn hệ thống.
 13. **Xử lý lỗi CSDL & Probe 10 bảng:** Ứng dụng xử lý an toàn khi SQL Server offline (không làm crash ứng dụng); phương thức `DatabaseConfig.ProbeDatabase` kiểm tra đầy đủ 10 bảng dữ liệu cốt lõi.
-14. **Bảo toàn dữ liệu:** Xác thực 100% tài khoản cốt lõi (`Admin`, `quy123`, `quy456`, `user123`) và các đầu sách ban đầu được giữ nguyên vẹn.
+14. **Bảo toàn dữ liệu:** Xác thực 100% tài khoản cốt lõi và sách gốc giữ nguyên.
+15. **Quy tắc mật khẩu nâng cao:** Kiểm tra bắt buộc tối thiểu 8 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
+16. **Từ chối mật khẩu yếu tầng Service:** Ngăn chặn đăng ký tài khoản nếu mật khẩu thiếu ký tự đặc biệt hoặc chữ hoa. Xác thực 100% tài khoản cốt lõi (`Admin`, `quy123`, `quy456`, `user123`) và các đầu sách ban đầu được giữ nguyên vẹn.
 
 ---
 

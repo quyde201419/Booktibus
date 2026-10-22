@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
              xmlns:helpers="clr-namespace:Booktibus.Helpers"
+             xmlns:views="clr-namespace:Booktibus.Views"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:LoginViewModel}"
              d:DesignHeight="780"
@@ -294,9 +295,8 @@
                                     </Button.Template>
                                 </Button>
                             </Grid>
-                            <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                         helpers:PasswordBoxAssistant.BoundPassword="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                         Margin="0,0,0,18" />
+                            <views:RevealPasswordBox Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Margin="0,0,0,18" />
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -383,15 +383,13 @@
                                 <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,18">
                                     <TextBlock Text="{DynamicResource Str.Reg.PasswordLabel}"
                                                Style="{StaticResource FieldLabelTextStyle}" />
-                                    <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding RegPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <views:RevealPasswordBox Password="{Binding RegPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,18">
                                     <TextBlock Text="{DynamicResource Str.Reg.ConfirmPasswordLabel}"
                                                Style="{StaticResource FieldLabelTextStyle}" />
-                                    <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding RegConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <views:RevealPasswordBox Password="{Binding RegConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                             </Grid>
 
@@ -465,15 +463,13 @@
                                 <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,18">
                                     <TextBlock Text="{DynamicResource Str.Reg.PasswordLabel}"
                                                Style="{StaticResource FieldLabelTextStyle}" />
-                                    <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding RegPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <views:RevealPasswordBox Password="{Binding RegPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,18">
                                     <TextBlock Text="{DynamicResource Str.Reg.ConfirmPasswordLabel}"
                                                Style="{StaticResource FieldLabelTextStyle}" />
-                                    <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding RegConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <views:RevealPasswordBox Password="{Binding RegConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
                             </Grid>
 
@@ -620,15 +616,13 @@
 
                                 <TextBlock Text="{DynamicResource Str.Forgot.NewPasswordLabel}"
                                            Style="{StaticResource FieldLabelTextStyle}" />
-                                <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                             helpers:PasswordBoxAssistant.BoundPassword="{Binding ForgotNewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                             Margin="0,0,0,12" />
+                                <views:RevealPasswordBox Password="{Binding ForgotNewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="0,0,0,12" />
 
                                 <TextBlock Text="{DynamicResource Str.Forgot.ConfirmPasswordLabel}"
                                            Style="{StaticResource FieldLabelTextStyle}" />
-                                <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                             helpers:PasswordBoxAssistant.BoundPassword="{Binding ForgotConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                             Margin="0,0,0,16" />
+                                <views:RevealPasswordBox Password="{Binding ForgotConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="0,0,0,16" />
 
                                 <Button Content="{DynamicResource Str.Forgot.SaveNewPasswordBtn}"
                                         Style="{StaticResource PrimaryButtonStyle}"

@@ -244,14 +244,7 @@ namespace Booktibus.Services
 
         public static bool IsStrongPassword(string password)
         {
-            if (string.IsNullOrEmpty(password) || password.Length < 8)
-            {
-                return false;
-            }
-
-            bool hasLetter = password.Any(char.IsLetter);
-            bool hasDigit = password.Any(char.IsDigit);
-            return hasLetter && hasDigit;
+            return PasswordHasher.IsStrongPassword(password);
         }
 
         private void SeedHashedTestAccounts()

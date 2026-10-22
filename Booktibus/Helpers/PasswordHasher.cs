@@ -61,6 +61,29 @@ namespace Booktibus.Helpers
                 return false;
             }
         }
+
+        /// <summary>
+        /// Validates that a candidate password strictly complies with the project's security policy:
+        /// - Minimum 8 characters
+        /// - At least one uppercase letter (A-Z)
+        /// - At least one lowercase letter (a-z)
+        /// - At least one numeric digit (0-9)
+        /// - At least one special character (!@#$%^&amp;* etc.)
+        /// </summary>
+        public static bool IsStrongPassword(string? password)
+        {
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+            {
+                return false;
+            }
+
+            bool hasUpper = password.Any(char.IsUpper);
+            bool hasLower = password.Any(char.IsLower);
+            bool hasDigit = password.Any(char.IsDigit);
+            bool hasSpecial = password.Any(ch => !char.IsLetterOrDigit(ch) && !char.IsWhiteSpace(ch));
+
+            return hasUpper && hasLower && hasDigit && hasSpecial;
+        }
     }
 }
 

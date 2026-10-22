@@ -1108,8 +1108,8 @@ namespace Booktibus.Services
             if (!IsStrongPassword(request.Password))
             {
                 return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
-                    ? "Mật khẩu phải có tối thiểu 8 ký tự, bao gồm cả chữ cái và chữ số."
-                    : "Password must be at least 8 characters and contain both letters and digits.");
+                    ? "Mật khẩu phải có tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt."
+                    : "Password must be at least 8 characters and include uppercase, lowercase, digits, and special characters.");
             }
 
             if (!string.Equals(request.Password, request.ConfirmPassword, StringComparison.Ordinal))
@@ -1434,8 +1434,8 @@ namespace Booktibus.Services
             if (!IsStrongPassword(newPassword))
             {
                 return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
-                    ? "Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm cả chữ cái và chữ số (Không dùng mật khẩu mặc định cố định)."
-                    : "New password must be at least 8 characters and include both letters and digits (No hardcoded default passwords).");
+                    ? "Mật khẩu mới phải có tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt (Không dùng mật khẩu mặc định cố định)."
+                    : "New password must be at least 8 characters and include uppercase, lowercase, digits, and special characters (No hardcoded default passwords).");
             }
 
             if (!string.Equals(newPassword, confirmPassword, StringComparison.Ordinal))
@@ -1767,12 +1767,7 @@ namespace Booktibus.Services
 
         private static bool IsStrongPassword(string password)
         {
-            if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
-            {
-                return false;
-            }
-
-            return password.Any(char.IsLetter) && password.Any(char.IsDigit);
+            return PasswordHasher.IsStrongPassword(password);
         }
 
         private static StaffBorrowRecordItemModel MapStaffBorrowRecord(SqlDataReader reader)

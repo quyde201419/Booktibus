@@ -75,19 +75,19 @@ try
         Username = userReader1,
         FullName = "Độc giả Fines 1",
         Email = sharedEmail,
-        Password = "ReaderPass123",
-        ConfirmPassword = "ReaderPass123"
+        Password = "ReaderPass123!",
+        ConfirmPassword = "ReaderPass123!"
     });
     var reg2 = sqlAuthService.RegisterReader(new ReaderRegistrationRequest
     {
         Username = userReader2,
         FullName = "Độc giả Fines 2",
         Email = sharedEmail,
-        Password = "ReaderPass123",
-        ConfirmPassword = "ReaderPass123"
+        Password = "ReaderPass123!",
+        ConfirmPassword = "ReaderPass123!"
     });
-    reader1UserId = sqlAuthService.Authenticate(userReader1, "ReaderPass123").Session!.UserId;
-    reader2UserId = sqlAuthService.Authenticate(userReader2, "ReaderPass123").Session!.UserId;
+    reader1UserId = sqlAuthService.Authenticate(userReader1, "ReaderPass123!").Session!.UserId;
+    reader2UserId = sqlAuthService.Authenticate(userReader2, "ReaderPass123!").Session!.UserId;
 
     // Login as Admin to create Librarian & books
     sessionService.StartSession(new UserSession
@@ -104,10 +104,10 @@ try
         FullName = "Thủ thư Fines",
         Email = sharedEmail,
         Role = "Librarian",
-        Password = "LibPassword123",
-        ConfirmPassword = "LibPassword123"
+        Password = "LibPassword123!",
+        ConfirmPassword = "LibPassword123!"
     });
-    libUserId = sqlAuthService.Authenticate(userLib, "LibPassword123").Session!.UserId;
+    libUserId = sqlAuthService.Authenticate(userLib, "LibPassword123!").Session!.UserId;
 
     var b1Res = staffService.CreateBook(new BookUpsertRequest
     {
@@ -467,6 +467,65 @@ using (SqlConnection verifyConn = new(DatabaseConfig.GetConnectionString()))
         finalUserCount == initialUserCount && finalBookCount == initialBookCount && existingCoreUsers == 4,
         $"Users={finalUserCount}/{initialUserCount}, Books={finalBookCount}/{initialBookCount}, CoreActiveUsers={existingCoreUsers}/4");
 }
+
+// =========================================================================
+// SCENARIO 14: QUY TẮC BẢO MẬT MẬT KHẨU MỚI (TỐI THIỂU 8 KÝ TỰ, CHỮ HOA, CHỮ SỐ, ĐẶC BIỆT)
+// =========================================================================
+Console.WriteLine("\n--- [14] QUY ĐỊNH BẢO MẬT MẬT KHẨU (MIN 8, CHỮ HOA, CHỮ SỐ, KÝ TỰ ĐẶC BIỆT) ---");
+bool rejectShort = !PasswordHasher.IsStrongPassword("Sh1!");
+bool rejectNoUpper = !PasswordHasher.IsStrongPassword("lowercase123!");
+bool rejectNoLower = !PasswordHasher.IsStrongPassword("UPPERCASE123!");
+bool rejectNoDigit = !PasswordHasher.IsStrongPassword("NoDigitPassword!");
+bool rejectNoSpecial = !PasswordHasher.IsStrongPassword("NoSpecialChar123");
+bool acceptStrong1 = PasswordHasher.IsStrongPassword("Password123!");
+bool acceptStrong2 = PasswordHasher.IsStrongPassword("Admin@Booktibus#2026");
+
+AssertCheck("Quy tắc mật khẩu kiểm tra đủ: tối thiểu 8 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt",
+    rejectShort && rejectNoUpper && rejectNoLower && rejectNoDigit && rejectNoSpecial && acceptStrong1 && acceptStrong2,
+    $"Short={rejectShort}, NoUpper={rejectNoUpper}, NoLower={rejectNoLower}, NoDigit={rejectNoDigit}, NoSpecial={rejectNoSpecial}, Strong1={acceptStrong1}, Strong2={acceptStrong2}");
+
+// Kiểm tra tầng dịch vụ từ chối đăng ký độc giả nếu mật khẩu thiếu ký tự đặc biệt
+var weakRegRes = sqlAuthService.RegisterReader(new ReaderRegistrationRequest
+{
+    Username = $"weak_usr_{DateTime.UtcNow.Ticks.ToString()[^5..]}",
+    FullName = "Độc giả Weak Password",
+    Email = "weakpwd@booktibus.test",
+    Password = "WeakPassword123", // Không có ký tự đặc biệt
+    ConfirmPassword = "WeakPassword123"
+});
+AssertCheck("SqlAuthenticationService.RegisterReader từ chối mật khẩu không có ký tự đặc biệt (WeakPassword)",
+    !weakRegRes.IsSuccess && weakRegRes.FailureReason == RegistrationFailureReason.WeakPassword,
+    $"IsSuccess={weakRegRes.IsSuccess}, FailureReason={weakRegRes.FailureReason}");
+
+// =========================================================================
+// SCENARIO 15: KIỂM TRA KHỞI TẠO XAML VÀ RESOURCE CỦA FINESVIEW VÀ REVEALPASSWORDBOX
+// =========================================================================
+Console.WriteLine("\n--- [15] KHỞI TẠO XAML VÀ RESOURCE CỦA FINESVIEW VÀ REVEALPASSWORDBOX ---");
+Exception? xamlInitEx = null;
+Thread staThread = new(() =>
+{
+    try
+    {
+        if (System.Windows.Application.Current == null)
+        {
+            var app = new Booktibus.App();
+            app.InitializeComponent();
+        }
+        var finesView = new Booktibus.Views.FinesView();
+        var revealPwd = new Booktibus.Views.RevealPasswordBox();
+    }
+    catch (Exception ex)
+    {
+        xamlInitEx = ex;
+    }
+});
+staThread.SetApartmentState(ApartmentState.STA);
+staThread.Start();
+staThread.Join();
+
+AssertCheck("FinesView và RevealPasswordBox khởi tạo thành công không phát sinh XamlParseException",
+    xamlInitEx == null,
+    xamlInitEx == null ? "InitializeComponent thành công, tất cả StaticResource hợp lệ." : $"Lỗi: {xamlInitEx.ToString()}");
 
 Console.WriteLine("\n======================================================================");
 Console.WriteLine($"KẾT QUẢ KIỂM THỬ: {passedTests} PASSED, {failedTests} FAILED");

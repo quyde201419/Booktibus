@@ -537,10 +537,21 @@ namespace Booktibus.ViewModels
                 ForgotConfirmPassword = string.Empty;
                 ForgotStep = ForgotPasswordStep.VerifyOtp;
 
-                // Anti-enumeration message: identical whether the username exists or not
-                InfoMessage = LocalizationService.IsVietnamese
-                    ? "Nếu tài khoản tồn tại và có địa chỉ email hợp lệ, hệ thống đã gửi mã xác thực OTP (6 chữ số, hiệu lực 5 phút) tới email đăng ký của tài khoản đó. Vui lòng nhập mã OTP bên dưới."
-                    : "If the account exists and has a valid registered email address, a 6-digit OTP code (valid for 5 minutes) has been sent to its registered email. Please enter the OTP code below.";
+                if (IsEmailSimulationMode)
+                {
+                    IsSimulatedInboxExpanded = true;
+                    OnPropertyChanged(nameof(IsSimulatedInboxExpanded));
+                    InfoMessage = LocalizationService.IsVietnamese
+                        ? "Hệ thống đang ở Chế độ Giả lập Email (môi trường Dev, chưa cấu hình SMTP thật). Mã OTP 6 chữ số đã được tạo và hiển thị ngay tại khung 'Hộp thư Email Giả lập' màu vàng bên dưới! Hãy sao chép mã OTP để xác thực."
+                        : "System is in Simulated Email Mode (Dev environment, live SMTP not configured). Your 6-digit OTP code has been generated and displayed in the 'Simulated Email Sandbox' box below! Please copy the OTP code to verify.";
+                }
+                else
+                {
+                    // Anti-enumeration message: identical whether the username exists or not
+                    InfoMessage = LocalizationService.IsVietnamese
+                        ? "Nếu tài khoản tồn tại và có địa chỉ email hợp lệ, hệ thống đã gửi mã xác thực OTP (6 chữ số, hiệu lực 5 phút) tới email đăng ký của tài khoản đó. Vui lòng nhập mã OTP bên dưới."
+                        : "If the account exists and has a valid registered email address, a 6-digit OTP code (valid for 5 minutes) has been sent to its registered email. Please enter the OTP code below.";
+                }
                 return;
             }
 
@@ -670,8 +681,8 @@ namespace Booktibus.ViewModels
 
                 case PasswordResetFailureReason.WeakPassword:
                     ErrorMessage = LocalizationService.IsVietnamese
-                        ? "Mật khẩu mới chưa đủ mạnh: Cần tối thiểu 8 ký tự, bao gồm cả chữ cái và chữ số."
-                        : "New password is too weak: Must be at least 8 characters and include both letters and digits.";
+                        ? "Mật khẩu mới chưa đủ mạnh: Cần tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt."
+                        : "New password is too weak: Must be at least 8 characters and include uppercase, lowercase, digits, and special characters.";
                     break;
 
                 case PasswordResetFailureReason.PasswordConfirmationMismatch:
@@ -831,8 +842,8 @@ namespace Booktibus.ViewModels
 
                 case RegistrationFailureReason.WeakPassword:
                     ErrorMessage = LocalizationService.IsVietnamese
-                        ? "Mật khẩu chưa đủ mạnh: Cần tối thiểu 8 ký tự, bao gồm cả chữ cái và chữ số."
-                        : "Password is too weak: Must be at least 8 characters and include both letters and digits.";
+                        ? "Mật khẩu chưa đủ mạnh: Cần tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt."
+                        : "Password is too weak: Must be at least 8 characters and include uppercase, lowercase, digits, and special characters.";
                     break;
 
                 case RegistrationFailureReason.PasswordConfirmationMismatch:

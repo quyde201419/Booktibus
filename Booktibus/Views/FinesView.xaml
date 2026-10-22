@@ -4,10 +4,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
+             xmlns:converters="clr-namespace:Booktibus.Converters"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:FinesViewModel}"
              d:DesignHeight="850"
              d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
 
     <Grid>
         <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -86,7 +91,7 @@
 
                     <!-- Card 1: Recorded Unpaid Fines -->
                     <Border Grid.Column="0"
-                            Style="{StaticResource PremiumCardBorderStyle}"
+                            Style="{StaticResource CardBorderStyle}"
                             Background="#FFFDF0F0"
                             BorderBrush="#FFDE9A9A">
                         <StackPanel>
@@ -107,7 +112,7 @@
 
                     <!-- Card 2: Estimated Overdue Fines -->
                     <Border Grid.Column="2"
-                            Style="{StaticResource PremiumCardBorderStyle}"
+                            Style="{StaticResource CardBorderStyle}"
                             Background="#FFFFFBF0"
                             BorderBrush="#FFE3C36B">
                         <StackPanel>
@@ -128,8 +133,8 @@
 
                     <!-- Card 3: Total Outstanding (Recorded + Estimated) -->
                     <Border Grid.Column="4"
-                            Style="{StaticResource PremiumCardBorderStyle}"
-                            Background="{StaticResource Brush.Background.Input}">
+                            Style="{StaticResource CardBorderStyle}"
+                            Background="{StaticResource Brush.Background.Subtle}">
                         <StackPanel>
                             <TextBlock Text="TỔNG NGHĨA VỤ PHẠT TÍCH LŨY"
                                        FontSize="11"
@@ -148,7 +153,7 @@
 
                     <!-- Card 4: Rate & Waived/Paid Info -->
                     <Border Grid.Column="6"
-                            Style="{StaticResource PremiumCardBorderStyle}"
+                            Style="{StaticResource CardBorderStyle}"
                             Background="#FFF3F8F5"
                             BorderBrush="#FFA3D5B9">
                         <StackPanel>
@@ -169,7 +174,7 @@
                 </Grid>
 
                 <!-- 3. SEARCH & FILTER TOOLBAR (FOR STAFF) -->
-                <Border Style="{StaticResource PremiumCardBorderStyle}"
+                <Border Style="{StaticResource CardBorderStyle}"
                         Visibility="{Binding IsStaffMode, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Margin="0,0,0,16">
                     <Grid>
@@ -183,14 +188,14 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Tìm kiếm khoản phạt (Mã phiếu, Mã phạt, Độc giả, Tên sách):"
-                                       Style="{StaticResource FormLabelStyle}" />
+                                       Style="{StaticResource FieldLabelTextStyle}" />
                             <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource FormTextBoxStyle}" />
+                                     Style="{StaticResource StandardTextBoxStyle}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Lọc trạng thái khoản phạt:"
-                                       Style="{StaticResource FormLabelStyle}" />
+                                       Style="{StaticResource FieldLabelTextStyle}" />
                             <ComboBox SelectedValue="{Binding SelectedStatusFilter}"
                                       SelectedValuePath="Tag"
                                       Height="36">
@@ -212,7 +217,7 @@
                 </Border>
 
                 <!-- 4. MAIN FINES LIST TABLE -->
-                <Border Style="{StaticResource PremiumCardBorderStyle}"
+                <Border Style="{StaticResource CardBorderStyle}"
                         Margin="0,0,0,20">
                     <StackPanel>
                         <Grid Margin="0,0,0,12">
@@ -237,7 +242,7 @@
                                   HeadersVisibility="Column"
                                   Background="Transparent"
                                   BorderThickness="1"
-                                  BorderBrush="{StaticResource Brush.Border.Main}">
+                                  BorderBrush="{StaticResource Brush.Border.Subtle}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Mã phạt" Binding="{Binding FineCode}" Width="110" />
                                 <DataGridTextColumn Header="Phiếu mượn" Binding="{Binding BorrowRecordCode}" Width="100" />
@@ -269,7 +274,7 @@
                 </Border>
 
                 <!-- 5. SELECTED FINE DETAILS & ACTION PANEL -->
-                <Border Style="{StaticResource PremiumCardBorderStyle}"
+                <Border Style="{StaticResource CardBorderStyle}"
                         Visibility="{Binding HasSelectedFine, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Background="#FFFBFDFE">
                     <StackPanel>
@@ -281,7 +286,7 @@
 
                         <!-- Explanation banner -->
                         <Border Background="{StaticResource Brush.Background.App}"
-                                BorderBrush="{StaticResource Brush.Border.Main}"
+                                BorderBrush="{StaticResource Brush.Border.Subtle}"
                                 BorderThickness="1"
                                 CornerRadius="6"
                                 Padding="14,10"
@@ -307,7 +312,7 @@
 
                             <!-- Confirm provisional overdue fine -->
                             <Button Content="Xác nhận Ghi nhận Phạt"
-                                    Style="{StaticResource PrimaryActionButtonStyle}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
                                     Command="{Binding ConfirmOverdueFineCommand}"
                                     Visibility="{Binding SelectedFine.CanBeConfirmed, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     Margin="0,0,10,0" />
@@ -345,7 +350,7 @@
         <!-- 1. ADJUST FINE MODAL -->
         <Border Background="#80000000"
                 Visibility="{Binding IsAdjustDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border Style="{StaticResource PremiumCardBorderStyle}"
+            <Border Style="{StaticResource CardBorderStyle}"
                     Width="460"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center">
@@ -357,15 +362,15 @@
                                Margin="0,0,0,12" />
 
                     <TextBlock Text="Số tiền phạt mới (VNĐ) (*):"
-                               Style="{StaticResource FormLabelStyle}" />
+                               Style="{StaticResource FieldLabelTextStyle}" />
                     <TextBox Text="{Binding AdjustAmountInput, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource FormTextBoxStyle}"
+                             Style="{StaticResource StandardTextBoxStyle}"
                              Margin="0,0,0,12" />
 
                     <TextBlock Text="Lý do điều chỉnh (Bắt buộc) (*):"
-                               Style="{StaticResource FormLabelStyle}" />
+                               Style="{StaticResource FieldLabelTextStyle}" />
                     <TextBox Text="{Binding AdjustReasonInput, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource FormTextBoxStyle}"
+                             Style="{StaticResource StandardTextBoxStyle}"
                              Height="60"
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
@@ -377,7 +382,7 @@
                                 Command="{Binding CloseAdjustDialogCommand}"
                                 Margin="0,0,10,0" />
                         <Button Content="Lưu Điều Chỉnh"
-                                Style="{StaticResource PrimaryActionButtonStyle}"
+                                Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding SubmitAdjustCommand}" />
                     </StackPanel>
                 </StackPanel>
@@ -387,7 +392,7 @@
         <!-- 2. WAIVE FINE MODAL -->
         <Border Background="#80000000"
                 Visibility="{Binding IsWaiveDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border Style="{StaticResource PremiumCardBorderStyle}"
+            <Border Style="{StaticResource CardBorderStyle}"
                     Width="460"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center">
@@ -399,9 +404,9 @@
                                Margin="0,0,0,12" />
 
                     <TextBlock Text="Lý do miễn phạt (Bắt buộc theo quy chế thư viện) (*):"
-                               Style="{StaticResource FormLabelStyle}" />
+                               Style="{StaticResource FieldLabelTextStyle}" />
                     <TextBox Text="{Binding WaiveReasonInput, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource FormTextBoxStyle}"
+                             Style="{StaticResource StandardTextBoxStyle}"
                              Height="70"
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
@@ -413,7 +418,7 @@
                                 Command="{Binding CloseWaiveDialogCommand}"
                                 Margin="0,0,10,0" />
                         <Button Content="Xác Nhận Miễn Phạt"
-                                Style="{StaticResource PrimaryActionButtonStyle}"
+                                Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding SubmitWaiveCommand}" />
                     </StackPanel>
                 </StackPanel>
@@ -423,7 +428,7 @@
         <!-- 3. CONFIG RATE MODAL (ADMIN ONLY) -->
         <Border Background="#80000000"
                 Visibility="{Binding IsRateDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border Style="{StaticResource PremiumCardBorderStyle}"
+            <Border Style="{StaticResource CardBorderStyle}"
                     Width="440"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center">
@@ -435,9 +440,9 @@
                                Margin="0,0,0,12" />
 
                     <TextBlock Text="Mức phạt mặc định (VNĐ / cuốn sách / ngày quá hạn) (*):"
-                               Style="{StaticResource FormLabelStyle}" />
+                               Style="{StaticResource FieldLabelTextStyle}" />
                     <TextBox Text="{Binding NewRateInput, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource FormTextBoxStyle}"
+                             Style="{StaticResource StandardTextBoxStyle}"
                              Margin="0,0,0,16" />
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -446,7 +451,7 @@
                                 Command="{Binding CloseRateDialogCommand}"
                                 Margin="0,0,10,0" />
                         <Button Content="Lưu Cấu Hình"
-                                Style="{StaticResource PrimaryActionButtonStyle}"
+                                Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding SubmitRateUpdateCommand}" />
                     </StackPanel>
                 </StackPanel>
@@ -456,7 +461,7 @@
         <!-- 4. AUDIT LOGS MODAL -->
         <Border Background="#80000000"
                 Visibility="{Binding IsAuditLogsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border Style="{StaticResource PremiumCardBorderStyle}"
+            <Border Style="{StaticResource CardBorderStyle}"
                     Width="600"
                     MaxHeight="450"
                     VerticalAlignment="Center"

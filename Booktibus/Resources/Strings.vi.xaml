@@ -8,6 +8,8 @@
     <sys:String x:Key="Str.AppTagline">HỆ THỐNG QUẢN LÝ THƯ VIỆN</sys:String>
     <sys:String x:Key="Str.CurrentLangBadge">VI • Tiếng Việt</sys:String>
     <sys:String x:Key="Str.SwitchLanguageBtn">EN • English</sys:String>
+    <sys:String x:Key="Str.Common.ShowPasswordTooltip">Hiện mật khẩu</sys:String>
+    <sys:String x:Key="Str.Common.HidePasswordTooltip">Ẩn mật khẩu</sys:String>
 
     <!-- Stage 4: Login & Registration View Strings -->
     <sys:String x:Key="Str.Login.BrandHeadline">Không gian Tri thức &amp; Quản trị Thư viện Chuyên nghiệp</sys:String>
@@ -42,7 +44,7 @@
     <sys:String x:Key="Str.Reg.UsernameLabel">Tên đăng nhập (*, tối thiểu 4 ký tự chữ/số):</sys:String>
     <sys:String x:Key="Str.Reg.EmailLabel">Địa chỉ Email (*):</sys:String>
     <sys:String x:Key="Str.Reg.PhoneLabel">Số điện thoại (Tùy chọn):</sys:String>
-    <sys:String x:Key="Str.Reg.PasswordLabel">Mật khẩu (*, tối thiểu 8 ký tự gồm cả chữ và số):</sys:String>
+    <sys:String x:Key="Str.Reg.PasswordLabel">Mật khẩu (*, tối thiểu 8 ký tự, gồm chữ hoa, số &amp; ký tự đặc biệt):</sys:String>
     <sys:String x:Key="Str.Reg.ConfirmPasswordLabel">Xác nhận lại mật khẩu (*):</sys:String>
     <sys:String x:Key="Str.Reg.SubmitBtn">Hoàn tất Đăng ký Độc giả</sys:String>
 
@@ -76,7 +78,7 @@
     <sys:String x:Key="Str.Nav.BorrowingReturns">Mượn &amp; Trả sách (Borrowing &amp; Returns)</sys:String>
     <sys:String x:Key="Str.Nav.Fines">Tiền phạt (Fines)</sys:String>
     <sys:String x:Key="Str.Nav.Reports">Báo cáo thống kê (Reports)</sys:String>
-    <sys:String x:Key="Str.Nav.Settings">Cài đặt hệ thống (Settings)</sys:String>
+    <sys:String x:Key="Str.Nav.Settings">Quản lý tài khoản (Account Management)</sys:String>
     <sys:String x:Key="Str.Nav.Favorites">Sách yêu thích (Favorites)</sys:String>
     <sys:String x:Key="Str.Nav.ReaderProfile">Hồ sơ cá nhân (My Profile)</sys:String>
     <sys:String x:Key="Str.Sidebar.RoleFilterLabel">CHẾ ĐỘ XEM MENU THEO VAI TRÒ</sys:String>
@@ -290,7 +292,7 @@
     <sys:String x:Key="Str.AdminUser.BtnApplyRole">Áp dụng Vai trò</sys:String>
     <sys:String x:Key="Str.AdminUser.BtnUnlock">Gỡ khóa 15 phút (Reset Lockout)</sys:String>
     <sys:String x:Key="Str.AdminUser.ResetPwdTitle">Đặt lại Mật khẩu Bảo mật (PBKDF2-SHA256)</sys:String>
-    <sys:String x:Key="Str.AdminUser.LblNewPwd">Mật khẩu mới (*, tối thiểu 8 ký tự chữ + số):</sys:String>
+    <sys:String x:Key="Str.AdminUser.LblNewPwd">Mật khẩu mới (*, tối thiểu 8 ký tự, gồm chữ hoa, số &amp; ký tự đặc biệt):</sys:String>
     <sys:String x:Key="Str.AdminUser.LblConfirmPwd">Xác nhận mật khẩu mới (*):</sys:String>
     <sys:String x:Key="Str.AdminUser.BtnResetPwd">Cập nhật Mật khẩu Mới</sys:String>
 
@@ -327,7 +329,7 @@
     <sys:String x:Key="Str.Forgot.VerifyOtpBtn">Xác Minh Mã OTP</sys:String>
     <sys:String x:Key="Str.Forgot.ResendOtpBtn">Gửi lại mã OTP</sys:String>
     <sys:String x:Key="Str.Forgot.ChangeUsernameBtn">Đổi tên đăng nhập</sys:String>
-    <sys:String x:Key="Str.Forgot.NewPasswordLabel">Mật khẩu mới (*, tối thiểu 8 ký tự gồm chữ và số):</sys:String>
+    <sys:String x:Key="Str.Forgot.NewPasswordLabel">Mật khẩu mới (*, tối thiểu 8 ký tự, gồm chữ hoa, số &amp; ký tự đặc biệt):</sys:String>
     <sys:String x:Key="Str.Forgot.ConfirmPasswordLabel">Xác nhận mật khẩu mới (*):</sys:String>
     <sys:String x:Key="Str.Forgot.SaveNewPasswordBtn">Xác Nhận Đặt Lại Mật Khẩu</sys:String>
     <sys:String x:Key="Str.Forgot.BackToSignInBtn">← Quay lại màn hình Đăng nhập</sys:String>

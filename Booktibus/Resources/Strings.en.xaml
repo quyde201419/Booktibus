@@ -8,6 +8,8 @@
     <sys:String x:Key="Str.AppTagline">LIBRARY MANAGEMENT SYSTEM</sys:String>
     <sys:String x:Key="Str.CurrentLangBadge">EN • English</sys:String>
     <sys:String x:Key="Str.SwitchLanguageBtn">VI • Tiếng Việt</sys:String>
+    <sys:String x:Key="Str.Common.ShowPasswordTooltip">Show password</sys:String>
+    <sys:String x:Key="Str.Common.HidePasswordTooltip">Hide password</sys:String>
 
     <!-- Stage 4: Login & Registration View Strings -->
     <sys:String x:Key="Str.Login.BrandHeadline">Elegant Knowledge &amp; Library Administration Platform</sys:String>
@@ -42,7 +44,7 @@
     <sys:String x:Key="Str.Reg.UsernameLabel">Username (*, min 4 alphanumeric characters):</sys:String>
     <sys:String x:Key="Str.Reg.EmailLabel">Email Address (*):</sys:String>
     <sys:String x:Key="Str.Reg.PhoneLabel">Phone Number (Optional):</sys:String>
-    <sys:String x:Key="Str.Reg.PasswordLabel">Password (*, min 8 chars with letters &amp; digits):</sys:String>
+    <sys:String x:Key="Str.Reg.PasswordLabel">Password (*, min 8 chars with uppercase, digits &amp; special chars):</sys:String>
     <sys:String x:Key="Str.Reg.ConfirmPasswordLabel">Confirm Password (*):</sys:String>
     <sys:String x:Key="Str.Reg.SubmitBtn">Complete Reader Registration</sys:String>
 
@@ -76,7 +78,7 @@
     <sys:String x:Key="Str.Nav.BorrowingReturns">Borrowing &amp; Returns</sys:String>
     <sys:String x:Key="Str.Nav.Fines">Overdue &amp; Fines</sys:String>
     <sys:String x:Key="Str.Nav.Reports">Reports &amp; Analytics</sys:String>
-    <sys:String x:Key="Str.Nav.Settings">System Settings</sys:String>
+    <sys:String x:Key="Str.Nav.Settings">Account Management</sys:String>
     <sys:String x:Key="Str.Nav.Favorites">Favorite Books</sys:String>
     <sys:String x:Key="Str.Nav.ReaderProfile">My Reader Profile</sys:String>
     <sys:String x:Key="Str.Sidebar.RoleFilterLabel">ROLE MENU PREVIEW MODE</sys:String>
@@ -290,7 +292,7 @@
     <sys:String x:Key="Str.AdminUser.BtnApplyRole">Apply Role</sys:String>
     <sys:String x:Key="Str.AdminUser.BtnUnlock">Clear 15-Min Lockout</sys:String>
     <sys:String x:Key="Str.AdminUser.ResetPwdTitle">Secure Password Reset (PBKDF2-SHA256)</sys:String>
-    <sys:String x:Key="Str.AdminUser.LblNewPwd">New Password (*, min 8 chars with letters + digits):</sys:String>
+    <sys:String x:Key="Str.AdminUser.LblNewPwd">New Password (*, min 8 chars with uppercase, digits &amp; special chars):</sys:String>
     <sys:String x:Key="Str.AdminUser.LblConfirmPwd">Confirm New Password (*):</sys:String>
     <sys:String x:Key="Str.AdminUser.BtnResetPwd">Update Password</sys:String>
 
@@ -327,7 +329,7 @@
     <sys:String x:Key="Str.Forgot.VerifyOtpBtn">Verify OTP Code</sys:String>
     <sys:String x:Key="Str.Forgot.ResendOtpBtn">Resend OTP Code</sys:String>
     <sys:String x:Key="Str.Forgot.ChangeUsernameBtn">Change Username</sys:String>
-    <sys:String x:Key="Str.Forgot.NewPasswordLabel">New Password (*, min 8 chars with letters &amp; digits):</sys:String>
+    <sys:String x:Key="Str.Forgot.NewPasswordLabel">New Password (*, min 8 chars with uppercase, digits &amp; special chars):</sys:String>
     <sys:String x:Key="Str.Forgot.ConfirmPasswordLabel">Confirm New Password (*):</sys:String>
     <sys:String x:Key="Str.Forgot.SaveNewPasswordBtn">Confirm Password Reset</sys:String>
     <sys:String x:Key="Str.Forgot.BackToSignInBtn">← Back to Sign In</sys:String>

@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
              xmlns:helpers="clr-namespace:Booktibus.Helpers"
+             xmlns:views="clr-namespace:Booktibus.Views"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:AdminAccountManagementViewModel}"
              d:DesignWidth="1120"
@@ -214,15 +215,13 @@
 
                         <TextBlock Text="{DynamicResource Str.AdminUser.LblNewPwd}"
                                    Style="{StaticResource FieldLabelTextStyle}" />
-                        <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                     helpers:PasswordBoxAssistant.BoundPassword="{Binding ResetPasswordInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,0,0,10" />
+                        <views:RevealPasswordBox Password="{Binding ResetPasswordInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Margin="0,0,0,10" />
 
                         <TextBlock Text="{DynamicResource Str.AdminUser.LblConfirmPwd}"
                                    Style="{StaticResource FieldLabelTextStyle}" />
-                        <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                     helpers:PasswordBoxAssistant.BoundPassword="{Binding ResetConfirmPasswordInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,0,0,12" />
+                        <views:RevealPasswordBox Password="{Binding ResetConfirmPasswordInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Margin="0,0,0,12" />
 
                         <Button Content="{DynamicResource Str.AdminUser.BtnResetPwd}"
                                 Command="{Binding ResetPasswordCommand}"
@@ -284,15 +283,13 @@
                         <StackPanel Grid.Row="2" Grid.Column="2">
                             <TextBlock Text="{DynamicResource Str.AdminUser.LblNewPwd}"
                                        Style="{StaticResource FieldLabelTextStyle}" />
-                            <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                         helpers:PasswordBoxAssistant.BoundPassword="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <views:RevealPasswordBox Password="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="2" Grid.Column="4">
                             <TextBlock Text="{DynamicResource Str.AdminUser.LblConfirmPwd}"
                                        Style="{StaticResource FieldLabelTextStyle}" />
-                            <PasswordBox helpers:PasswordBoxAssistant.BindPassword="True"
-                                         helpers:PasswordBoxAssistant.BoundPassword="{Binding NewConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <views:RevealPasswordBox Password="{Binding NewConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="5" Orientation="Horizontal">
