@@ -237,7 +237,9 @@ Khi khởi chạy ứng dụng trên một database mới chưa có tài khoản
 | **Độc giả 1** | `quy123` | `Password123!` | `quy@gmail.com` | `LIB-2026-0001` | Tài khoản độc giả mẫu |
 | **Độc giả 2** | `quy456` | `Password123!` | `quy@gmail.com` | `LIB-2026-0002` | Minh họa **dùng chung email** với `quy123` |
 | **Độc giả 3** | `user123` | `Password123!` | `user123@gmail.com` | `LIB-2026-0003` | Tài khoản độc giả độc lập |
-| **Quản trị viên** | `Admin` | *(Thiết lập khi khởi tạo)* | `admin@booktibus.com` | — | Toàn quyền cấu hình & tài khoản |
+| **Quản trị viên** | `Admin` | *Admin@123!* | `admin@booktibus.com` | — | Toàn quyền cấu hình & tài khoản |
+| **Librarian** | `Librarian` | *Libra@123!* | `admin@booktibus.com` | — | Thủ thư |
+
 
 ---
 
