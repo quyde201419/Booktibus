@@ -41,6 +41,10 @@ namespace Booktibus.ViewModels
         private bool _isWaiveDialogOpen;
         private string _waiveReasonInput = string.Empty;
 
+        private bool _isPayDialogOpen;
+        private string _selectedPaymentMethod = "Tiền mặt";
+        private string _payNotesInput = string.Empty;
+
         private bool _isRateDialogOpen;
         private string _newRateInput = "5000";
 
@@ -70,10 +74,18 @@ namespace Booktibus.ViewModels
 
             FinesList = new ObservableCollection<FineItemModel>();
             AuditLogsList = new ObservableCollection<FineAuditLogItemModel>();
+            PaymentMethodOptions = new ObservableCollection<string>
+            {
+                "Tiền mặt",
+                "Chuyển khoản"
+            };
 
             RefreshCommand = new RelayCommand(LoadFines);
             ClearFiltersCommand = new RelayCommand(ExecuteClearFilters);
             ConfirmOverdueFineCommand = new RelayCommand(ExecuteConfirmOverdueFine, () => SelectedFine?.CanBeConfirmed == true && IsStaffMode);
+            OpenPayDialogCommand = new RelayCommand(ExecuteOpenPayDialog, () => SelectedFine?.CanBePaid == true && IsStaffMode);
+            SubmitPayCommand = new RelayCommand(ExecuteSubmitPay);
+            ClosePayDialogCommand = new RelayCommand(() => IsPayDialogOpen = false);
             OpenAdjustDialogCommand = new RelayCommand(ExecuteOpenAdjustDialog, () => SelectedFine?.CanBeAdjustedOrWaived == true && IsStaffMode);
             SubmitAdjustCommand = new RelayCommand(ExecuteSubmitAdjust);
             CloseAdjustDialogCommand = new RelayCommand(() => IsAdjustDialogOpen = false);
@@ -94,6 +106,8 @@ namespace Booktibus.ViewModels
         public ObservableCollection<FineItemModel> FinesList { get; }
 
         public ObservableCollection<FineAuditLogItemModel> AuditLogsList { get; }
+
+        public ObservableCollection<string> PaymentMethodOptions { get; }
 
         public bool IsReaderMode => _sessionService.CurrentSession?.Role == UserRole.Reader;
 
@@ -214,6 +228,24 @@ namespace Booktibus.ViewModels
             set => SetProperty(ref _waiveReasonInput, value);
         }
 
+        public bool IsPayDialogOpen
+        {
+            get => _isPayDialogOpen;
+            set => SetProperty(ref _isPayDialogOpen, value);
+        }
+
+        public string SelectedPaymentMethod
+        {
+            get => _selectedPaymentMethod;
+            set => SetProperty(ref _selectedPaymentMethod, value);
+        }
+
+        public string PayNotesInput
+        {
+            get => _payNotesInput;
+            set => SetProperty(ref _payNotesInput, value);
+        }
+
         public bool IsRateDialogOpen
         {
             get => _isRateDialogOpen;
@@ -253,6 +285,9 @@ namespace Booktibus.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand ClearFiltersCommand { get; }
         public ICommand ConfirmOverdueFineCommand { get; }
+        public ICommand OpenPayDialogCommand { get; }
+        public ICommand SubmitPayCommand { get; }
+        public ICommand ClosePayDialogCommand { get; }
         public ICommand OpenAdjustDialogCommand { get; }
         public ICommand SubmitAdjustCommand { get; }
         public ICommand CloseAdjustDialogCommand { get; }
@@ -423,6 +458,43 @@ namespace Booktibus.ViewModels
             if (result.IsSuccess)
             {
                 IsWaiveDialogOpen = false;
+                SetFeedback(result.Message, isError: false);
+                _statusFeedbackCallback(result.Message);
+                LoadFines();
+            }
+            else
+            {
+                SetFeedback(result.Message, isError: true);
+            }
+        }
+
+        private void ExecuteOpenPayDialog()
+        {
+            if (SelectedFine is null || !SelectedFine.CanBePaid)
+            {
+                return;
+            }
+
+            SelectedPaymentMethod = PaymentMethodOptions.FirstOrDefault() ?? "Tiền mặt";
+            PayNotesInput = string.Empty;
+            IsPayDialogOpen = true;
+        }
+
+        private void ExecuteSubmitPay()
+        {
+            if (SelectedFine is null || !SelectedFine.FineId.HasValue)
+            {
+                return;
+            }
+
+            ServiceOperationResult result = _fineService.MarkFineAsPaid(
+                SelectedFine.FineId.Value,
+                SelectedPaymentMethod,
+                PayNotesInput);
+
+            if (result.IsSuccess)
+            {
+                IsPayDialogOpen = false;
                 SetFeedback(result.Message, isError: false);
                 _statusFeedbackCallback(result.Message);
                 LoadFines();

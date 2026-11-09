@@ -166,6 +166,10 @@
                                        FontWeight="Bold"
                                        Foreground="{StaticResource Brush.PrimaryNavy.Main}"
                                        Margin="0,4,0,4" />
+                            <TextBlock Text="{Binding TotalPaidDisplay, StringFormat='{}Đã thu: {0}'}"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource Brush.Status.Success}" />
                             <TextBlock Text="{Binding TotalWaivedDisplay, StringFormat='{}Đã miễn: {0}'}"
                                        FontSize="11"
                                        Foreground="{StaticResource Brush.Text.Muted}" />
@@ -317,6 +321,13 @@
                                     Visibility="{Binding SelectedFine.CanBeConfirmed, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     Margin="0,0,10,0" />
 
+                            <!-- Collect fine payment (Mark as Paid) -->
+                            <Button Content="Thu tiền phạt"
+                                    Style="{StaticResource TealButtonStyle}"
+                                    Command="{Binding OpenPayDialogCommand}"
+                                    Visibility="{Binding SelectedFine.CanBePaid, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Margin="0,0,10,0" />
+
                             <!-- Adjust fine amount -->
                             <Button Content="Điều chỉnh Số tiền"
                                     Style="{StaticResource SecondaryOutlineButtonStyle}"
@@ -420,6 +431,72 @@
                         <Button Content="Xác Nhận Miễn Phạt"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding SubmitWaiveCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- 2.5. PAY FINE / MARK AS PAID MODAL -->
+        <Border Background="#80000000"
+                Visibility="{Binding IsPayDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Width="480"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="THU TIỀN PHẠT / XÁC NHẬN THANH TOÁN"
+                               FontSize="15"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,10" />
+
+                    <Border Background="{StaticResource Brush.Background.App}"
+                            BorderBrush="{StaticResource Brush.Border.Subtle}"
+                            BorderThickness="1"
+                            CornerRadius="5"
+                            Padding="12,8"
+                            Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}">
+                                <Run Text="Khoản phạt: " />
+                                <Run Text="{Binding SelectedFine.FineCode, Mode=OneWay}" />
+                                <Run Text=" • Độc giả: " />
+                                <Run Text="{Binding SelectedFine.ReaderFullName, Mode=OneWay}" />
+                            </TextBlock>
+                            <TextBlock FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.Status.Danger}"
+                                       Margin="0,4,0,0">
+                                <Run Text="Số tiền cần thu: " />
+                                <Run Text="{Binding SelectedFine.FormattedAmount, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Chọn hình thức thanh toán (*):"
+                               Style="{StaticResource FieldLabelTextStyle}" />
+                    <ComboBox ItemsSource="{Binding PaymentMethodOptions}"
+                              SelectedItem="{Binding SelectedPaymentMethod, Mode=TwoWay}"
+                              Height="36"
+                              Margin="0,0,0,12" />
+
+                    <TextBlock Text="Ghi chú biên lai / Mã giao dịch (Tùy chọn):"
+                               Style="{StaticResource FieldLabelTextStyle}" />
+                    <TextBox Text="{Binding PayNotesInput, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource StandardTextBoxStyle}"
+                             Height="56"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Hủy bỏ"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding ClosePayDialogCommand}"
+                                Margin="0,0,10,0" />
+                        <Button Content="Xác Nhận Đã Thu Tiền"
+                                Style="{StaticResource TealButtonStyle}"
+                                Command="{Binding SubmitPayCommand}" />
                     </StackPanel>
                 </StackPanel>
             </Border>

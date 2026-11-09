@@ -7,9 +7,17 @@ using Booktibus.Services;
 
 namespace Booktibus.ViewModels
 {
+    public class RenewalDaysOptionItem
+    {
+        public int Days { get; init; }
+
+        public string DisplayText { get; init; } = string.Empty;
+    }
+
     /// <summary>
-    /// ViewModel for Borrowing &amp; Return Tracking (Stage 5.4 for Readers)
-    /// and Circulation Checkout &amp; Return Management (Stage 6.3.2 for Librarians &amp; Administrators).
+    /// ViewModel for Borrowing &amp; Return Tracking (Stage 5.4 for Readers),
+    /// Circulation Checkout &amp; Return Management (Stage 6.3.2 for Librarians &amp; Administrators),
+    /// Loan Renewal (+7 / +14 days), and Book Reservation / Hold when AvailableCopies == 0.
     /// </summary>
     public class ReaderBorrowingViewModel : PageViewModelBase
     {
@@ -36,6 +44,14 @@ namespace Booktibus.ViewModels
         private string _staffActionFeedback = string.Empty;
         private bool _isStaffFeedbackSuccess;
 
+        // Loan Renewal Fields
+        private RenewalDaysOptionItem? _selectedRenewalDaysOption;
+
+        // Book Reservation / Hold Fields
+        private BookItemModel? _selectedBookToReserve;
+        private string _reservationNotesInput = string.Empty;
+        private BookReservationItemModel? _selectedReservation;
+
         public ReaderBorrowingViewModel(
             SessionService sessionService,
             AuthorizationService authorizationService,
@@ -60,22 +76,35 @@ namespace Booktibus.ViewModels
             StatusFilterOptions = new ObservableCollection<FilterOptionItem>();
             AvailableReadersForLoan = new ObservableCollection<ReaderDirectoryItemModel>();
             AvailableBooksForLoan = new ObservableCollection<BookItemModel>();
+            RenewalDayOptions = new ObservableCollection<RenewalDaysOptionItem>();
+            OutOfStockBooksForReservation = new ObservableCollection<BookItemModel>();
+            ReservationsList = new ObservableCollection<BookReservationItemModel>();
 
             RefreshCommand = new RelayCommand(ExecuteRefresh);
             StaffSearchCommand = new RelayCommand(ExecuteRefresh);
             BrowseCatalogCommand = new RelayCommand(() => _navigateCallback(NavigationPageKey.Books));
             CreateLoanCommand = new RelayCommand(ExecuteCreateLoan);
             ProcessReturnCommand = new RelayCommand(ExecuteProcessReturn);
+            RenewLoanCommand = new RelayCommand(ExecuteRenewLoan);
+            ReserveBookCommand = new RelayCommand(ExecuteReserveBook);
+            CancelReservationCommand = new RelayCommand(ExecuteCancelReservation);
+            FulfillReservationCommand = new RelayCommand(ExecuteFulfillReservation);
 
             _libraryManagementService.CirculationChanged += (_, _) =>
             {
                 LoadBorrowRecordsFromDatabase();
                 LoadStaffLoanPickers();
+                LoadReservationWorkspace();
             };
-            _libraryManagementService.CatalogChanged += (_, _) => LoadStaffLoanPickers();
+            _libraryManagementService.CatalogChanged += (_, _) =>
+            {
+                LoadStaffLoanPickers();
+                LoadReservationWorkspace();
+            };
             _libraryManagementService.ReadersChanged += (_, _) => LoadStaffLoanPickers();
 
             InitializeStatusFilters();
+            InitializeRenewalOptions();
         }
 
         public ObservableCollection<BorrowRecordItemModel> BorrowRecords { get; }
@@ -87,6 +116,12 @@ namespace Booktibus.ViewModels
         public ObservableCollection<ReaderDirectoryItemModel> AvailableReadersForLoan { get; }
 
         public ObservableCollection<BookItemModel> AvailableBooksForLoan { get; }
+
+        public ObservableCollection<RenewalDaysOptionItem> RenewalDayOptions { get; }
+
+        public ObservableCollection<BookItemModel> OutOfStockBooksForReservation { get; }
+
+        public ObservableCollection<BookReservationItemModel> ReservationsList { get; }
 
         public bool IsStaffCirculationManager => _authorizationService.HasPermission(AppPermission.ProcessCirculation);
 
@@ -111,7 +146,13 @@ namespace Booktibus.ViewModels
         public BorrowRecordItemModel? SelectedBorrowRecord
         {
             get => _selectedBorrowRecord;
-            set => SetProperty(ref _selectedBorrowRecord, value);
+            set
+            {
+                if (SetProperty(ref _selectedBorrowRecord, value))
+                {
+                    NotifySelectedLoanRenewalState();
+                }
+            }
         }
 
         public StaffBorrowRecordItemModel? SelectedStaffBorrowRecord
@@ -123,6 +164,7 @@ namespace Booktibus.ViewModels
                 {
                     OnPropertyChanged(nameof(HasSelectedStaffRecord));
                     OnPropertyChanged(nameof(CanReturnSelectedStaffRecord));
+                    NotifySelectedLoanRenewalState();
                 }
             }
         }
@@ -131,6 +173,89 @@ namespace Booktibus.ViewModels
 
         public bool CanReturnSelectedStaffRecord =>
             SelectedStaffBorrowRecord is not null && !SelectedStaffBorrowRecord.IsReturned;
+
+        public RenewalDaysOptionItem? SelectedRenewalDaysOption
+        {
+            get => _selectedRenewalDaysOption;
+            set => SetProperty(ref _selectedRenewalDaysOption, value);
+        }
+
+        public bool CanRenewSelectedLoan => IsStaffCirculationManager
+            ? SelectedStaffBorrowRecord?.CanRenew == true
+            : SelectedBorrowRecord?.CanRenew == true;
+
+        public string SelectedLoanRenewalSummary
+        {
+            get
+            {
+                if (IsStaffCirculationManager)
+                {
+                    if (SelectedStaffBorrowRecord is not { } sr)
+                    {
+                        return LocalizationService.IsVietnamese
+                            ? "Chọn một phiếu đang mượn trong bảng để gia hạn."
+                            : "Select an active loan in the table to renew.";
+                    }
+
+                    return $"{sr.RecordCode} — {sr.BookTitle} • Hạn trả: {sr.DueDateDisplay} • Gia hạn: {sr.RenewalStatusDisplay}";
+                }
+
+                if (SelectedBorrowRecord is not { } r)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Chọn một phiếu đang mượn trong bảng để gia hạn."
+                        : "Select an active loan in the table to renew.";
+                }
+
+                return $"{r.RecordCode} — {r.BookTitle} • Hạn trả: {r.DueDateDisplay} • Gia hạn: {r.RenewalStatusDisplay}";
+            }
+        }
+
+        public string SelectedLoanRenewalHint => IsStaffCirculationManager
+            ? (SelectedStaffBorrowRecord?.RenewalConstraintHint ?? string.Empty)
+            : (SelectedBorrowRecord?.RenewalConstraintHint ?? string.Empty);
+
+        public BookItemModel? SelectedBookToReserve
+        {
+            get => _selectedBookToReserve;
+            set
+            {
+                if (SetProperty(ref _selectedBookToReserve, value))
+                {
+                    OnPropertyChanged(nameof(CanSubmitReservation));
+                }
+            }
+        }
+
+        public string ReservationNotesInput
+        {
+            get => _reservationNotesInput;
+            set => SetProperty(ref _reservationNotesInput, value);
+        }
+
+        public bool CanSubmitReservation => SelectedBookToReserve is not null && SelectedBookToReserve.AvailableCopies == 0;
+
+        public bool HasOutOfStockBooks => OutOfStockBooksForReservation.Count > 0;
+
+        public BookReservationItemModel? SelectedReservation
+        {
+            get => _selectedReservation;
+            set
+            {
+                if (SetProperty(ref _selectedReservation, value))
+                {
+                    OnPropertyChanged(nameof(CanCancelSelectedReservation));
+                    OnPropertyChanged(nameof(CanFulfillSelectedReservation));
+                }
+            }
+        }
+
+        public bool CanCancelSelectedReservation => SelectedReservation?.CanCancel == true;
+
+        public bool CanFulfillSelectedReservation =>
+            IsStaffCirculationManager && SelectedReservation?.CanFulfill == true;
+
+        public bool HasReservations => ReservationsList.Count > 0;
 
         public ReaderDirectoryItemModel? SelectedLoanReader
         {
@@ -208,8 +333,8 @@ namespace Booktibus.ViewModels
                 if (IsStaffCirculationManager)
                 {
                     return LocalizationService.IsVietnamese
-                        ? $"Chế độ Nghiệp vụ Lưu thông ({session.Role}: {session.Username}) • Quản lý toàn bộ giao dịch lập phiếu mượn và ghi nhận trả sách trong BooktibusDB"
-                        : $"Staff Circulation Mode ({session.Role}: {session.Username}) • Managing all book checkouts and returns in BooktibusDB";
+                        ? $"Chế độ Nghiệp vụ Lưu thông ({session.Role}: {session.Username}) • Quản lý lập phiếu mượn, trả sách, gia hạn và đặt trước trong BooktibusDB"
+                        : $"Staff Circulation Mode ({session.Role}: {session.Username}) • Managing checkouts, returns, renewals, and reservations in BooktibusDB";
                 }
 
                 return LocalizationService.IsVietnamese
@@ -240,12 +365,23 @@ namespace Booktibus.ViewModels
 
         public ICommand ProcessReturnCommand { get; }
 
+        public ICommand RenewLoanCommand { get; }
+
+        public ICommand ReserveBookCommand { get; }
+
+        public ICommand CancelReservationCommand { get; }
+
+        public ICommand FulfillReservationCommand { get; }
+
         public override void OnLanguageUpdated()
         {
             base.OnLanguageUpdated();
             InitializeStatusFilters();
+            InitializeRenewalOptions();
             LoadBorrowRecordsFromDatabase();
+            LoadReservationWorkspace();
             OnPropertyChanged(nameof(ActiveReaderCardBanner));
+            NotifySelectedLoanRenewalState();
         }
 
         public void OnSessionUpdated()
@@ -254,16 +390,26 @@ namespace Booktibus.ViewModels
             OnPropertyChanged(nameof(ActiveReaderCardBanner));
             StaffActionFeedback = string.Empty;
             InitializeStatusFilters();
+            InitializeRenewalOptions();
             LoadBorrowRecordsFromDatabase();
+            LoadReservationWorkspace();
             if (IsStaffCirculationManager)
             {
                 LoadStaffLoanPickers();
             }
         }
 
+        private void NotifySelectedLoanRenewalState()
+        {
+            OnPropertyChanged(nameof(CanRenewSelectedLoan));
+            OnPropertyChanged(nameof(SelectedLoanRenewalSummary));
+            OnPropertyChanged(nameof(SelectedLoanRenewalHint));
+        }
+
         private void ExecuteRefresh()
         {
             LoadBorrowRecordsFromDatabase();
+            LoadReservationWorkspace();
             if (IsStaffCirculationManager)
             {
                 LoadStaffLoanPickers();
@@ -271,8 +417,8 @@ namespace Booktibus.ViewModels
 
             int count = IsStaffCirculationManager ? StaffBorrowRecords.Count : BorrowRecords.Count;
             _statusFeedbackCallback(LocalizationService.IsVietnamese
-                ? $"[Mượn & Trả sách] Đã tải {count} giao dịch thực tế từ bảng dbo.BorrowRecords."
-                : $"[Borrowing & Returns] Loaded {count} real transaction(s) from dbo.BorrowRecords.");
+                ? $"[Mượn & Trả sách] Đã tải {count} giao dịch mượn trả và {ReservationsList.Count} phiếu đặt trước từ CSDL."
+                : $"[Borrowing & Returns] Loaded {count} loan transaction(s) and {ReservationsList.Count} reservation(s) from DB.");
         }
 
         private void ExecuteCreateLoan()
@@ -343,8 +489,8 @@ namespace Booktibus.ViewModels
             }
 
             string confirmMsg = LocalizationService.IsVietnamese
-                ? $"Xác nhận ghi nhận trả sách cho phiếu '{target.RecordCode}'?\n\n• Độc giả: {target.ReaderFullName} ({target.ReaderCardId})\n• Sách: {target.BookTitle} ({target.BookCode})\n• Hệ thống sẽ chuyển trạng thái sang 'Returned' và cộng lại 1 bản sao vào kho."
-                : $"Confirm book return for loan '{target.RecordCode}'?\n\n• Reader: {target.ReaderFullName} ({target.ReaderCardId})\n• Book: {target.BookTitle} ({target.BookCode})\n• This will mark the loan as 'Returned' and restore 1 copy to inventory.";
+                ? $"Xác nhận ghi nhận trả sách cho phiếu '{target.RecordCode}'?\n\n• Độc giả: {target.ReaderFullName} ({target.ReaderCardId})\n• Sách: {target.BookTitle} ({target.BookCode})\n• Hệ thống sẽ chuyển trạng thái sang 'Returned' và cộng lại 1 bản sao (hoặc giữ sách cho người đã đặt trước nếu có)."
+                : $"Confirm book return for loan '{target.RecordCode}'?\n\n• Reader: {target.ReaderFullName} ({target.ReaderCardId})\n• Book: {target.BookTitle} ({target.BookCode})\n• This will mark the loan as 'Returned' and restore 1 copy (or hold it for the next reserver).";
 
             string confirmTitle = LocalizationService.IsVietnamese
                 ? "Xác nhận Ghi nhận Trả sách"
@@ -364,6 +510,116 @@ namespace Booktibus.ViewModels
             {
                 ReturnNotesInput = string.Empty;
             }
+        }
+
+        private void ExecuteRenewLoan(object? parameter)
+        {
+            StaffActionFeedback = string.Empty;
+
+            int borrowRecordId = 0;
+            if (parameter is StaffBorrowRecordItemModel staffParam)
+            {
+                borrowRecordId = staffParam.BorrowRecordId;
+            }
+            else if (parameter is BorrowRecordItemModel readerParam)
+            {
+                borrowRecordId = readerParam.BorrowRecordId;
+            }
+            else if (IsStaffCirculationManager && SelectedStaffBorrowRecord is not null)
+            {
+                borrowRecordId = SelectedStaffBorrowRecord.BorrowRecordId;
+            }
+            else if (!IsStaffCirculationManager && SelectedBorrowRecord is not null)
+            {
+                borrowRecordId = SelectedBorrowRecord.BorrowRecordId;
+            }
+
+            if (borrowRecordId <= 0)
+            {
+                IsStaffFeedbackSuccess = false;
+                StaffActionFeedback = LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn một phiếu mượn trong bảng để gia hạn."
+                    : "Please select a loan in the table to renew.";
+                return;
+            }
+
+            int extensionDays = SelectedRenewalDaysOption?.Days ?? 7;
+            ServiceOperationResult res = _libraryManagementService.RenewBorrowLoan(borrowRecordId, extensionDays);
+
+            IsStaffFeedbackSuccess = res.IsSuccess;
+            StaffActionFeedback = res.Message;
+            _statusFeedbackCallback(res.Message);
+        }
+
+        private void ExecuteReserveBook()
+        {
+            StaffActionFeedback = string.Empty;
+
+            if (SelectedBookToReserve is null)
+            {
+                IsStaffFeedbackSuccess = false;
+                StaffActionFeedback = LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn một đầu sách đang hết bản sao (AvailableCopies = 0) để đặt trước."
+                    : "Please select an out-of-stock book (AvailableCopies = 0) to reserve.";
+                return;
+            }
+
+            int? targetReaderId = IsStaffCirculationManager ? SelectedLoanReader?.UserId : null;
+            if (IsStaffCirculationManager && (!targetReaderId.HasValue || targetReaderId.Value <= 0))
+            {
+                IsStaffFeedbackSuccess = false;
+                StaffActionFeedback = LocalizationService.IsVietnamese
+                    ? "Trong chế độ Thủ thư, vui lòng chọn Độc giả (ở mục Độc giả mượn sách) cần đặt trước."
+                    : "In Staff mode, please select a Reader to place the reservation for.";
+                return;
+            }
+
+            ServiceOperationResult res = _libraryManagementService.ReserveBook(
+                SelectedBookToReserve.BookId,
+                targetReaderId,
+                ReservationNotesInput);
+
+            IsStaffFeedbackSuccess = res.IsSuccess;
+            StaffActionFeedback = res.Message;
+            _statusFeedbackCallback(res.Message);
+
+            if (res.IsSuccess)
+            {
+                ReservationNotesInput = string.Empty;
+            }
+        }
+
+        private void ExecuteCancelReservation(object? parameter)
+        {
+            BookReservationItemModel? target = parameter as BookReservationItemModel ?? SelectedReservation;
+            if (target is null)
+            {
+                return;
+            }
+
+            ServiceOperationResult res = _libraryManagementService.CancelReservation(target.ReservationId);
+            IsStaffFeedbackSuccess = res.IsSuccess;
+            StaffActionFeedback = res.Message;
+            _statusFeedbackCallback(res.Message);
+        }
+
+        private void ExecuteFulfillReservation(object? parameter)
+        {
+            BookReservationItemModel? target = parameter as BookReservationItemModel ?? SelectedReservation;
+            if (target is null)
+            {
+                return;
+            }
+
+            if (!int.TryParse(LoanDaysInput?.Trim(), out int loanDays) || loanDays < 1 || loanDays > 60)
+            {
+                loanDays = 14;
+            }
+
+            ServiceOperationResult res = _libraryManagementService.FulfillReservation(target.ReservationId, loanDays);
+            IsStaffFeedbackSuccess = res.IsSuccess;
+            StaffActionFeedback = res.Message;
+            _statusFeedbackCallback(res.Message);
         }
 
         private void LoadStaffLoanPickers()
@@ -397,6 +653,53 @@ namespace Booktibus.ViewModels
                                ?? AvailableBooksForLoan.FirstOrDefault();
         }
 
+        private void LoadReservationWorkspace()
+        {
+            int? prevOutBookId = SelectedBookToReserve?.BookId;
+            int? prevRsvId = SelectedReservation?.ReservationId;
+
+            OutOfStockBooksForReservation.Clear();
+            foreach (BookItemModel b in _readerService.SearchBooks("", "", "OUT_OF_STOCK", out _))
+            {
+                OutOfStockBooksForReservation.Add(b);
+            }
+
+            SelectedBookToReserve = OutOfStockBooksForReservation.FirstOrDefault(b => b.BookId == prevOutBookId)
+                                    ?? OutOfStockBooksForReservation.FirstOrDefault();
+
+            ReservationsList.Clear();
+            foreach (BookReservationItemModel rsv in _libraryManagementService.GetReservationsForCurrentSession(out _))
+            {
+                ReservationsList.Add(rsv);
+            }
+
+            SelectedReservation = ReservationsList.FirstOrDefault(r => r.ReservationId == prevRsvId)
+                                  ?? ReservationsList.FirstOrDefault();
+
+            OnPropertyChanged(nameof(HasOutOfStockBooks));
+            OnPropertyChanged(nameof(CanSubmitReservation));
+            OnPropertyChanged(nameof(HasReservations));
+        }
+
+        private void InitializeRenewalOptions()
+        {
+            int prevDays = _selectedRenewalDaysOption?.Days ?? 7;
+            RenewalDayOptions.Clear();
+            if (LocalizationService.IsVietnamese)
+            {
+                RenewalDayOptions.Add(new RenewalDaysOptionItem { Days = 7, DisplayText = "+ 7 ngày (Gia hạn 1 tuần)" });
+                RenewalDayOptions.Add(new RenewalDaysOptionItem { Days = 14, DisplayText = "+ 14 ngày (Gia hạn 2 tuần)" });
+            }
+            else
+            {
+                RenewalDayOptions.Add(new RenewalDaysOptionItem { Days = 7, DisplayText = "+ 7 Days (1 Week)" });
+                RenewalDayOptions.Add(new RenewalDaysOptionItem { Days = 14, DisplayText = "+ 14 Days (2 Weeks)" });
+            }
+
+            SelectedRenewalDaysOption = RenewalDayOptions.FirstOrDefault(o => o.Days == prevDays)
+                                        ?? RenewalDayOptions.FirstOrDefault();
+        }
+
         private void InitializeStatusFilters()
         {
             _isSuppressingReload = true;
@@ -426,6 +729,8 @@ namespace Booktibus.ViewModels
         private void LoadBorrowRecordsFromDatabase()
         {
             string statusKey = _selectedStatusFilter?.Key ?? "ALL";
+            int? prevStaffId = SelectedStaffBorrowRecord?.BorrowRecordId;
+            int? prevReaderId = SelectedBorrowRecord?.BorrowRecordId;
 
             if (IsStaffCirculationManager)
             {
@@ -442,7 +747,8 @@ namespace Booktibus.ViewModels
                     StaffBorrowRecords.Add(item);
                 }
 
-                SelectedStaffBorrowRecord = StaffBorrowRecords.FirstOrDefault();
+                SelectedStaffBorrowRecord = StaffBorrowRecords.FirstOrDefault(r => r.BorrowRecordId == prevStaffId)
+                                            ?? StaffBorrowRecords.FirstOrDefault();
             }
             else
             {
@@ -456,14 +762,15 @@ namespace Booktibus.ViewModels
                     BorrowRecords.Add(item);
                 }
 
-                SelectedBorrowRecord = BorrowRecords.FirstOrDefault();
+                SelectedBorrowRecord = BorrowRecords.FirstOrDefault(r => r.BorrowRecordId == prevReaderId)
+                                       ?? BorrowRecords.FirstOrDefault();
             }
 
             OnPropertyChanged(nameof(IsRecordsEmpty));
             OnPropertyChanged(nameof(ActiveBorrowedCount));
             OnPropertyChanged(nameof(ReturnedCount));
             OnPropertyChanged(nameof(OverdueCount));
+            NotifySelectedLoanRenewalState();
         }
     }
 }
-

@@ -74,6 +74,7 @@ namespace Booktibus.ViewModels
             SearchCommand = new RelayCommand(ExecuteSearch);
             ClearFiltersCommand = new RelayCommand(ExecuteClearFilters);
             ToggleFavoriteCommand = new RelayCommand(ExecuteToggleFavorite);
+            ReserveBookCommand = new RelayCommand(ExecuteReserveBook);
             OpenFavoritesPageCommand = new RelayCommand(() => _navigateCallback(NavigationPageKey.Favorites));
 
             // Stage 6 Staff CRUD Commands
@@ -83,6 +84,7 @@ namespace Booktibus.ViewModels
             DeleteSelectedBookCommand = new RelayCommand(ExecuteDeleteSelectedBook);
 
             _readerService.FavoritesChanged += (_, _) => ReloadCatalogPreservingSelection();
+            _libraryManagementService.CirculationChanged += (_, _) => ReloadCatalogPreservingSelection();
             _libraryManagementService.CatalogChanged += (_, _) =>
             {
                 InitializeFilterOptions();
@@ -280,6 +282,8 @@ namespace Booktibus.ViewModels
 
         public ICommand ToggleFavoriteCommand { get; }
 
+        public ICommand ReserveBookCommand { get; }
+
         public ICommand OpenFavoritesPageCommand { get; }
 
         public ICommand StartAddNewBookCommand { get; }
@@ -341,6 +345,20 @@ namespace Booktibus.ViewModels
             }
 
             ServiceOperationResult result = _readerService.ToggleOwnFavorite(targetBook);
+            _statusFeedbackCallback(result.Message);
+        }
+
+        private void ExecuteReserveBook(object? parameter)
+        {
+            BookItemModel? targetBook = parameter as BookItemModel ?? SelectedBook;
+            if (targetBook is null)
+            {
+                return;
+            }
+
+            ServiceOperationResult result = _libraryManagementService.ReserveBook(targetBook.BookId);
+            IsStaffFeedbackSuccess = result.IsSuccess;
+            StaffActionFeedback = result.Message;
             _statusFeedbackCallback(result.Message);
         }
 

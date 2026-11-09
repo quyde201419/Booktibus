@@ -100,6 +100,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                LibraryManagementService.EnsureCirculationSchema(conn);
 
                 const string sql = @"
                     SELECT
@@ -116,7 +117,9 @@ namespace Booktibus.Services
                         ISNULL(b.[ShelfLocation], N''),
                         ISNULL(b.[Description], N''),
                         b.[IsSampleData],
-                        CASE WHEN rf.[FavoriteId] IS NOT NULL THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS [IsFavorite]
+                        CASE WHEN rf.[FavoriteId] IS NOT NULL THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS [IsFavorite],
+                        (SELECT COUNT(1) FROM [dbo].[BookReservations] rsv WHERE rsv.[BookId] = b.[BookId] AND rsv.[ReservationStatus] IN (N'Pending', N'Ready')) AS [ActiveReservationsCount],
+                        ISNULL((SELECT TOP (1) rsv2.[ReservationStatus] FROM [dbo].[BookReservations] rsv2 WHERE rsv2.[BookId] = b.[BookId] AND rsv2.[UserId] = @CurrentUserId AND rsv2.[ReservationStatus] IN (N'Pending', N'Ready') ORDER BY rsv2.[ReservedAtUtc] DESC), N'') AS [CurrentUserReservationStatus]
                     FROM [dbo].[Books] b
                     LEFT JOIN [dbo].[ReaderFavorites] rf
                         ON rf.[BookId] = b.[BookId] AND rf.[UserId] = @CurrentUserId
@@ -411,6 +414,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                LibraryManagementService.EnsureCirculationSchema(conn);
 
                 const string syncOverdueSql = @"
                     UPDATE [dbo].[BorrowRecords]
@@ -440,7 +444,13 @@ namespace Booktibus.Services
                         br.[DueAtUtc],
                         br.[ReturnedAtUtc],
                         br.[BorrowStatus],
-                        ISNULL(br.[Notes], N'')
+                        ISNULL(br.[Notes], N''),
+                        br.[RenewalCount],
+                        CASE WHEN EXISTS (
+                            SELECT 1 FROM [dbo].[BookReservations] rsv
+                            WHERE rsv.[BookId] = br.[BookId]
+                              AND rsv.[ReservationStatus] IN (N'Pending', N'Ready')
+                        ) THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS [HasActiveReservation]
                     FROM [dbo].[BorrowRecords] br
                     INNER JOIN [dbo].[Books] b ON b.[BookId] = br.[BookId]
                     WHERE br.[UserId] = @UserId
@@ -474,7 +484,9 @@ namespace Booktibus.Services
                         DueAtLocal = dueUtc.ToLocalTime(),
                         ReturnedAtLocal = returnedLocal,
                         BorrowStatus = reader.GetString(11),
-                        Notes = reader.GetString(12)
+                        Notes = reader.GetString(12),
+                        RenewalCount = reader.GetInt32(13),
+                        HasActiveReservationOnBook = reader.GetBoolean(14)
                     });
                 }
             }
@@ -678,6 +690,9 @@ namespace Booktibus.Services
 
         private static BookItemModel MapBookFromReader(SqlDataReader reader)
         {
+            int activeReservations = reader.FieldCount > 14 && !reader.IsDBNull(14) ? reader.GetInt32(14) : 0;
+            string currentUserRsvStatus = reader.FieldCount > 15 && !reader.IsDBNull(15) ? reader.GetString(15) : string.Empty;
+
             return new BookItemModel
             {
                 BookId = reader.GetInt32(0),
@@ -693,7 +708,10 @@ namespace Booktibus.Services
                 ShelfLocation = reader.GetString(10),
                 Description = reader.GetString(11),
                 IsSampleData = reader.GetBoolean(12),
-                IsFavorite = reader.GetBoolean(13)
+                IsFavorite = reader.GetBoolean(13),
+                ActiveReservationsCount = activeReservations,
+                IsReservedByCurrentUser = !string.IsNullOrWhiteSpace(currentUserRsvStatus),
+                CurrentUserReservationStatus = currentUserRsvStatus
             };
         }
     }

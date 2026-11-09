@@ -368,13 +368,78 @@ try
     var waiveWithoutReason = fineService.WaiveFine(lateFineId, "");
     var waiveSuccess = fineService.WaiveFine(lateFineId, "Miễn toàn bộ theo phê duyệt của Ban giám đốc thư viện");
 
+    // Confirm estimated overdue fine and test MarkFineAsPaid ("Thu tiền phạt")
+    var confirmEstRes = fineService.ConfirmOrRecordOverdueFine(activeOverdueBorrowId);
+    int confirmedFineId = 0;
+    using (SqlConnection conn = new(connStr))
+    {
+        conn.Open();
+        using SqlCommand getConfIdCmd = new("SELECT FineId FROM dbo.Fines WHERE BorrowRecordId = @Id;", conn);
+        getConfIdCmd.Parameters.AddWithValue("@Id", activeOverdueBorrowId);
+        confirmedFineId = Convert.ToInt32(getConfIdCmd.ExecuteScalar());
+    }
+
+    var paySuccess = fineService.MarkFineAsPaid(confirmedFineId, "Chuyển khoản", "UNC Vietcombank #9988");
+    var paidLogs = fineService.GetFineAuditLogs(confirmedFineId);
     var auditLogs = fineService.GetFineAuditLogs(lateFineId);
 
-    AssertCheck("Điều chỉnh và Miễn tiền phạt: bắt buộc có lý do và ghi nhận đầy đủ vào dbo.FineAuditLogs",
+    AssertCheck("Điều chỉnh, Miễn phạt và Thu tiền phạt (Mark as Paid): ghi nhận PaidAtUtc và dbo.FineAuditLogs",
         !adjustWithoutReason.IsSuccess && adjustSuccess.IsSuccess &&
         !waiveWithoutReason.IsSuccess && waiveSuccess.IsSuccess &&
+        confirmEstRes.IsSuccess && paySuccess.IsSuccess &&
+        paidLogs.Any(l => l.ActionType == "Paid" && l.NewStatus == "Paid") &&
         auditLogs.Count >= 2,
-        $"AdjustSuccess={adjustSuccess.IsSuccess}, WaiveSuccess={waiveSuccess.IsSuccess}, AuditLogsCount={auditLogs.Count}");
+        $"Adjust={adjustSuccess.IsSuccess}, Waive={waiveSuccess.IsSuccess}, Pay={paySuccess.IsSuccess}, PaidAuditFound={paidLogs.Any(l => l.ActionType == "Paid")}");
+
+    // =========================================================================
+    // SCENARIO 11B: GIA HẠN MƯỢN SÁCH (LOAN RENEWAL) & ĐẶT TRƯỚC SÁCH (RESERVATION)
+    // =========================================================================
+    Console.WriteLine("\n--- [11B] GIA HẠN MƯỢN SÁCH (+7/+14 NGÀY, TỐI ĐA 2 LẦN) & ĐẶT TRƯỚC SÁCH (HOLD) ---");
+    // 1. Overdue loan cannot be renewed
+    var renewOverdueFail = staffService.RenewBorrowLoan(activeOverdueBorrowId, 7);
+    // 2. Active not-due loan can be renewed 1st time (+7 days) and 2nd time (+14 days), 3rd time blocked
+    var renew1Ok = staffService.RenewBorrowLoan(activeNotDueBorrowId, 7);
+    var renew2Ok = staffService.RenewBorrowLoan(activeNotDueBorrowId, 14);
+    var renew3Blocked = staffService.RenewBorrowLoan(activeNotDueBorrowId, 7);
+
+    AssertCheck("Gia hạn mượn sách: chặn sách quá hạn, cho phép gia hạn +7/+14 ngày tối đa 2 lần, chặn lần thứ 3",
+        !renewOverdueFail.IsSuccess && renew1Ok.IsSuccess && renew2Ok.IsSuccess && !renew3Blocked.IsSuccess,
+        $"OverdueBlocked={!renewOverdueFail.IsSuccess}, Renew1={renew1Ok.IsSuccess}, Renew2={renew2Ok.IsSuccess}, Renew3Blocked={!renew3Blocked.IsSuccess}");
+
+    // 3. Test Book Reservation when AvailableCopies == 0
+    using (SqlConnection conn = new(connStr))
+    {
+        conn.Open();
+        using SqlCommand zeroCopiesCmd = new("UPDATE dbo.Books SET AvailableCopies = 0 WHERE BookId = @BId;", conn);
+        zeroCopiesCmd.Parameters.AddWithValue("@BId", book1Id);
+        zeroCopiesCmd.ExecuteNonQuery();
+    }
+
+    // Reader 2 reserves book1Id (which has AvailableCopies == 0 and Reader 1 is currently borrowing activeOverdueBorrowId)
+    sessionService.StartSession(new UserSession
+    {
+        UserId = reader2UserId,
+        Username = userReader2,
+        FullName = "Độc giả Fines 2",
+        Role = UserRole.Reader
+    });
+    var reserveOk = staffService.ReserveBook(book1Id, null, "Đặt trước khi hết sách");
+
+    // Switch back to Librarian and return Reader 1's loan of book1Id -> system should hold it for Reader 2 ('Ready')
+    sessionService.StartSession(new UserSession
+    {
+        UserId = libUserId,
+        Username = userLib,
+        FullName = "Thủ thư Fines",
+        Role = UserRole.Librarian
+    });
+    var returnAndHoldRes = staffService.ProcessBookReturn(activeOverdueBorrowId, "Trả sách có người đặt trước");
+    var rsvList = staffService.GetReservationsForCurrentSession(out _);
+    var r2Hold = rsvList.FirstOrDefault(r => r.BookId == book1Id && r.UserId == reader2UserId);
+
+    AssertCheck("Đặt trước sách (AvailableCopies == 0) & Tự động giữ sách (Ready/Hold) khi có người trả",
+        reserveOk.IsSuccess && returnAndHoldRes.IsSuccess && r2Hold is { ReservationStatus: "Ready" },
+        $"ReserveOk={reserveOk.IsSuccess}, ReturnHoldOk={returnAndHoldRes.IsSuccess}, HoldStatus={r2Hold?.ReservationStatus}");
 
     // Test Admin updating daily rate
     sessionService.StartSession(new UserSession
@@ -425,6 +490,8 @@ finally
         using SqlConnection cleanupConn = new(DatabaseConfig.GetConnectionString());
         cleanupConn.Open();
         using SqlCommand cleanCmd = new(@"
+            IF OBJECT_ID(N'dbo.BookReservations', N'U') IS NOT NULL
+                DELETE FROM dbo.BookReservations WHERE UserId IN (@U1, @U2, @UL) OR BookId IN (@B1, @B2);
             DELETE FROM dbo.FineAuditLogs WHERE FineId IN (SELECT FineId FROM dbo.Fines WHERE UserId IN (@U1, @U2, @UL));
             DELETE FROM dbo.Fines WHERE UserId IN (@U1, @U2, @UL);
             DELETE FROM dbo.BorrowRecords WHERE UserId IN (@U1, @U2, @UL) OR BookId IN (@B1, @B2);
@@ -512,6 +579,8 @@ Thread staThread = new(() =>
             app.InitializeComponent();
         }
         var finesView = new Booktibus.Views.FinesView();
+        var borrowingView = new Booktibus.Views.ReaderBorrowingView();
+        var catalogView = new Booktibus.Views.BookCatalogView();
         var revealPwd = new Booktibus.Views.RevealPasswordBox();
     }
     catch (Exception ex)

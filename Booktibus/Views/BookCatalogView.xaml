@@ -250,6 +250,16 @@
                                 Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                 CommandParameter="{Binding}"
                                 HorizontalAlignment="Stretch"
+                                Margin="0,0,0,8" />
+
+                        <!-- Reserve Action Button when AvailableCopies == 0 -->
+                        <Button Content="{Binding ReserveButtonLabel}"
+                                Style="{StaticResource GoldAccentButtonStyle}"
+                                Command="{Binding DataContext.ReserveBookCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                Visibility="{Binding IsOutOfStock, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                IsEnabled="{Binding CanReserve}"
+                                HorizontalAlignment="Stretch"
                                 Margin="0,0,0,16" />
 
                         <Border BorderBrush="{StaticResource Brush.Border.Subtle}"
