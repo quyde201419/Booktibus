@@ -14,6 +14,8 @@ namespace Booktibus.ViewModels
     public class LibraryReportsViewModel : PageViewModelBase
     {
         private readonly LibraryManagementService _libraryManagementService;
+        private readonly FineManagementService? _fineManagementService;
+        private readonly ReportExportService _exportService;
         private readonly Action<string> _statusFeedbackCallback;
 
         private int _totalBookTitles;
@@ -27,18 +29,31 @@ namespace Booktibus.ViewModels
         public LibraryReportsViewModel(
             LibraryManagementService libraryManagementService,
             Action<string> statusFeedbackCallback)
+            : this(libraryManagementService, null, statusFeedbackCallback)
+        {
+        }
+
+        public LibraryReportsViewModel(
+            LibraryManagementService libraryManagementService,
+            FineManagementService? fineManagementService,
+            Action<string> statusFeedbackCallback)
             : base(
                 NavigationPageKey.Reports,
                 "Str.Page.Reports.Title",
                 "Str.Page.Reports.Subtitle")
         {
             _libraryManagementService = libraryManagementService;
+            _fineManagementService = fineManagementService;
+            _exportService = new ReportExportService();
             _statusFeedbackCallback = statusFeedbackCallback;
 
             CategoryStats = new ObservableCollection<CategoryStatRowModel>();
             MonthlyLoanStats = new ObservableCollection<PeriodLoanStatRowModel>();
 
             RefreshReportsCommand = new RelayCommand(ExecuteRefreshReports);
+            ExportBooksInventoryCommand = new RelayCommand(ExecuteExportBooksInventory);
+            ExportUnpaidFinesCommand = new RelayCommand(ExecuteExportUnpaidFines);
+            ExportMonthlyLoanStatsCommand = new RelayCommand(ExecuteExportMonthlyLoanStats);
 
             _libraryManagementService.CatalogChanged += (_, _) => LoadLiveStatistics();
             _libraryManagementService.CirculationChanged += (_, _) => LoadLiveStatistics();
@@ -48,6 +63,12 @@ namespace Booktibus.ViewModels
         public ObservableCollection<CategoryStatRowModel> CategoryStats { get; }
 
         public ObservableCollection<PeriodLoanStatRowModel> MonthlyLoanStats { get; }
+
+        public ICommand ExportBooksInventoryCommand { get; }
+
+        public ICommand ExportUnpaidFinesCommand { get; }
+
+        public ICommand ExportMonthlyLoanStatsCommand { get; }
 
         public int TotalBookTitles
         {
@@ -126,6 +147,62 @@ namespace Booktibus.ViewModels
             _statusFeedbackCallback(LocalizationService.IsVietnamese
                 ? $"[Báo cáo & Thống kê] Đã cập nhật số liệu trực tiếp từ SQL Server (BooktibusDB): {TotalBookTitles} đầu sách ({TotalBookCopies} bản sao), {TotalRegisteredReaders} độc giả, {ActiveBorrowedLoans} đang mượn."
                 : $"[Reports & Analytics] Refreshed live SQL Server statistics: {TotalBookTitles} titles ({TotalBookCopies} copies), {TotalRegisteredReaders} readers, {ActiveBorrowedLoans} active loans.");
+        }
+
+        private void ExecuteExportBooksInventory()
+        {
+            if (_exportService.ExportBooksInventory(out string? savedPath, out string? err))
+            {
+                _statusFeedbackCallback(LocalizationService.IsVietnamese
+                    ? $"[Xuất Excel / CSV Thành công] Danh mục sách và tồn kho đã được lưu tại: {savedPath}"
+                    : $"[Export Successful] Book catalog and inventory saved to: {savedPath}");
+            }
+            else if (!string.IsNullOrEmpty(err))
+            {
+                _statusFeedbackCallback(LocalizationService.IsVietnamese
+                    ? $"[Lỗi xuất tệp] {err}"
+                    : $"[Export Error] {err}");
+            }
+        }
+
+        private void ExecuteExportUnpaidFines()
+        {
+            if (_fineManagementService == null)
+            {
+                _statusFeedbackCallback(LocalizationService.IsVietnamese
+                    ? "[Thông báo] Dịch vụ quản lý tiền phạt chưa được kết nối."
+                    : "[Notice] Fine management service is not initialized.");
+                return;
+            }
+
+            if (_exportService.ExportUnpaidFines(_fineManagementService, out string? savedPath, out string? err))
+            {
+                _statusFeedbackCallback(LocalizationService.IsVietnamese
+                    ? $"[Xuất Excel / CSV Thành công] Danh sách các khoản nợ phạt chưa thu đã được lưu tại: {savedPath}"
+                    : $"[Export Successful] Unpaid fine debts list saved to: {savedPath}");
+            }
+            else if (!string.IsNullOrEmpty(err))
+            {
+                _statusFeedbackCallback(LocalizationService.IsVietnamese
+                    ? $"[Lỗi xuất tệp] {err}"
+                    : $"[Export Error] {err}");
+            }
+        }
+
+        private void ExecuteExportMonthlyLoanStats()
+        {
+            if (_exportService.ExportMonthlyCirculation(MonthlyLoanStats, out string? savedPath, out string? err))
+            {
+                _statusFeedbackCallback(LocalizationService.IsVietnamese
+                    ? $"[Xuất Excel / CSV Thành công] Báo cáo thống kê lượt mượn trả theo tháng đã được lưu tại: {savedPath}"
+                    : $"[Export Successful] Monthly loan circulation report saved to: {savedPath}");
+            }
+            else if (!string.IsNullOrEmpty(err))
+            {
+                _statusFeedbackCallback(LocalizationService.IsVietnamese
+                    ? $"[Lỗi xuất tệp] {err}"
+                    : $"[Export Error] {err}");
+            }
         }
 
         private void LoadLiveStatistics()

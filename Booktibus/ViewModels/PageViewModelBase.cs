@@ -23,9 +23,9 @@ namespace Booktibus.ViewModels
 
         public NavigationPageKey PageKey { get; }
 
-        public string PageTitle => LocalizationService.GetString(_titleResourceKey, PageKey.ToString());
+        public virtual string PageTitle => LocalizationService.GetString(_titleResourceKey, PageKey.ToString());
 
-        public string PageSubtitle => LocalizationService.GetString(_subtitleResourceKey, string.Empty);
+        public virtual string PageSubtitle => LocalizationService.GetString(_subtitleResourceKey, string.Empty);
 
         public virtual void OnLanguageUpdated()
         {

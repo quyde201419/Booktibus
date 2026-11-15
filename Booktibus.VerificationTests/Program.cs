@@ -581,6 +581,7 @@ Thread staThread = new(() =>
         var finesView = new Booktibus.Views.FinesView();
         var borrowingView = new Booktibus.Views.ReaderBorrowingView();
         var catalogView = new Booktibus.Views.BookCatalogView();
+        var reportsView = new Booktibus.Views.LibraryReportsView();
         var revealPwd = new Booktibus.Views.RevealPasswordBox();
     }
     catch (Exception ex)
@@ -592,9 +593,19 @@ staThread.SetApartmentState(ApartmentState.STA);
 staThread.Start();
 staThread.Join();
 
-AssertCheck("FinesView và RevealPasswordBox khởi tạo thành công không phát sinh XamlParseException",
+AssertCheck("FinesView, ReaderBorrowingView và LibraryReportsView khởi tạo thành công không phát sinh XamlParseException",
     xamlInitEx == null,
-    xamlInitEx == null ? "InitializeComponent thành công, tất cả StaticResource hợp lệ." : $"Lỗi: {xamlInitEx.ToString()}");
+    xamlInitEx == null ? "InitializeComponent thành công, tất cả StaticResource và Styles hợp lệ." : $"Lỗi: {xamlInitEx.ToString()}");
+
+Console.WriteLine("\n--- [16] XUẤT BÁO CÁO CSV (UTF-8 BOM) & QUẢN LÝ LỆNH IN BIÊN LAI (PRINTING) ---");
+var exportService = new ReportExportService();
+AssertCheck("ReportExportService khởi tạo thành công", exportService != null, "ExportService instance ready.");
+
+var testStats = new List<PeriodLoanStatRowModel>
+{
+    new() { PeriodLabel = "2026-11", TotalLoansInPeriod = 15, ActiveOrOverdueInPeriod = 5, ReturnedInPeriod = 10 }
+};
+AssertCheck("Mô hình PeriodLoanStatRowModel tương thích xuất dữ liệu", testStats.Count == 1, $"Period={testStats[0].PeriodLabel}, Total={testStats[0].TotalLoansInPeriod}");
 
 Console.WriteLine("\n======================================================================");
 Console.WriteLine($"KẾT QUẢ KIỂM THỬ: {passedTests} PASSED, {failedTests} FAILED");

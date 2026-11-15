@@ -14,6 +14,7 @@
         MinHeight="660"
         MinWidth="1040"
         WindowStartupLocation="CenterScreen"
+        Icon="/Assets/logo.png"
         Background="{StaticResource Brush.Background.App}"
         FontFamily="{StaticResource Font.Primary}">
 
@@ -93,19 +94,14 @@
                             </Grid.ColumnDefinitions>
 
                             <Border Grid.Column="0"
-                                    Width="38"
-                                    Height="38"
-                                    CornerRadius="6"
-                                    Background="{StaticResource Brush.AccentGold.Main}"
+                                    Width="42"
+                                    Height="42"
+                                    CornerRadius="8"
+                                    Background="White"
+                                    Padding="3"
                                     Margin="0,0,12,0"
                                     VerticalAlignment="Center">
-                                <TextBlock Text="B"
-                                           FontFamily="{StaticResource Font.Display}"
-                                           FontSize="21"
-                                           FontWeight="Bold"
-                                           Foreground="{StaticResource Brush.PrimaryNavy.Dark}"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
+                                <Image Source="/Assets/logo.png" Stretch="Uniform" />
                             </Border>
 
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">

@@ -30,11 +30,27 @@
                                    Style="{StaticResource CaptionTextStyle}"
                                    Margin="0,3,0,0" />
                     </StackPanel>
-                    <Button Grid.Column="1"
-                            Content="{DynamicResource Str.Reports.BtnRefresh}"
-                            Command="{Binding RefreshReportsCommand}"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="{DynamicResource Str.Reports.ExportBooks}"
+                                Command="{Binding ExportBooksInventoryCommand}"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Margin="0,0,8,0"
+                                Padding="12,6" />
+                        <Button Content="{DynamicResource Str.Reports.ExportFines}"
+                                Command="{Binding ExportUnpaidFinesCommand}"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Margin="0,0,8,0"
+                                Padding="12,6" />
+                        <Button Content="{DynamicResource Str.Reports.ExportMonthly}"
+                                Command="{Binding ExportMonthlyLoanStatsCommand}"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Margin="0,0,8,0"
+                                Padding="12,6" />
+                        <Button Content="{DynamicResource Str.Reports.BtnRefresh}"
+                                Command="{Binding RefreshReportsCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Padding="14,6" />
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -142,9 +158,17 @@
                 <!-- Left: Category Statistics -->
                 <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="{DynamicResource Str.Reports.CategoryCardTitle}"
-                                   Style="{StaticResource SectionHeaderTextStyle}"
-                                   Margin="0,0,0,10" />
+                        <Grid Margin="0,0,0,10">
+                            <TextBlock Text="{DynamicResource Str.Reports.CategoryCardTitle}"
+                                       Style="{StaticResource SectionHeaderTextStyle}"
+                                       VerticalAlignment="Center" />
+                            <Button Content="{DynamicResource Str.Reports.BtnQuickExport}"
+                                    Command="{Binding ExportBooksInventoryCommand}"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    HorizontalAlignment="Right"
+                                    Padding="10,3"
+                                    FontSize="11" />
+                        </Grid>
 
                         <DataGrid ItemsSource="{Binding CategoryStats}"
                                   MinHeight="280">
@@ -169,9 +193,17 @@
                 <!-- Right: Monthly Circulation Breakdown -->
                 <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="{DynamicResource Str.Reports.MonthlyCardTitle}"
-                                   Style="{StaticResource SectionHeaderTextStyle}"
-                                   Margin="0,0,0,10" />
+                        <Grid Margin="0,0,0,10">
+                            <TextBlock Text="{DynamicResource Str.Reports.MonthlyCardTitle}"
+                                       Style="{StaticResource SectionHeaderTextStyle}"
+                                       VerticalAlignment="Center" />
+                            <Button Content="{DynamicResource Str.Reports.BtnQuickExport}"
+                                    Command="{Binding ExportMonthlyLoanStatsCommand}"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    HorizontalAlignment="Right"
+                                    Padding="10,3"
+                                    FontSize="11" />
+                        </Grid>
 
                         <DataGrid ItemsSource="{Binding MonthlyLoanStats}"
                                   MinHeight="280">

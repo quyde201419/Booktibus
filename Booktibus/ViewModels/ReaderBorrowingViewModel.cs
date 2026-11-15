@@ -52,11 +52,34 @@ namespace Booktibus.ViewModels
         private string _reservationNotesInput = string.Empty;
         private BookReservationItemModel? _selectedReservation;
 
+        private readonly FineManagementService? _fineManagementService;
+        private decimal _totalUnpaidFineVnd;
+        private string _unpaidFineNotice = string.Empty;
+
         public ReaderBorrowingViewModel(
             SessionService sessionService,
             AuthorizationService authorizationService,
             ReaderWorkspaceService readerService,
             LibraryManagementService libraryManagementService,
+            Action<NavigationPageKey> navigateCallback,
+            Action<string> statusFeedbackCallback)
+            : this(
+                sessionService,
+                authorizationService,
+                readerService,
+                libraryManagementService,
+                null,
+                navigateCallback,
+                statusFeedbackCallback)
+        {
+        }
+
+        public ReaderBorrowingViewModel(
+            SessionService sessionService,
+            AuthorizationService authorizationService,
+            ReaderWorkspaceService readerService,
+            LibraryManagementService libraryManagementService,
+            FineManagementService? fineManagementService,
             Action<NavigationPageKey> navigateCallback,
             Action<string> statusFeedbackCallback)
             : base(
@@ -68,6 +91,7 @@ namespace Booktibus.ViewModels
             _authorizationService = authorizationService;
             _readerService = readerService;
             _libraryManagementService = libraryManagementService;
+            _fineManagementService = fineManagementService;
             _navigateCallback = navigateCallback;
             _statusFeedbackCallback = statusFeedbackCallback;
 
@@ -83,12 +107,20 @@ namespace Booktibus.ViewModels
             RefreshCommand = new RelayCommand(ExecuteRefresh);
             StaffSearchCommand = new RelayCommand(ExecuteRefresh);
             BrowseCatalogCommand = new RelayCommand(() => _navigateCallback(NavigationPageKey.Books));
+            NavigateToFinesCommand = new RelayCommand(() => _navigateCallback(NavigationPageKey.Fines));
             CreateLoanCommand = new RelayCommand(ExecuteCreateLoan);
             ProcessReturnCommand = new RelayCommand(ExecuteProcessReturn);
             RenewLoanCommand = new RelayCommand(ExecuteRenewLoan);
+            PrintBorrowSlipCommand = new RelayCommand(ExecutePrintBorrowSlip, () => HasSelectedRecord);
+            PrintReturnSlipCommand = new RelayCommand(ExecutePrintReturnSlip, () => HasSelectedRecord && IsSelectedRecordReturned);
             ReserveBookCommand = new RelayCommand(ExecuteReserveBook);
             CancelReservationCommand = new RelayCommand(ExecuteCancelReservation);
             FulfillReservationCommand = new RelayCommand(ExecuteFulfillReservation);
+
+            if (_fineManagementService != null)
+            {
+                _fineManagementService.FinesChanged += (_, _) => LoadReaderFineSummary();
+            }
 
             _libraryManagementService.CirculationChanged += (_, _) =>
             {
@@ -170,6 +202,14 @@ namespace Booktibus.ViewModels
         }
 
         public bool HasSelectedStaffRecord => SelectedStaffBorrowRecord is not null;
+
+        public bool HasSelectedRecord => IsStaffCirculationManager
+            ? SelectedStaffBorrowRecord is not null
+            : SelectedBorrowRecord is not null;
+
+        public bool IsSelectedRecordReturned => IsStaffCirculationManager
+            ? SelectedStaffBorrowRecord?.IsReturned == true
+            : SelectedBorrowRecord?.IsReturned == true;
 
         public bool CanReturnSelectedStaffRecord =>
             SelectedStaffBorrowRecord is not null && !SelectedStaffBorrowRecord.IsReturned;
@@ -321,6 +361,38 @@ namespace Booktibus.ViewModels
             ? StaffBorrowRecords.Count(r => r.IsOverdue)
             : BorrowRecords.Count(r => r.BorrowStatus == "Overdue");
 
+        public override string PageTitle => !IsStaffCirculationManager
+            ? (LocalizationService.IsVietnamese ? "Sách Đang Mượn & Hạn Trả" : "My Borrowed Books & Due Dates")
+            : base.PageTitle;
+
+        public override string PageSubtitle => !IsStaffCirculationManager
+            ? (LocalizationService.IsVietnamese
+                ? "Theo dõi danh sách sách bạn đang mượn, hạn trả thực tế, gia hạn và nghĩa vụ tiền phạt phát sinh."
+                : "Track your borrowed books, real due dates, loan renewals, and outstanding fees.")
+            : base.PageSubtitle;
+
+        public decimal TotalUnpaidFineVnd
+        {
+            get => _totalUnpaidFineVnd;
+            private set
+            {
+                if (SetProperty(ref _totalUnpaidFineVnd, value))
+                {
+                    OnPropertyChanged(nameof(HasUnpaidFines));
+                }
+            }
+        }
+
+        public bool HasUnpaidFines => TotalUnpaidFineVnd > 0;
+
+        public string UnpaidFineNotice
+        {
+            get => _unpaidFineNotice;
+            private set => SetProperty(ref _unpaidFineNotice, value);
+        }
+
+        public ICommand NavigateToFinesCommand { get; }
+
         public string ActiveReaderCardBanner
         {
             get
@@ -337,9 +409,10 @@ namespace Booktibus.ViewModels
                         : $"Staff Circulation Mode ({session.Role}: {session.Username}) • Managing checkouts, returns, renewals, and reservations in BooktibusDB";
                 }
 
+                string displayName = !string.IsNullOrWhiteSpace(session.FullName) ? session.FullName : session.Username;
                 return LocalizationService.IsVietnamese
-                    ? $"Tài khoản Độc giả: {session.Username} (UserId={session.UserId}) • Mã thẻ độc giả: {session.ReaderCardId ?? "N/A"}"
-                    : $"Reader Account: {session.Username} (UserId={session.UserId}) • Reader Card ID: {session.ReaderCardId ?? "N/A"}";
+                    ? $"Độc giả: {displayName} • Mã thẻ thư viện: {session.ReaderCardId ?? "N/A"}"
+                    : $"Reader: {displayName} • Library Card ID: {session.ReaderCardId ?? "N/A"}";
             }
         }
 
@@ -367,6 +440,10 @@ namespace Booktibus.ViewModels
 
         public ICommand RenewLoanCommand { get; }
 
+        public ICommand PrintBorrowSlipCommand { get; }
+
+        public ICommand PrintReturnSlipCommand { get; }
+
         public ICommand ReserveBookCommand { get; }
 
         public ICommand CancelReservationCommand { get; }
@@ -376,23 +453,29 @@ namespace Booktibus.ViewModels
         public override void OnLanguageUpdated()
         {
             base.OnLanguageUpdated();
+            OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(PageSubtitle));
+            OnPropertyChanged(nameof(ActiveReaderCardBanner));
             InitializeStatusFilters();
             InitializeRenewalOptions();
             LoadBorrowRecordsFromDatabase();
             LoadReservationWorkspace();
-            OnPropertyChanged(nameof(ActiveReaderCardBanner));
+            LoadReaderFineSummary();
             NotifySelectedLoanRenewalState();
         }
 
         public void OnSessionUpdated()
         {
             OnPropertyChanged(nameof(IsStaffCirculationManager));
+            OnPropertyChanged(nameof(PageTitle));
+            OnPropertyChanged(nameof(PageSubtitle));
             OnPropertyChanged(nameof(ActiveReaderCardBanner));
             StaffActionFeedback = string.Empty;
             InitializeStatusFilters();
             InitializeRenewalOptions();
             LoadBorrowRecordsFromDatabase();
             LoadReservationWorkspace();
+            LoadReaderFineSummary();
             if (IsStaffCirculationManager)
             {
                 LoadStaffLoanPickers();
@@ -404,12 +487,16 @@ namespace Booktibus.ViewModels
             OnPropertyChanged(nameof(CanRenewSelectedLoan));
             OnPropertyChanged(nameof(SelectedLoanRenewalSummary));
             OnPropertyChanged(nameof(SelectedLoanRenewalHint));
+            OnPropertyChanged(nameof(HasSelectedRecord));
+            OnPropertyChanged(nameof(IsSelectedRecordReturned));
+            RelayCommand.RaiseCanExecuteChanged();
         }
 
         private void ExecuteRefresh()
         {
             LoadBorrowRecordsFromDatabase();
             LoadReservationWorkspace();
+            LoadReaderFineSummary();
             if (IsStaffCirculationManager)
             {
                 LoadStaffLoanPickers();
@@ -419,6 +506,42 @@ namespace Booktibus.ViewModels
             _statusFeedbackCallback(LocalizationService.IsVietnamese
                 ? $"[Mượn & Trả sách] Đã tải {count} giao dịch mượn trả và {ReservationsList.Count} phiếu đặt trước từ CSDL."
                 : $"[Borrowing & Returns] Loaded {count} loan transaction(s) and {ReservationsList.Count} reservation(s) from DB.");
+        }
+
+        private void LoadReaderFineSummary()
+        {
+            if (IsStaffCirculationManager || _fineManagementService == null || _sessionService.CurrentSession is not { } session)
+            {
+                TotalUnpaidFineVnd = 0;
+                UnpaidFineNotice = string.Empty;
+                return;
+            }
+
+            try
+            {
+                var fines = _fineManagementService.TryGetFinesForUser(session.UserId, out var stats, out _);
+                decimal totalDue = stats.TotalCombinedOutstandingVnd;
+                TotalUnpaidFineVnd = totalDue;
+
+                if (totalDue > 0)
+                {
+                    int unpaidCount = fines.Count(f => f.IsEstimatedOnly || string.Equals(f.FineStatus, "Unpaid", StringComparison.OrdinalIgnoreCase));
+                    UnpaidFineNotice = LocalizationService.IsVietnamese
+                        ? $"Bạn đang có {unpaidCount} khoản phạt quá hạn với tổng số tiền {totalDue:N0} VNĐ. Vui lòng thanh toán sớm để tiếp tục mượn sách thuận lợi."
+                        : $"You have {unpaidCount} overdue/fine obligations totaling {totalDue:N0} VNĐ. Please settle your fines to keep borrowing smoothly.";
+                }
+                else
+                {
+                    UnpaidFineNotice = LocalizationService.IsVietnamese
+                        ? "Tình trạng tài khoản tốt: Không có khoản nợ phạt nào tồn đọng."
+                        : "Account in good standing: No outstanding fines.";
+                }
+            }
+            catch
+            {
+                TotalUnpaidFineVnd = 0;
+                UnpaidFineNotice = string.Empty;
+            }
         }
 
         private void ExecuteCreateLoan()
@@ -549,6 +672,98 @@ namespace Booktibus.ViewModels
             IsStaffFeedbackSuccess = res.IsSuccess;
             StaffActionFeedback = res.Message;
             _statusFeedbackCallback(res.Message);
+        }
+
+        private void ExecutePrintBorrowSlip()
+        {
+            StaffActionFeedback = string.Empty;
+            string staffName = _sessionService.CurrentSession?.FullName ?? _sessionService.CurrentSession?.Username ?? "Thư viện Booktibus";
+            bool ok = false;
+            string? err = null;
+
+            if (IsStaffCirculationManager && SelectedStaffBorrowRecord is not null)
+            {
+                ok = ReceiptPrintingService.PrintBorrowSlip(SelectedStaffBorrowRecord, staffName, out err);
+            }
+            else if (!IsStaffCirculationManager && SelectedBorrowRecord is not null)
+            {
+                ok = ReceiptPrintingService.PrintBorrowSlip(SelectedBorrowRecord, staffName, out err);
+            }
+            else
+            {
+                IsStaffFeedbackSuccess = false;
+                StaffActionFeedback = LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn một phiếu mượn trong danh sách để in phiếu."
+                    : "Please select a loan in the list to print the borrow slip.";
+                return;
+            }
+
+            if (ok)
+            {
+                IsStaffFeedbackSuccess = true;
+                StaffActionFeedback = LocalizationService.IsVietnamese
+                    ? "[In thành công] Đã gửi lệnh in / xuất PDF phiếu mượn sách."
+                    : "[Print Successful] Borrow slip sent to printer / PDF.";
+            }
+            else if (!string.IsNullOrEmpty(err))
+            {
+                IsStaffFeedbackSuccess = false;
+                StaffActionFeedback = LocalizationService.IsVietnamese ? $"[Lỗi in] {err}" : $"[Print Error] {err}";
+            }
+        }
+
+        private void ExecutePrintReturnSlip()
+        {
+            StaffActionFeedback = string.Empty;
+            string staffName = _sessionService.CurrentSession?.FullName ?? _sessionService.CurrentSession?.Username ?? "Thư viện Booktibus";
+            bool ok = false;
+            string? err = null;
+
+            if (IsStaffCirculationManager && SelectedStaffBorrowRecord is not null)
+            {
+                if (!SelectedStaffBorrowRecord.IsReturned)
+                {
+                    IsStaffFeedbackSuccess = false;
+                    StaffActionFeedback = LocalizationService.IsVietnamese
+                        ? "Phiếu mượn này chưa được ghi nhận trả sách. Chỉ có thể in phiếu trả cho sách đã hoàn tất trả kho."
+                        : "This loan has not been returned yet. Return slip can only be printed for returned loans.";
+                    return;
+                }
+                ok = ReceiptPrintingService.PrintReturnSlip(SelectedStaffBorrowRecord, staffName, out err);
+            }
+            else if (!IsStaffCirculationManager && SelectedBorrowRecord is not null)
+            {
+                if (!SelectedBorrowRecord.IsReturned)
+                {
+                    IsStaffFeedbackSuccess = false;
+                    StaffActionFeedback = LocalizationService.IsVietnamese
+                        ? "Phiếu mượn này chưa được ghi nhận trả sách. Chỉ có thể in phiếu trả cho sách đã hoàn tất trả kho."
+                        : "This loan has not been returned yet. Return slip can only be printed for returned loans.";
+                    return;
+                }
+                ok = ReceiptPrintingService.PrintReturnSlip(SelectedBorrowRecord, staffName, out err);
+            }
+            else
+            {
+                IsStaffFeedbackSuccess = false;
+                StaffActionFeedback = LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn một phiếu đã trả trong danh sách để in phiếu trả."
+                    : "Please select a returned loan in the list to print the return slip.";
+                return;
+            }
+
+            if (ok)
+            {
+                IsStaffFeedbackSuccess = true;
+                StaffActionFeedback = LocalizationService.IsVietnamese
+                    ? "[In thành công] Đã gửi lệnh in / xuất PDF biên lai trả sách."
+                    : "[Print Successful] Return receipt sent to printer / PDF.";
+            }
+            else if (!string.IsNullOrEmpty(err))
+            {
+                IsStaffFeedbackSuccess = false;
+                StaffActionFeedback = LocalizationService.IsVietnamese ? $"[Lỗi in] {err}" : $"[Print Error] {err}";
+            }
         }
 
         private void ExecuteReserveBook()

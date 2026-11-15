@@ -39,6 +39,36 @@
                 </Grid>
             </Border>
 
+            <!-- READER OUTSTANDING FINES ALERT BANNER (PayOS Direct Link) -->
+            <Border Style="{StaticResource DangerNotificationBannerStyle}"
+                    Visibility="{Binding HasUnpaidFines, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="CẢNH BÁO: BẠN CÓ KHOẢN TIỀN PHẠT QUÁ HẠN CẦN THANH TOÁN"
+                                   FontWeight="Bold"
+                                   FontSize="12.5"
+                                   Foreground="{StaticResource Brush.Status.Danger}" />
+                        <TextBlock Text="{Binding UnpaidFineNotice}"
+                                   FontSize="12"
+                                   Foreground="{StaticResource Brush.Text.Primary}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,3,0,0" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="Xem &amp; Quét mã PayOS Thanh toán →"
+                            Style="{StaticResource DangerButtonStyle}"
+                            Command="{Binding NavigateToFinesCommand}"
+                            Margin="16,0,0,0"
+                            Padding="14,6"
+                            VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
             <!-- ERROR BANNER IF ANY -->
             <Border Style="{StaticResource DangerNotificationBannerStyle}"
                     Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -343,12 +373,22 @@
                                           DisplayMemberPath="DisplayText" />
                             </StackPanel>
 
-                            <Button Grid.Column="4"
-                                    Content="Gia hạn sách"
-                                    Style="{StaticResource GoldAccentButtonStyle}"
-                                    Command="{Binding RenewLoanCommand}"
-                                    IsEnabled="{Binding CanRenewSelectedLoan}"
-                                    VerticalAlignment="Bottom" />
+                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                <Button Content="Gia hạn sách"
+                                        Style="{StaticResource GoldAccentButtonStyle}"
+                                        Command="{Binding RenewLoanCommand}"
+                                        IsEnabled="{Binding CanRenewSelectedLoan}"
+                                        Margin="0,0,8,0" />
+                                <Button Content="{DynamicResource Str.Print.BtnPrintBorrowSlip}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding PrintBorrowSlipCommand}"
+                                        IsEnabled="{Binding HasSelectedRecord}"
+                                        Margin="0,0,8,0" />
+                                <Button Content="{DynamicResource Str.Print.BtnPrintReturnSlip}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding PrintReturnSlipCommand}"
+                                        IsEnabled="{Binding IsSelectedRecordReturned}" />
+                            </StackPanel>
                         </Grid>
                     </Border>
 
@@ -402,31 +442,28 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColRecordCode}"
                                                 Binding="{Binding RecordCode}"
-                                                Width="115" />
-                            <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReaderCard}"
-                                                Binding="{Binding ReaderCardId}"
-                                                Width="120" />
+                                                Width="110" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookCode}"
                                                 Binding="{Binding BookCode}"
                                                 Width="95" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookTitle}"
                                                 Binding="{Binding BookTitle}"
-                                                Width="1.5*" />
+                                                Width="1.8*" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBorrowDate}"
                                                 Binding="{Binding BorrowedDateDisplay}"
-                                                Width="105" />
+                                                Width="110" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColDueDate}"
                                                 Binding="{Binding DueDateDisplay}"
-                                                Width="105" />
+                                                Width="110" />
                             <DataGridTextColumn Header="Gia hạn"
                                                 Binding="{Binding RenewalStatusDisplay}"
-                                                Width="85" />
+                                                Width="90" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReturnDate}"
                                                 Binding="{Binding ReturnedDateDisplay}"
                                                 Width="120" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColStatus}"
                                                 Binding="{Binding LocalizedStatusDisplay}"
-                                                Width="110" />
+                                                Width="120" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColNotes}"
                                                 Binding="{Binding Notes}"
                                                 Width="1*" />

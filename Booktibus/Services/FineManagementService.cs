@@ -1054,6 +1054,90 @@ namespace Booktibus.Services
             }
         }
 
+        /// <summary>
+        /// Automatically records online fine payment completed via PayOS or payment gateway.
+        /// Does not require staff authorization since it is verified cryptographically by PayOS.
+        /// </summary>
+        public ServiceOperationResult RecordOnlineFinePayment(int fineId, string gatewayName, string transactionRef)
+        {
+            if (fineId <= 0)
+            {
+                return ServiceOperationResult.Fail("Khoản phạt không hợp lệ.");
+            }
+
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+                using SqlTransaction tx = conn.BeginTransaction();
+
+                const string lockFineSql = @"
+                    SELECT [FineCode], [BorrowRecordId], [Amount], [FineStatus], [UserId]
+                    FROM [dbo].[Fines] WITH (UPDLOCK)
+                    WHERE [FineId] = @FineId;";
+
+                string fineCode;
+                int borrowRecordId;
+                decimal currentAmount;
+                string currentStatus;
+                int fineUserId;
+
+                using (SqlCommand getCmd = new(lockFineSql, conn, tx))
+                {
+                    getCmd.Parameters.Add("@FineId", SqlDbType.Int).Value = fineId;
+                    using SqlDataReader rdr = getCmd.ExecuteReader();
+                    if (!rdr.Read())
+                    {
+                        rdr.Close();
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail("Không tìm thấy khoản phạt.");
+                    }
+
+                    fineCode = rdr.GetString(0);
+                    borrowRecordId = rdr.GetInt32(1);
+                    currentAmount = rdr.GetDecimal(2);
+                    currentStatus = rdr.GetString(3);
+                    fineUserId = rdr.GetInt32(4);
+                }
+
+                if (!string.Equals(currentStatus, "Unpaid", StringComparison.OrdinalIgnoreCase))
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Ok($"Khoản phạt {fineCode} đã được ghi nhận trước đó.");
+                }
+
+                string paymentNote = $"Thanh toán trực tuyến thành công qua {gatewayName} (Mã GD: #{transactionRef}).";
+
+                const string updateSql = @"
+                    UPDATE [dbo].[Fines]
+                    SET [FineStatus]       = N'Paid',
+                        [PaidAtUtc]        = SYSUTCDATETIME(),
+                        [UpdatedAtUtc]     = SYSUTCDATETIME(),
+                        [Notes]            = @Notes
+                    WHERE [FineId] = @FineId;";
+
+                using (SqlCommand updCmd = new(updateSql, conn, tx))
+                {
+                    updCmd.Parameters.Add("@Notes", SqlDbType.NVarChar, 500).Value = paymentNote;
+                    updCmd.Parameters.Add("@FineId", SqlDbType.Int).Value = fineId;
+                    updCmd.ExecuteNonQuery();
+                }
+
+                InsertAuditLog(conn, tx, fineId, borrowRecordId, "PaidOnline", currentAmount, currentAmount,
+                    currentStatus, "Paid", paymentNote, fineUserId, $"User#{fineUserId}");
+
+                tx.Commit();
+                FinesChanged?.Invoke(this, EventArgs.Empty);
+
+                return ServiceOperationResult.Ok($"Khoản phạt {fineCode} đã được thanh toán trực tuyến thành công.");
+            }
+            catch (SqlException ex)
+            {
+                AppDiagnosticLogger.LogDatabaseException(nameof(FineManagementService), nameof(RecordOnlineFinePayment), ex, $"FineId={fineId}");
+                return ServiceOperationResult.Fail("Lỗi cập nhật CSDL: " + ex.Message);
+            }
+        }
+
         // =====================================================================
         // 5. TRANSACTIONAL HOOK FOR BOOK RETURN (ProcessBookReturn Integration)
         // =====================================================================

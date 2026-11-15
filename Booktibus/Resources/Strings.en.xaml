@@ -34,6 +34,8 @@
     <sys:String x:Key="Str.Login.UsernameLabel">Username:</sys:String>
     <sys:String x:Key="Str.Login.PasswordLabel">Password:</sys:String>
     <sys:String x:Key="Str.Login.SignInBtn">Sign In to Booktibus</sys:String>
+    <sys:String x:Key="Str.Login.SignInGoogleBtn">Sign In with Google</sys:String>
+    <sys:String x:Key="Str.Login.OrSeparator">OR</sys:String>
     <sys:String x:Key="Str.Login.ClearBtn">Clear</sys:String>
 
     <!-- Reader Registration Form -->
@@ -176,14 +178,14 @@
     <sys:String x:Key="Str.Fav.EmptyStateDesc">You haven't added any books to your personal Favorites list yet. Open 'Books Catalog' and click '♡ Add to Favorites'.</sys:String>
 
     <!-- Stage 5.4: Borrowing & Return Tracking -->
-    <sys:String x:Key="Str.Borrow.MetricActiveTitle">CURRENTLY BORROWED (DB)</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricActiveSub">Records with Borrowed status</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricReturnedTitle">RETURNED BOOKS (DB)</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricReturnedSub">Records with Returned status</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricOverdueTitle">OVERDUE LOANS (DB)</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricOverdueSub">Records with Overdue status</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricActiveTitle">CURRENTLY BORROWED</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricActiveSub">Books currently borrowed by you</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricReturnedTitle">RETURNED BOOKS</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricReturnedSub">Loan history returned to library</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricOverdueTitle">OVERDUE BOOKS</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricOverdueSub">Please return promptly to avoid fines</sys:String>
     <sys:String x:Key="Str.Borrow.FilterStatusLabel">Filter by Loan Status:</sys:String>
-    <sys:String x:Key="Str.Borrow.BtnRefresh">Reload from SQL Server</sys:String>
+    <sys:String x:Key="Str.Borrow.BtnRefresh">Refresh Data</sys:String>
     <sys:String x:Key="Str.Borrow.ColRecordCode">Record Code</sys:String>
     <sys:String x:Key="Str.Borrow.ColReaderCard">Reader Card</sys:String>
     <sys:String x:Key="Str.Borrow.ColBookCode">Book Code</sys:String>
@@ -314,6 +316,16 @@
     <sys:String x:Key="Str.Reports.ColTotalLoans">Total Loans</sys:String>
     <sys:String x:Key="Str.Reports.ColActiveLoans">Active / Overdue</sys:String>
     <sys:String x:Key="Str.Reports.ColReturnedLoans">Completed Returns</sys:String>
+    <sys:String x:Key="Str.Reports.BtnExportMenu">Export Reports (CSV / Excel) ▼</sys:String>
+    <sys:String x:Key="Str.Reports.ExportBooks">1. Export All Book Titles &amp; Inventory (CSV/Excel)</sys:String>
+    <sys:String x:Key="Str.Reports.ExportFines">2. Export Outstanding Unpaid Fines (CSV/Excel)</sys:String>
+    <sys:String x:Key="Str.Reports.ExportMonthly">3. Export Monthly Circulation Stats (CSV/Excel)</sys:String>
+    <sys:String x:Key="Str.Reports.BtnQuickExport">Export CSV</sys:String>
+
+    <!-- Receipt Printing Strings -->
+    <sys:String x:Key="Str.Print.BtnPrintBorrowSlip">Print Borrow Slip</sys:String>
+    <sys:String x:Key="Str.Print.BtnPrintReturnSlip">Print Return Slip</sys:String>
+    <sys:String x:Key="Str.Print.BtnPrintFineReceipt">Print Fine Receipt</sys:String>
 
     <!-- Forgot Password -->
     <sys:String x:Key="Str.Forgot.LinkText">Forgot password?</sys:String>

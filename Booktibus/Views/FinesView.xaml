@@ -309,10 +309,35 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Action buttons for Reader (Online PayOS VietQR Payment & Print Receipt) -->
+                        <StackPanel Orientation="Horizontal"
+                                    Visibility="{Binding IsStaffMode, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,0,10">
+                            <Button Content="Thanh toán trực tuyến PayOS (VietQR)"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding OpenPayOSDialogCommand}"
+                                    Visibility="{Binding SelectedFine.CanBePaid, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Padding="16,8" />
+                            <Button Content="{DynamicResource Str.Print.BtnPrintFineReceipt}"
+                                    Style="{StaticResource TealButtonStyle}"
+                                    Command="{Binding PrintFineReceiptCommand}"
+                                    Visibility="{Binding CanPrintFineReceipt, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Padding="16,8"
+                                    Margin="10,0,0,0" />
+                        </StackPanel>
+
                         <!-- Action buttons (Staff Only) -->
                         <StackPanel Orientation="Horizontal"
                                     Visibility="{Binding IsStaffMode, Converter={StaticResource BooleanToVisibilityConverter}}"
                                     HorizontalAlignment="Right">
+
+                            <!-- Print fine receipt when paid -->
+                            <Button Content="{DynamicResource Str.Print.BtnPrintFineReceipt}"
+                                    Style="{StaticResource TealButtonStyle}"
+                                    Command="{Binding PrintFineReceiptCommand}"
+                                    Visibility="{Binding CanPrintFineReceipt, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    Margin="0,0,10,0" />
 
                             <!-- Confirm provisional overdue fine -->
                             <Button Content="Xác nhận Ghi nhận Phạt"
@@ -530,6 +555,59 @@
                         <Button Content="Lưu Cấu Hình"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding SubmitRateUpdateCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- 5. PAYOS VIETQR ONLINE PAYMENT MODAL -->
+        <Border Background="#80000000"
+                Visibility="{Binding IsPayOSDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Width="440"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="24,20">
+                <StackPanel>
+                    <TextBlock Text="THANH TOÁN TIỀN PHẠT TRỰC TUYẾN"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,6" />
+
+                    <TextBlock Text="Cổng thanh toán PayOS • Ngân hàng Quân Đội (MB Bank)"
+                               FontSize="11.5"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource Brush.Text.Muted}"
+                               Margin="0,0,0,14" />
+
+                    <Border Background="{StaticResource Brush.Background.Surface}"
+                            BorderBrush="{StaticResource Brush.Border.Subtle}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="12"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,12">
+                        <Image Source="{Binding PayOSQrImageUrl}"
+                               Width="260"
+                               Height="260"
+                               Stretch="Uniform" />
+                    </Border>
+
+                    <TextBlock Text="{Binding PayOSPaymentNotice}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Đóng cửa sổ"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding ClosePayOSDialogCommand}"
+                                MinWidth="120" />
                     </StackPanel>
                 </StackPanel>
             </Border>

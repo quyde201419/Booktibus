@@ -34,6 +34,8 @@
     <sys:String x:Key="Str.Login.UsernameLabel">Tên đăng nhập (Username):</sys:String>
     <sys:String x:Key="Str.Login.PasswordLabel">Mật khẩu (Password):</sys:String>
     <sys:String x:Key="Str.Login.SignInBtn">Đăng nhập vào Booktibus</sys:String>
+    <sys:String x:Key="Str.Login.SignInGoogleBtn">Đăng nhập với Google</sys:String>
+    <sys:String x:Key="Str.Login.OrSeparator">HOẶC</sys:String>
     <sys:String x:Key="Str.Login.ClearBtn">Xóa trống</sys:String>
 
     <!-- Reader Registration Form -->
@@ -176,14 +178,14 @@
     <sys:String x:Key="Str.Fav.EmptyStateDesc">Bạn chưa lưu cuốn sách nào vào danh sách yêu thích. Hãy chuyển sang trang 'Tra cứu &amp; Danh mục Sách' và bấm '♡ Thêm vào Yêu thích'.</sys:String>
 
     <!-- Stage 5.4: Borrowing & Return Tracking -->
-    <sys:String x:Key="Str.Borrow.MetricActiveTitle">SÁCH ĐANG MƯỢN (CSDL)</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricActiveSub">Giao dịch trạng thái Borrowed</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricReturnedTitle">ĐÃ TRẢ HOÀN TẤT (CSDL)</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricReturnedSub">Giao dịch trạng thái Returned</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricOverdueTitle">PHIẾU QUÁ HẠN (CSDL)</sys:String>
-    <sys:String x:Key="Str.Borrow.MetricOverdueSub">Giao dịch trạng thái Overdue</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricActiveTitle">SÁCH ĐANG MƯỢN</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricActiveSub">Số sách bạn đang mượn đọc</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricReturnedTitle">ĐÃ TRẢ HOÀN TẤT</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricReturnedSub">Lịch sử các cuốn sách đã trả kho</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricOverdueTitle">SÁCH QUÁ HẠN CẦN TRẢ</sys:String>
+    <sys:String x:Key="Str.Borrow.MetricOverdueSub">Vui lòng trả sớm để tránh phí phạt</sys:String>
     <sys:String x:Key="Str.Borrow.FilterStatusLabel">Lọc theo trạng thái phiếu:</sys:String>
-    <sys:String x:Key="Str.Borrow.BtnRefresh">Tải lại từ SQL Server</sys:String>
+    <sys:String x:Key="Str.Borrow.BtnRefresh">Làm mới dữ liệu</sys:String>
     <sys:String x:Key="Str.Borrow.ColRecordCode">Mã phiếu</sys:String>
     <sys:String x:Key="Str.Borrow.ColReaderCard">Mã thẻ độc giả</sys:String>
     <sys:String x:Key="Str.Borrow.ColBookCode">Mã sách</sys:String>
@@ -314,6 +316,16 @@
     <sys:String x:Key="Str.Reports.ColTotalLoans">Tổng lượt mượn</sys:String>
     <sys:String x:Key="Str.Reports.ColActiveLoans">Đang mượn / Quá hạn</sys:String>
     <sys:String x:Key="Str.Reports.ColReturnedLoans">Đã trả hoàn tất</sys:String>
+    <sys:String x:Key="Str.Reports.BtnExportMenu">Xuất báo cáo (CSV / Excel) ▼</sys:String>
+    <sys:String x:Key="Str.Reports.ExportBooks">1. Xuất Toàn bộ Đầu sách &amp; Tồn kho (CSV/Excel)</sys:String>
+    <sys:String x:Key="Str.Reports.ExportFines">2. Xuất Danh sách Nợ phạt Chưa thu (CSV/Excel)</sys:String>
+    <sys:String x:Key="Str.Reports.ExportMonthly">3. Xuất Thống kê Mượn - Trả theo tháng (CSV/Excel)</sys:String>
+    <sys:String x:Key="Str.Reports.BtnQuickExport">Xuất CSV</sys:String>
+
+    <!-- Receipt Printing Strings -->
+    <sys:String x:Key="Str.Print.BtnPrintBorrowSlip">In Phiếu Mượn</sys:String>
+    <sys:String x:Key="Str.Print.BtnPrintReturnSlip">In Phiếu Trả</sys:String>
+    <sys:String x:Key="Str.Print.BtnPrintFineReceipt">In Biên Lai Thu Phạt</sys:String>
 
     <!-- Forgot Password (Quên mật khẩu) -->
     <sys:String x:Key="Str.Forgot.LinkText">Quên mật khẩu?</sys:String>

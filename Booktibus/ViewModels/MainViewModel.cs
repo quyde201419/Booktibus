@@ -283,6 +283,7 @@ namespace Booktibus.ViewModels
                     _authorizationService,
                     _readerWorkspaceService,
                     _libraryManagementService,
+                    _fineManagementService,
                     NavigateToPage,
                     msg => StatusMessage = msg),
                 "⇄",
@@ -319,6 +320,7 @@ namespace Booktibus.ViewModels
             RegisterPageAndSidebarItem(
                 new LibraryReportsViewModel(
                     _libraryManagementService,
+                    _fineManagementService,
                     msg => StatusMessage = msg),
                 "▣",
                 "Str.Nav.Reports",

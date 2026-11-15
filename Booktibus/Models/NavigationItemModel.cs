@@ -10,6 +10,7 @@ namespace Booktibus.Models
     {
         private bool _isSelected;
         private bool _isVisible = true;
+        private UserRole _activeRole = UserRole.Reader;
 
         public NavigationItemModel(
             NavigationPageKey pageKey,
@@ -31,7 +32,17 @@ namespace Booktibus.Models
 
         public IReadOnlyCollection<UserRole> AllowedRoles { get; }
 
-        public string DisplayTitle => LocalizationService.GetString(TitleResourceKey, PageKey.ToString());
+        public string DisplayTitle
+        {
+            get
+            {
+                if (PageKey == NavigationPageKey.BorrowingReturns && _activeRole == UserRole.Reader)
+                {
+                    return LocalizationService.IsVietnamese ? "Sách mượn & Hạn trả" : "My Loans & Due Dates";
+                }
+                return LocalizationService.GetString(TitleResourceKey, PageKey.ToString());
+            }
+        }
 
         public bool IsSelected
         {
@@ -47,7 +58,9 @@ namespace Booktibus.Models
 
         public void UpdateForRole(UserRole activeRole)
         {
+            _activeRole = activeRole;
             IsVisible = AllowedRoles.Contains(activeRole);
+            OnPropertyChanged(nameof(DisplayTitle));
         }
 
         public void RefreshLocalization()

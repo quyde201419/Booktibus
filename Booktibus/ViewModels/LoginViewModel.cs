@@ -29,6 +29,7 @@ namespace Booktibus.ViewModels
         private readonly SessionService _sessionService;
         private readonly IEmailDeliveryService _emailDeliveryService;
         private readonly PasswordResetService _passwordResetService;
+        private readonly GoogleAuthService _googleAuthService;
         private IAuthenticationService _activeAuthService;
 
         private AuthScreenMode _currentMode = AuthScreenMode.SignIn;
@@ -78,6 +79,7 @@ namespace Booktibus.ViewModels
             _sessionService = sessionService;
             _emailDeliveryService = emailDeliveryService ?? new EmailDeliveryService();
             _passwordResetService = passwordResetService ?? new PasswordResetService(_sessionService, _emailDeliveryService);
+            _googleAuthService = new GoogleAuthService(_sessionService);
             _activeAuthService = _fallbackTestService;
 
             TestCredentialGuides = new ObservableCollection<TestCredentialGuideItem>();
@@ -85,6 +87,7 @@ namespace Booktibus.ViewModels
             SwitchModeCommand = new RelayCommand(ExecuteSwitchMode);
             ProbeDatabaseCommand = new RelayCommand(ExecuteProbeDatabase);
             LoginCommand = new RelayCommand(ExecuteLogin);
+            SignInWithGoogleCommand = new RelayCommand(ExecuteSignInWithGoogle);
             RegisterReaderCommand = new RelayCommand(ExecuteRegisterReader);
             SetupInitialAdminCommand = new RelayCommand(ExecuteSetupInitialAdmin);
             ClearFormCommand = new RelayCommand(ExecuteClearForm);
@@ -394,6 +397,8 @@ namespace Booktibus.ViewModels
 
         public ICommand LoginCommand { get; }
 
+        public ICommand SignInWithGoogleCommand { get; }
+
         public ICommand RegisterReaderCommand { get; }
 
         public ICommand SetupInitialAdminCommand { get; }
@@ -503,6 +508,29 @@ namespace Booktibus.ViewModels
                 }
 
                 CurrentMode = targetMode;
+            }
+        }
+
+        private async void ExecuteSignInWithGoogle()
+        {
+            ClearFeedback();
+            try
+            {
+                InfoMessage = LocalizationService.IsVietnamese
+                    ? "Đang mở trình duyệt để xác thực tài khoản Google của bạn..."
+                    : "Opening browser to authenticate with your Google account...";
+
+                ServiceOperationResult result = await _googleAuthService.SignInWithGoogleAsync();
+                if (!result.IsSuccess)
+                {
+                    ClearFeedback();
+                    ErrorMessage = result.Message;
+                }
+            }
+            catch (Exception ex)
+            {
+                ClearFeedback();
+                ErrorMessage = "Lỗi đăng nhập Google: " + ex.Message;
             }
         }
 

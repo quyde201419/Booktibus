@@ -17,6 +17,7 @@ namespace Booktibus.ViewModels
     public class FinesViewModel : PageViewModelBase
     {
         private readonly FineManagementService _fineService;
+        private readonly PayOSPaymentService _payOSService;
         private readonly SessionService _sessionService;
         private readonly AuthorizationService _authorizationService;
         private readonly Action<string> _statusFeedbackCallback;
@@ -48,6 +49,12 @@ namespace Booktibus.ViewModels
         private bool _isRateDialogOpen;
         private string _newRateInput = "5000";
 
+        // PayOS Online Payment Dialog States
+        private bool _isPayOSDialogOpen;
+        private string _payOSQrImageUrl = string.Empty;
+        private string _payOSCheckoutUrl = string.Empty;
+        private string _payOSPaymentNotice = string.Empty;
+
         private bool _isAuditLogsOpen;
 
         // Feedback
@@ -68,9 +75,13 @@ namespace Booktibus.ViewModels
             ArgumentNullException.ThrowIfNull(statusFeedbackCallback);
 
             _fineService = fineService;
+            _payOSService = new PayOSPaymentService(_fineService);
             _sessionService = sessionService;
             _authorizationService = authorizationService;
             _statusFeedbackCallback = statusFeedbackCallback;
+
+            _payOSService.PaymentSucceeded += OnPayOSPaymentSucceeded;
+            _payOSService.PaymentStatusUpdated += (s, msg) => PayOSPaymentNotice = msg;
 
             FinesList = new ObservableCollection<FineItemModel>();
             AuditLogsList = new ObservableCollection<FineAuditLogItemModel>();
@@ -86,6 +97,8 @@ namespace Booktibus.ViewModels
             OpenPayDialogCommand = new RelayCommand(ExecuteOpenPayDialog, () => SelectedFine?.CanBePaid == true && IsStaffMode);
             SubmitPayCommand = new RelayCommand(ExecuteSubmitPay);
             ClosePayDialogCommand = new RelayCommand(() => IsPayDialogOpen = false);
+            OpenPayOSDialogCommand = new RelayCommand(ExecuteOpenPayOSDialog, () => SelectedFine?.CanBePaid == true);
+            ClosePayOSDialogCommand = new RelayCommand(ExecuteClosePayOSDialog);
             OpenAdjustDialogCommand = new RelayCommand(ExecuteOpenAdjustDialog, () => SelectedFine?.CanBeAdjustedOrWaived == true && IsStaffMode);
             SubmitAdjustCommand = new RelayCommand(ExecuteSubmitAdjust);
             CloseAdjustDialogCommand = new RelayCommand(() => IsAdjustDialogOpen = false);
@@ -97,6 +110,7 @@ namespace Booktibus.ViewModels
             OpenRateDialogCommand = new RelayCommand(ExecuteOpenRateDialog, () => IsAdmin);
             SubmitRateUpdateCommand = new RelayCommand(ExecuteSubmitRateUpdate);
             CloseRateDialogCommand = new RelayCommand(() => IsRateDialogOpen = false);
+            PrintFineReceiptCommand = new RelayCommand(ExecutePrintFineReceipt, () => CanPrintFineReceipt);
 
             _fineService.FinesChanged += (_, _) => LoadFines();
 
@@ -131,12 +145,18 @@ namespace Booktibus.ViewModels
                 if (SetProperty(ref _selectedFine, value))
                 {
                     OnPropertyChanged(nameof(HasSelectedFine));
+                    OnPropertyChanged(nameof(CanPrintFineReceipt));
                     RelayCommand.RaiseCanExecuteChanged();
                 }
             }
         }
 
         public bool HasSelectedFine => SelectedFine is not null;
+
+        public bool CanPrintFineReceipt =>
+            SelectedFine is not null &&
+            (SelectedFine.PaidAtLocal.HasValue ||
+             string.Equals(SelectedFine.FineStatus, "Paid", StringComparison.OrdinalIgnoreCase));
 
         public string SearchKeyword
         {
@@ -258,6 +278,30 @@ namespace Booktibus.ViewModels
             set => SetProperty(ref _newRateInput, value);
         }
 
+        public bool IsPayOSDialogOpen
+        {
+            get => _isPayOSDialogOpen;
+            set => SetProperty(ref _isPayOSDialogOpen, value);
+        }
+
+        public string PayOSQrImageUrl
+        {
+            get => _payOSQrImageUrl;
+            set => SetProperty(ref _payOSQrImageUrl, value);
+        }
+
+        public string PayOSCheckoutUrl
+        {
+            get => _payOSCheckoutUrl;
+            set => SetProperty(ref _payOSCheckoutUrl, value);
+        }
+
+        public string PayOSPaymentNotice
+        {
+            get => _payOSPaymentNotice;
+            set => SetProperty(ref _payOSPaymentNotice, value);
+        }
+
         public bool IsAuditLogsOpen
         {
             get => _isAuditLogsOpen;
@@ -288,6 +332,8 @@ namespace Booktibus.ViewModels
         public ICommand OpenPayDialogCommand { get; }
         public ICommand SubmitPayCommand { get; }
         public ICommand ClosePayDialogCommand { get; }
+        public ICommand OpenPayOSDialogCommand { get; }
+        public ICommand ClosePayOSDialogCommand { get; }
         public ICommand OpenAdjustDialogCommand { get; }
         public ICommand SubmitAdjustCommand { get; }
         public ICommand CloseAdjustDialogCommand { get; }
@@ -299,6 +345,7 @@ namespace Booktibus.ViewModels
         public ICommand OpenRateDialogCommand { get; }
         public ICommand SubmitRateUpdateCommand { get; }
         public ICommand CloseRateDialogCommand { get; }
+        public ICommand PrintFineReceiptCommand { get; }
 
         public void OnSessionUpdated()
         {
@@ -468,6 +515,51 @@ namespace Booktibus.ViewModels
             }
         }
 
+        private async void ExecuteOpenPayOSDialog()
+        {
+            if (SelectedFine is null || !SelectedFine.CanBePaid)
+            {
+                return;
+            }
+
+            PayOSPaymentNotice = "Đang kết nối PayOS và tạo mã VietQR...";
+            PayOSQrImageUrl = string.Empty;
+            PayOSCheckoutUrl = string.Empty;
+            IsPayOSDialogOpen = true;
+
+            var result = await _payOSService.CreateFinePaymentLinkAsync(SelectedFine);
+            if (result != null)
+            {
+                // Generate VietQR quick URL directly with order parameters for immediate scanning
+                int amountInt = (int)Math.Round(SelectedFine.Amount);
+                string memo = $"BTB FINE {SelectedFine.FineId}";
+                PayOSQrImageUrl = !string.IsNullOrWhiteSpace(result.QrCode)
+                    ? $"https://img.vietqr.io/image/MB-0387887153-compact2.png?amount={amountInt}&addInfo={Uri.EscapeDataString(memo)}&accountName=MAI%20XUAN%20QUY"
+                    : $"https://img.vietqr.io/image/MB-0387887153-compact2.png?amount={amountInt}&addInfo={Uri.EscapeDataString(memo)}&accountName=MAI%20XUAN%20QUY";
+                PayOSCheckoutUrl = result.CheckoutUrl;
+                PayOSPaymentNotice = "Vui lòng mở ứng dụng Ngân hàng (MB, VCB, MoMo,...) quét mã VietQR bên dưới để thanh toán.";
+            }
+            else
+            {
+                PayOSPaymentNotice = "Không thể tạo liên kết thanh toán PayOS. Vui lòng thử lại sau.";
+            }
+        }
+
+        private void ExecuteClosePayOSDialog()
+        {
+            _payOSService.StopPolling();
+            IsPayOSDialogOpen = false;
+        }
+
+        private void OnPayOSPaymentSucceeded(object? sender, FineItemModel fine)
+        {
+            IsPayOSDialogOpen = false;
+            string msg = $"[Thanh toán PayOS thành công] Khoản phạt {fine.FineCode} ({fine.Amount:N0} VNĐ) đã được thanh toán trực tuyến!";
+            SetFeedback(msg, isError: false);
+            _statusFeedbackCallback(msg);
+            LoadFines();
+        }
+
         private void ExecuteOpenPayDialog()
         {
             if (SelectedFine is null || !SelectedFine.CanBePaid)
@@ -549,6 +641,23 @@ namespace Booktibus.ViewModels
             else
             {
                 SetFeedback(result.Message, isError: true);
+            }
+        }
+
+        private void ExecutePrintFineReceipt()
+        {
+            if (SelectedFine == null) return;
+
+            string staffName = _sessionService.CurrentSession?.FullName ?? _sessionService.CurrentSession?.Username ?? "Thư viện Booktibus";
+            if (ReceiptPrintingService.PrintFineReceipt(SelectedFine, staffName, out string? err))
+            {
+                SetFeedback(LocalizationService.IsVietnamese
+                    ? $"[In thành công] Đã in / xuất biên lai thu tiền phạt cho khoản '{SelectedFine.FineCode}'."
+                    : $"[Print Successful] Fine receipt printed for '{SelectedFine.FineCode}'.", isError: false);
+            }
+            else if (!string.IsNullOrEmpty(err))
+            {
+                SetFeedback(LocalizationService.IsVietnamese ? $"[Lỗi in biên lai] {err}" : $"[Print Error] {err}", isError: true);
             }
         }
 
