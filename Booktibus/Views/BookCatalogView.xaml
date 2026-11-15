@@ -141,6 +141,16 @@
                                   Visibility="{Binding IsCatalogEmpty, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"
                                   MinHeight="340">
                             <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Ảnh" Width="52">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Width="34" Height="46" CornerRadius="3" ClipToBounds="True" Background="{StaticResource Brush.Background.App}" Margin="1">
+                                                <Image Source="{Binding DisplayCoverImagePath}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
                                 <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColCode}"
                                                     Binding="{Binding BookCode}"
                                                     Width="95" />
@@ -153,6 +163,15 @@
                                 <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColCategory}"
                                                     Binding="{Binding Category}"
                                                     Width="125" />
+                                <DataGridTemplateColumn Header="{DynamicResource Str.Catalog.LblShelf}" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource Brush.PrimaryNavy.Main}" CornerRadius="3" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding ShelfLocation}" Foreground="{StaticResource Brush.AccentGold.Light}" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="{DynamicResource Str.Catalog.ColAvailability}"
                                                     Binding="{Binding AvailabilityDisplay}"
                                                     Width="135" />
@@ -228,6 +247,21 @@
                                            FontWeight="Bold" />
                             </Border>
                         </Grid>
+
+                        <!-- Book Cover Image (Large) -->
+                        <Border HorizontalAlignment="Center"
+                                Margin="0,4,0,12"
+                                Width="140"
+                                Height="190"
+                                CornerRadius="6"
+                                ClipToBounds="True"
+                                Background="{StaticResource Brush.PrimaryNavy.Dark}"
+                                BorderBrush="{StaticResource Brush.AccentGold.Main}"
+                                BorderThickness="1.5">
+                            <Image Source="{Binding DisplayCoverImagePath}"
+                                   Stretch="UniformToFill"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                        </Border>
 
                         <!-- Book Title & Author -->
                         <TextBlock Text="{Binding Title}"
@@ -387,6 +421,14 @@
                         <StackPanel Grid.Column="1"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Top">
+                            <Button Content="📥 Nhập từ Excel/CSV"
+                                    Style="{StaticResource TealButtonStyle}"
+                                    Command="{Binding ImportBooksFromFileCommand}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="📄 Tải mẫu CSV"
+                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                    Command="{Binding DownloadSampleTemplateCommand}"
+                                    Margin="0,0,8,0" />
                             <Button Content="{DynamicResource Str.StaffBook.BtnNewMode}"
                                     Style="{StaticResource GoldAccentButtonStyle}"
                                     Command="{Binding StartAddNewBookCommand}"

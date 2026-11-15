@@ -1,3 +1,8 @@
+using System.Text;
+using Booktibus.Data;
+using System.IO;
+using System.Data;
+using Microsoft.Data.SqlClient;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
@@ -47,6 +52,8 @@ namespace Booktibus.ViewModels
         private string _formTotalCopies = "1";
         private string _formShelfLocation = string.Empty;
         private string _formDescription = string.Empty;
+        private string _formCoverImagePath = string.Empty;
+        private bool _isImporting;
         private string _staffActionFeedback = string.Empty;
         private bool _isStaffFeedbackSuccess;
 
@@ -82,6 +89,10 @@ namespace Booktibus.ViewModels
             LoadSelectedBookToEditCommand = new RelayCommand(ExecuteLoadSelectedBookToEdit);
             SaveBookCommand = new RelayCommand(ExecuteSaveBook);
             DeleteSelectedBookCommand = new RelayCommand(ExecuteDeleteSelectedBook);
+            BrowseCoverImageCommand = new RelayCommand(ExecuteBrowseCoverImage);
+            ClearCoverImageCommand = new RelayCommand(ExecuteClearCoverImage);
+            ImportBooksFromFileCommand = new RelayCommand(ExecuteImportBooksFromFile);
+            DownloadSampleTemplateCommand = new RelayCommand(ExecuteDownloadSampleTemplate);
 
             _readerService.FavoritesChanged += (_, _) => ReloadCatalogPreservingSelection();
             _libraryManagementService.CirculationChanged += (_, _) => ReloadCatalogPreservingSelection();
@@ -290,6 +301,57 @@ namespace Booktibus.ViewModels
 
         public ICommand LoadSelectedBookToEditCommand { get; }
 
+        public string FormCoverImagePath
+        {
+            get => _formCoverImagePath;
+            set
+            {
+                if (SetProperty(ref _formCoverImagePath, value))
+                {
+                    OnPropertyChanged(nameof(DisplayFormCoverImage));
+                    OnPropertyChanged(nameof(HasFormCoverImage));
+                }
+            }
+        }
+
+        public bool HasFormCoverImage => !string.IsNullOrWhiteSpace(_formCoverImagePath);
+
+        public string DisplayFormCoverImage
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(_formCoverImagePath) && File.Exists(_formCoverImagePath))
+                {
+                    return Path.GetFullPath(_formCoverImagePath);
+                }
+
+                string relative = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _formCoverImagePath ?? "");
+                if (File.Exists(relative))
+                {
+                    return relative;
+                }
+
+                string cur = Path.Combine(Directory.GetCurrentDirectory(), _formCoverImagePath ?? "");
+                if (File.Exists(cur))
+                {
+                    return cur;
+                }
+
+                return "pack://application:,,,/Resources/default_book_cover.png";
+            }
+        }
+
+        public bool IsImporting
+        {
+            get => _isImporting;
+            set => SetProperty(ref _isImporting, value);
+        }
+
+        public ICommand BrowseCoverImageCommand { get; }
+        public ICommand ClearCoverImageCommand { get; }
+        public ICommand ImportBooksFromFileCommand { get; }
+        public ICommand DownloadSampleTemplateCommand { get; }
+
         public ICommand SaveBookCommand { get; }
 
         public ICommand DeleteSelectedBookCommand { get; }
@@ -374,8 +436,9 @@ namespace Booktibus.ViewModels
             FormPublishYear = DateTime.Now.Year.ToString();
             FormIsbn = string.Empty;
             FormTotalCopies = "3";
-            FormShelfLocation = "Kệ A1-01";
+            FormShelfLocation = "Kệ A1, Tầng 1, Ngăn 1";
             FormDescription = string.Empty;
+            FormCoverImagePath = string.Empty;
             StaffActionFeedback = string.Empty;
             OnPropertyChanged(nameof(StaffFormModeTitle));
         }
@@ -419,12 +482,16 @@ namespace Booktibus.ViewModels
             StaffActionFeedback = result.Message;
             _statusFeedbackCallback(result.Message);
 
-            if (result.IsSuccess && IsAddNewMode)
+            if (result.IsSuccess)
             {
-                IsAddNewMode = false;
-                if (SelectedBook is not null)
+                SaveCoverImageToDatabase(FormBookCode, FormCoverImagePath);
+                if (IsAddNewMode)
                 {
-                    PopulateFormFromBook(SelectedBook);
+                    IsAddNewMode = false;
+                    if (SelectedBook is not null)
+                    {
+                        PopulateFormFromBook(SelectedBook);
+                    }
                 }
             }
         }
@@ -474,7 +541,281 @@ namespace Booktibus.ViewModels
             FormTotalCopies = book.TotalCopies.ToString();
             FormShelfLocation = book.ShelfLocation;
             FormDescription = book.Description;
+            FormCoverImagePath = (book as BookModel)?.CoverImagePath ?? string.Empty;
             OnPropertyChanged(nameof(StaffFormModeTitle));
+        }
+
+        private void ExecuteBrowseCoverImage()
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = LocalizationService.IsVietnamese ? "Chọn ảnh bìa sách (JPG, PNG, WebP)" : "Select Book Cover Image",
+                Filter = "Image Files (*.jpg;*.jpeg;*.png;*.webp)|*.jpg;*.jpeg;*.png;*.webp|All Files (*.*)|*.*",
+                CheckFileExists = true
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                try
+                {
+                    string sourceFile = dialog.FileName;
+                    string extension = Path.GetExtension(sourceFile);
+                    string targetFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", "Covers");
+                    if (!Directory.Exists(targetFolder))
+                    {
+                        Directory.CreateDirectory(targetFolder);
+                    }
+
+                    string safeCode = string.IsNullOrWhiteSpace(FormBookCode) ? "BOOK" : FormBookCode.Trim().Replace(" ", "_").Replace("/", "_").Replace("\\", "_");
+                    string fileName = $"cover_{safeCode}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
+                    string targetPath = Path.Combine(targetFolder, fileName);
+
+                    File.Copy(sourceFile, targetPath, true);
+                    FormCoverImagePath = Path.Combine("Images", "Covers", fileName);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        (LocalizationService.IsVietnamese ? "Không thể lưu tệp ảnh: " : "Failed to save cover image: ") + ex.Message,
+                        "Booktibus",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void ExecuteClearCoverImage()
+        {
+            FormCoverImagePath = string.Empty;
+        }
+
+        private void ExecuteDownloadSampleTemplate()
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = LocalizationService.IsVietnamese ? "Lưu file CSV mẫu" : "Save Sample CSV Template",
+                Filter = "CSV Files (*.csv)|*.csv",
+                FileName = "sample_books_template.csv"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                File.WriteAllText(dialog.FileName, CsvBookParser.GenerateSampleCsvTemplate(), Encoding.UTF8);
+                MessageBox.Show(
+                    LocalizationService.IsVietnamese ? "Đã lưu file mẫu thành công!" : "Sample template saved successfully!",
+                    "Booktibus",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+        }
+
+        private void ExecuteImportBooksFromFile()
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = LocalizationService.IsVietnamese ? "Chọn file danh mục sách (Excel CSV)" : "Select Book Catalog CSV",
+                Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                CheckFileExists = true
+            };
+
+            if (dialog.ShowDialog() != true) return;
+
+            string selectedFile = dialog.FileName;
+            IsImporting = true;
+
+            try
+            {
+                var parsedItems = CsvBookParser.ParseCsvFile(selectedFile, out var warnings);
+                if (warnings.Count > 0 && parsedItems.Count == 0)
+                {
+                    MessageBox.Show(string.Join("\n", warnings), "Booktibus", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                int successCount = 0;
+                int failureCount = 0;
+                List<string> errors = new();
+
+                using (SqlConnection conn = new(DatabaseConfig.GetConnectionString()))
+                {
+                    conn.Open();
+
+                    const string ensureCol = @"
+                        IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Books]') AND name = N'CoverImagePath')
+                        BEGIN
+                            ALTER TABLE [dbo].[Books] ADD [CoverImagePath] NVARCHAR(500) NULL;
+                        END";
+                    using (SqlCommand ensureCmd = new(ensureCol, conn))
+                    {
+                        ensureCmd.ExecuteNonQuery();
+                    }
+
+                    HashSet<string> existingCodes = new(StringComparer.OrdinalIgnoreCase);
+                    const string codeSql = "SELECT [BookCode] FROM [dbo].[Books];";
+                    using (SqlCommand codeCmd = new(codeSql, conn))
+                    using (SqlDataReader r = codeCmd.ExecuteReader())
+                    {
+                        while (r.Read()) existingCodes.Add(r.GetString(0));
+                    }
+
+                    using SqlTransaction tx = conn.BeginTransaction();
+                    const string insertSql = @"
+                        INSERT INTO [dbo].[Books]
+                            ([BookCode], [Title], [Author], [Category], [Publisher], [PublishYear], [Isbn],
+                             [TotalCopies], [AvailableCopies], [ShelfLocation], [Description], [CoverImagePath], [IsSampleData])
+                        VALUES
+                            (@BookCode, @Title, @Author, @Category, @Publisher, @PublishYear, @Isbn,
+                             @TotalCopies, @AvailableCopies, @ShelfLocation, @Description, @CoverImagePath, 0);";
+
+                    using SqlCommand insertCmd = new(insertSql, conn, tx);
+                    insertCmd.Parameters.Add("@BookCode", SqlDbType.NVarChar, 30);
+                    insertCmd.Parameters.Add("@Title", SqlDbType.NVarChar, 200);
+                    insertCmd.Parameters.Add("@Author", SqlDbType.NVarChar, 150);
+                    insertCmd.Parameters.Add("@Category", SqlDbType.NVarChar, 80);
+                    insertCmd.Parameters.Add("@Publisher", SqlDbType.NVarChar, 120);
+                    insertCmd.Parameters.Add("@PublishYear", SqlDbType.Int);
+                    insertCmd.Parameters.Add("@Isbn", SqlDbType.NVarChar, 30);
+                    insertCmd.Parameters.Add("@TotalCopies", SqlDbType.Int);
+                    insertCmd.Parameters.Add("@AvailableCopies", SqlDbType.Int);
+                    insertCmd.Parameters.Add("@ShelfLocation", SqlDbType.NVarChar, 50);
+                    insertCmd.Parameters.Add("@Description", SqlDbType.NVarChar, 1000);
+                    insertCmd.Parameters.Add("@CoverImagePath", SqlDbType.NVarChar, 500);
+
+                    foreach (var item in parsedItems)
+                    {
+                        if (!item.IsValid)
+                        {
+                            failureCount++;
+                            errors.Add(item.ErrorMessage);
+                            continue;
+                        }
+
+                        if (existingCodes.Contains(item.BookCode))
+                        {
+                            failureCount++;
+                            errors.Add($"Dòng {item.RowIndex}: Mã sách '{item.BookCode}' đã tồn tại trong CSDL.");
+                            continue;
+                        }
+
+                        insertCmd.Parameters["@BookCode"].Value = item.BookCode;
+                        insertCmd.Parameters["@Title"].Value = item.Title;
+                        insertCmd.Parameters["@Author"].Value = item.Author;
+                        insertCmd.Parameters["@Category"].Value = item.Category;
+                        insertCmd.Parameters["@Publisher"].Value = string.IsNullOrWhiteSpace(item.Publisher) ? (object)DBNull.Value : item.Publisher.Trim();
+                        insertCmd.Parameters["@PublishYear"].Value = item.PublishYear.HasValue ? (object)item.PublishYear.Value : DBNull.Value;
+                        insertCmd.Parameters["@Isbn"].Value = string.IsNullOrWhiteSpace(item.Isbn) ? (object)DBNull.Value : item.Isbn.Trim();
+                        insertCmd.Parameters["@TotalCopies"].Value = item.TotalCopies;
+                        insertCmd.Parameters["@AvailableCopies"].Value = item.TotalCopies;
+                        insertCmd.Parameters["@ShelfLocation"].Value = string.IsNullOrWhiteSpace(item.ShelfLocation) ? (object)DBNull.Value : item.ShelfLocation.Trim();
+                        insertCmd.Parameters["@Description"].Value = string.IsNullOrWhiteSpace(item.Description) ? (object)DBNull.Value : item.Description.Trim();
+                        insertCmd.Parameters["@CoverImagePath"].Value = string.IsNullOrWhiteSpace(item.CoverImagePath) ? (object)DBNull.Value : item.CoverImagePath.Trim();
+
+                        insertCmd.ExecuteNonQuery();
+                        existingCodes.Add(item.BookCode);
+                        successCount++;
+                    }
+
+                    tx.Commit();
+                }
+
+                if (successCount > 0)
+                {
+                    ReloadCatalogPreservingSelection();
+                }
+
+                string summary = LocalizationService.IsVietnamese
+                    ? $"[Nhập sách hàng loạt] Đã nhập thành công {successCount}/{parsedItems.Count} cuốn sách vào CSDL." +
+                      (failureCount > 0 ? $"\n({failureCount} dòng không hợp lệ hoặc bị trùng mã sách)" : "")
+                    : $"[Batch Import] Successfully imported {successCount}/{parsedItems.Count} book(s) to DB." +
+                      (failureCount > 0 ? $"\n({failureCount} rows skipped or duplicate)" : "");
+
+                if (errors.Count > 0)
+                {
+                    summary += "\n\nChi tiết một số dòng bị lỗi:\n" + string.Join("\n", errors.Take(6));
+                    if (errors.Count > 6) summary += $"\n... và {errors.Count - 6} lỗi khác.";
+                }
+
+                IsStaffFeedbackSuccess = successCount > 0;
+                StaffActionFeedback = summary;
+                _statusFeedbackCallback(summary);
+
+                MessageBox.Show(
+                    summary,
+                    LocalizationService.IsVietnamese ? "Kết Quả Nhập Hàng Loạt" : "Batch Import Result",
+                    MessageBoxButton.OK,
+                    successCount > 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khi nhập file CSV: " + ex.Message, "Booktibus", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsImporting = false;
+            }
+        }
+
+        private Dictionary<string, string> LoadCoverImageMap()
+        {
+            Dictionary<string, string> map = new(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+
+                const string checkColSql = @"
+                    SELECT 1 FROM sys.columns 
+                    WHERE object_id = OBJECT_ID(N'[dbo].[Books]') AND name = N'CoverImagePath';";
+                using (SqlCommand checkCmd = new(checkColSql, conn))
+                {
+                    if (checkCmd.ExecuteScalar() == null) return map;
+                }
+
+                const string sql = "SELECT [BookCode], [CoverImagePath] FROM [dbo].[Books] WHERE [CoverImagePath] IS NOT NULL AND [CoverImagePath] <> '';";
+                using SqlCommand cmd = new(sql, conn);
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    string code = reader.GetString(0);
+                    string path = reader.GetString(1);
+                    map[code] = path;
+                }
+            }
+            catch
+            {
+                // Graceful fallback in mock mode
+            }
+            return map;
+        }
+
+        private void SaveCoverImageToDatabase(string bookCode, string coverImagePath)
+        {
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+
+                const string ensureCol = @"
+                    IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Books]') AND name = N'CoverImagePath')
+                    BEGIN
+                        ALTER TABLE [dbo].[Books] ADD [CoverImagePath] NVARCHAR(500) NULL;
+                    END";
+                using (SqlCommand ensureCmd = new(ensureCol, conn))
+                {
+                    ensureCmd.ExecuteNonQuery();
+                }
+
+                const string updateSql = "UPDATE [dbo].[Books] SET [CoverImagePath] = @Cover WHERE [BookCode] = @Code;";
+                using SqlCommand cmd = new(updateSql, conn);
+                cmd.Parameters.Add("@Cover", SqlDbType.NVarChar, 500).Value =
+                    string.IsNullOrWhiteSpace(coverImagePath) ? (object)DBNull.Value : coverImagePath.Trim();
+                cmd.Parameters.Add("@Code", SqlDbType.NVarChar, 30).Value = bookCode.Trim();
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Graceful fallback in mock mode
+            }
         }
 
         private void InitializeFilterOptions()
@@ -543,9 +884,15 @@ namespace Booktibus.ViewModels
             ErrorMessage = error ?? string.Empty;
 
             Books.Clear();
+            Dictionary<string, string> coverMap = LoadCoverImageMap();
             foreach (BookItemModel item in items)
             {
-                Books.Add(item);
+                BookModel model = new(item);
+                if (coverMap.TryGetValue(item.BookCode, out string? coverPath))
+                {
+                    model.CoverImagePath = coverPath;
+                }
+                Books.Add(model);
             }
 
             if (preserveBookId.HasValue)
