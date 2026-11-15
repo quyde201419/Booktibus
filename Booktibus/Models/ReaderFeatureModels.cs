@@ -4,11 +4,14 @@ using Booktibus.ViewModels;
 namespace Booktibus.Models
 {
     /// <summary>
-    /// Represents a book item in the catalog with live availability and favorite status for the current user.
+    /// Represents a book item in the catalog with live availability, favorite status, and reservation status.
     /// </summary>
     public class BookItemModel : BaseViewModel
     {
         private bool _isFavorite;
+        private bool _isReservedByCurrentUser;
+        private int _activeReservationsCount;
+        private string _currentUserReservationStatus = string.Empty;
 
         public int BookId { get; init; }
 
@@ -38,6 +41,8 @@ namespace Booktibus.Models
 
         public bool IsAvailable => AvailableCopies > 0;
 
+        public bool IsOutOfStock => AvailableCopies == 0;
+
         public bool IsFavorite
         {
             get => _isFavorite;
@@ -51,13 +56,67 @@ namespace Booktibus.Models
             }
         }
 
-        public string AvailabilityDisplay => LocalizationService.IsVietnamese
-            ? (IsAvailable
-                ? $"Còn sách ({AvailableCopies}/{TotalCopies})"
-                : $"Hết sách (0/{TotalCopies})")
-            : (IsAvailable
-                ? $"Available ({AvailableCopies}/{TotalCopies})"
-                : $"Out of Stock (0/{TotalCopies})");
+        public bool IsReservedByCurrentUser
+        {
+            get => _isReservedByCurrentUser;
+            set
+            {
+                if (SetProperty(ref _isReservedByCurrentUser, value))
+                {
+                    OnPropertyChanged(nameof(CanReserve));
+                    OnPropertyChanged(nameof(ReserveButtonLabel));
+                    OnPropertyChanged(nameof(ReservationBadgeText));
+                }
+            }
+        }
+
+        public int ActiveReservationsCount
+        {
+            get => _activeReservationsCount;
+            set
+            {
+                if (SetProperty(ref _activeReservationsCount, value))
+                {
+                    OnPropertyChanged(nameof(AvailabilityDisplay));
+                    OnPropertyChanged(nameof(ReservationBadgeText));
+                }
+            }
+        }
+
+        public string CurrentUserReservationStatus
+        {
+            get => _currentUserReservationStatus;
+            set
+            {
+                if (SetProperty(ref _currentUserReservationStatus, value))
+                {
+                    OnPropertyChanged(nameof(ReserveButtonLabel));
+                    OnPropertyChanged(nameof(ReservationBadgeText));
+                }
+            }
+        }
+
+        public bool CanReserve => AvailableCopies == 0 && !IsReservedByCurrentUser;
+
+        public string AvailabilityDisplay
+        {
+            get
+            {
+                string holdSuffix = ActiveReservationsCount > 0
+                    ? (LocalizationService.IsVietnamese ? $" • {ActiveReservationsCount} đặt trước" : $" • {ActiveReservationsCount} reserved")
+                    : string.Empty;
+
+                return LocalizationService.IsVietnamese
+                    ? (IsAvailable
+                        ? $"Còn sách ({AvailableCopies}/{TotalCopies}){holdSuffix}"
+                        : $"Hết sách (0/{TotalCopies}){holdSuffix}")
+                    : (IsAvailable
+                        ? $"Available ({AvailableCopies}/{TotalCopies}){holdSuffix}"
+                        : $"Out of Stock (0/{TotalCopies}){holdSuffix}");
+            }
+        }
+
+        public string PickerDisplay => $"{BookCode} — {Title} ({AvailabilityDisplay})";
 
         public string SampleDataBadge => IsSampleData
             ? (LocalizationService.IsVietnamese ? "DỮ LIỆU MẪU" : "SAMPLE DATA")
@@ -71,12 +130,61 @@ namespace Booktibus.Models
             ? (LocalizationService.IsVietnamese ? "★ Đã yêu thích" : "★ Favorited")
             : string.Empty;
 
+        public string ReserveButtonLabel
+        {
+            get
+            {
+                if (IsReservedByCurrentUser)
+                {
+                    if (string.Equals(CurrentUserReservationStatus, "Ready", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return LocalizationService.IsVietnamese
+                            ? "✓ Sách đã về — Đang giữ cho bạn"
+                            : "✓ Ready — Held for You";
+                    }
+
+                    return LocalizationService.IsVietnamese
+                        ? "⏳ Đã đặt trước (Đang chờ sách)"
+                        : "⏳ Reserved (Waiting in Queue)";
+                }
+
+                return LocalizationService.IsVietnamese
+                    ? "📌 Đặt trước sách (Reserve)"
+                    : "📌 Reserve Book (Hold)";
+            }
+        }
+
+        public string ReservationBadgeText
+        {
+            get
+            {
+                if (IsReservedByCurrentUser)
+                {
+                    return string.Equals(CurrentUserReservationStatus, "Ready", StringComparison.OrdinalIgnoreCase)
+                        ? (LocalizationService.IsVietnamese ? "ĐANG GIỮ CHO BẠN" : "HELD FOR YOU")
+                        : (LocalizationService.IsVietnamese ? "ĐÃ ĐẶT TRƯỚC" : "RESERVED");
+                }
+
+                if (ActiveReservationsCount > 0)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? $"Có {ActiveReservationsCount} đặt trước"
+                        : $"{ActiveReservationsCount} Hold(s)";
+                }
+
+                return string.Empty;
+            }
+        }
+
         public void RefreshLocalization()
         {
             OnPropertyChanged(nameof(AvailabilityDisplay));
+            OnPropertyChanged(nameof(PickerDisplay));
             OnPropertyChanged(nameof(SampleDataBadge));
             OnPropertyChanged(nameof(FavoriteButtonLabel));
             OnPropertyChanged(nameof(FavoriteBadgeText));
+            OnPropertyChanged(nameof(ReserveButtonLabel));
+            OnPropertyChanged(nameof(ReservationBadgeText));
         }
     }
 
@@ -127,6 +235,58 @@ namespace Booktibus.Models
 
         public string Notes { get; init; } = string.Empty;
 
+        public int RenewalCount { get; init; }
+
+        public bool HasActiveReservationOnBook { get; init; }
+
+        public bool IsReturned => ReturnedAtLocal.HasValue || string.Equals(BorrowStatus, "Returned", StringComparison.OrdinalIgnoreCase);
+
+        public bool IsOverdue => !IsReturned && (string.Equals(BorrowStatus, "Overdue", StringComparison.OrdinalIgnoreCase) || DueAtLocal.Date < DateTime.Now.Date);
+
+        public bool CanRenew => !IsReturned && !IsOverdue && RenewalCount < 2 && !HasActiveReservationOnBook;
+
+        public string RenewalStatusDisplay => LocalizationService.IsVietnamese
+            ? $"{RenewalCount}/2 lần"
+            : $"{RenewalCount}/2";
+
+        public string RenewalConstraintHint
+        {
+            get
+            {
+                if (IsReturned)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Phiếu mượn đã trả hoàn tất."
+                        : "Loan has already been returned.";
+                }
+
+                if (IsOverdue)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Không thể gia hạn: Sách đã quá hạn trả."
+                        : "Cannot renew: Loan is already overdue.";
+                }
+
+                if (RenewalCount >= 2)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Không thể gia hạn: Đã đạt tối đa 2/2 lần gia hạn."
+                        : "Cannot renew: Maximum 2/2 renewals reached.";
+                }
+
+                if (HasActiveReservationOnBook)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Không thể gia hạn: Đầu sách đang có người đặt trước."
+                        : "Cannot renew: Another reader has reserved this book.";
+                }
+
+                return LocalizationService.IsVietnamese
+                    ? $"Đủ điều kiện gia hạn (Còn {2 - RenewalCount} lần gia hạn)."
+                    : $"Eligible for renewal ({2 - RenewalCount} renewal(s) remaining).";
+            }
+        }
+
         public string BorrowedDateDisplay => BorrowedAtLocal.ToString("dd/MM/yyyy");
 
         public string DueDateDisplay => DueAtLocal.ToString("dd/MM/yyyy");
@@ -150,6 +310,71 @@ namespace Booktibus.Models
                     "Returned" => "Đã trả",
                     "Overdue" => "Quá hạn",
                     _ => BorrowStatus
+                };
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a Book Reservation / Hold record in dbo.BookReservations.
+    /// </summary>
+    public class BookReservationItemModel
+    {
+        public int ReservationId { get; init; }
+
+        public string ReservationCode { get; init; } = string.Empty;
+
+        public int BookId { get; init; }
+
+        public string BookCode { get; init; } = string.Empty;
+
+        public string BookTitle { get; init; } = string.Empty;
+
+        public string BookAuthor { get; init; } = string.Empty;
+
+        public int UserId { get; init; }
+
+        public string Username { get; init; } = string.Empty;
+
+        public string ReaderFullName { get; init; } = string.Empty;
+
+        public string ReaderCardId { get; init; } = string.Empty;
+
+        public DateTime ReservedAtLocal { get; init; }
+
+        public DateTime? ReadyAtLocal { get; init; }
+
+        public DateTime? ExpiresAtLocal { get; init; }
+
+        public string ReservationStatus { get; init; } = "Pending";
+
+        public string Notes { get; init; } = string.Empty;
+
+        public bool IsPending => string.Equals(ReservationStatus, "Pending", StringComparison.OrdinalIgnoreCase);
+
+        public bool IsReadyForPickup => string.Equals(ReservationStatus, "Ready", StringComparison.OrdinalIgnoreCase);
+
+        public bool CanCancel => IsPending || IsReadyForPickup;
+
+        public bool CanFulfill => IsReadyForPickup;
+
+        public string ReservedDateDisplay => ReservedAtLocal.ToString("dd/MM/yyyy HH:mm");
+
+        public string HoldUntilDisplay => ExpiresAtLocal.HasValue
+            ? ExpiresAtLocal.Value.ToString("dd/MM/yyyy HH:mm")
+            : (LocalizationService.IsVietnamese ? "Chờ sách trả về" : "Waiting for return");
+
+        public string LocalizedStatusDisplay
+        {
+            get
+            {
+                return ReservationStatus switch
+                {
+                    "Pending" => LocalizationService.IsVietnamese ? "Đang chờ sách trả (Pending)" : "Waiting for Return (Pending)",
+                    "Ready" => LocalizationService.IsVietnamese ? "Đang giữ sách cho người đặt (Held / Ready)" : "Held for Reader (Ready)",
+                    "Fulfilled" => LocalizationService.IsVietnamese ? "Đã nhận sách (Fulfilled)" : "Fulfilled",
+                    "Cancelled" => LocalizationService.IsVietnamese ? "Đã hủy (Cancelled)" : "Cancelled",
+                    _ => ReservationStatus
                 };
             }
         }
@@ -211,4 +436,3 @@ namespace Booktibus.Models
         };
     }
 }
-

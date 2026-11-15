@@ -6,7 +6,7 @@
              xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:ReaderBorrowingViewModel}"
-             d:DesignHeight="820"
+             d:DesignHeight="980"
              d:DesignWidth="1060">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -49,7 +49,7 @@
                            TextWrapping="Wrap" />
             </Border>
 
-            <!-- STAFF ACTION FEEDBACK BANNER -->
+            <!-- ACTION FEEDBACK BANNER (FOR BOTH READER & STAFF) -->
             <Border Visibility="{Binding HasStaffFeedback, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Margin="0,0,0,16">
                 <Border.Style>
@@ -260,8 +260,9 @@
                 </Border>
             </Grid>
 
-            <!-- 4. BORROWING TRANSACTIONS CARD -->
-            <Border Style="{StaticResource CardBorderStyle}">
+            <!-- 4. BORROWING TRANSACTIONS & LOAN RENEWAL CARD -->
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Margin="0,0,0,18">
                 <StackPanel>
                     <!-- Filter Header -->
                     <Grid Margin="0,0,0,14">
@@ -301,39 +302,92 @@
                                 Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </Grid>
 
+                    <!-- LOAN RENEWAL ACTION BAR (GIA HẠN MƯỢN SÁCH — FOR BOTH READER & STAFF) -->
+                    <Border Background="#FFF7FAFC"
+                            BorderBrush="{StaticResource Brush.Border.Subtle}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14,10"
+                            Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="210" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="GIA HẠN MƯỢN SÁCH (LOAN RENEWAL — TỐI ĐA 2 LẦN/PHIẾU)"
+                                           FontSize="11.5"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                <TextBlock Text="{Binding SelectedLoanRenewalSummary}"
+                                           FontSize="12.5"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource Brush.Text.Primary}"
+                                           Margin="0,3,0,2"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding SelectedLoanRenewalHint}"
+                                           FontSize="11.5"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                <TextBlock Text="Thời gian cộng thêm:"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <ComboBox ItemsSource="{Binding RenewalDayOptions}"
+                                          SelectedItem="{Binding SelectedRenewalDaysOption}"
+                                          DisplayMemberPath="DisplayText" />
+                            </StackPanel>
+
+                            <Button Grid.Column="4"
+                                    Content="Gia hạn sách"
+                                    Style="{StaticResource GoldAccentButtonStyle}"
+                                    Command="{Binding RenewLoanCommand}"
+                                    IsEnabled="{Binding CanRenewSelectedLoan}"
+                                    VerticalAlignment="Bottom" />
+                        </Grid>
+                    </Border>
+
                     <!-- STAFF DATAGRID (All readers' transactions) -->
                     <DataGrid ItemsSource="{Binding StaffBorrowRecords}"
                               SelectedItem="{Binding SelectedStaffBorrowRecord}"
                               Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}}"
-                              MinHeight="280">
+                              MinHeight="250">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColRecordCode}"
                                                 Binding="{Binding RecordCode}"
-                                                Width="115" />
+                                                Width="110" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReaderCard}"
                                                 Binding="{Binding ReaderCardId}"
-                                                Width="120" />
+                                                Width="115" />
                             <DataGridTextColumn Header="{DynamicResource Str.StaffBorrow.ColReaderName}"
                                                 Binding="{Binding ReaderFullName}"
-                                                Width="140" />
+                                                Width="135" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookCode}"
                                                 Binding="{Binding BookCode}"
                                                 Width="95" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookTitle}"
                                                 Binding="{Binding BookTitle}"
-                                                Width="1.5*" />
+                                                Width="1.4*" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBorrowDate}"
                                                 Binding="{Binding BorrowedDateDisplay}"
-                                                Width="125" />
+                                                Width="120" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColDueDate}"
                                                 Binding="{Binding DueDateDisplay}"
-                                                Width="100" />
+                                                Width="95" />
+                            <DataGridTextColumn Header="Gia hạn"
+                                                Binding="{Binding RenewalStatusDisplay}"
+                                                Width="85" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReturnDate}"
                                                 Binding="{Binding ReturnedDateDisplay}"
-                                                Width="125" />
+                                                Width="120" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColStatus}"
                                                 Binding="{Binding LocalizedStatusDisplay}"
-                                                Width="135" />
+                                                Width="130" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColNotes}"
                                                 Binding="{Binding Notes}"
                                                 Width="1*" />
@@ -344,35 +398,38 @@
                     <DataGrid ItemsSource="{Binding BorrowRecords}"
                               SelectedItem="{Binding SelectedBorrowRecord}"
                               Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"
-                              MinHeight="260">
+                              MinHeight="240">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColRecordCode}"
                                                 Binding="{Binding RecordCode}"
-                                                Width="120" />
+                                                Width="115" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReaderCard}"
                                                 Binding="{Binding ReaderCardId}"
-                                                Width="125" />
+                                                Width="120" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookCode}"
                                                 Binding="{Binding BookCode}"
                                                 Width="95" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBookTitle}"
                                                 Binding="{Binding BookTitle}"
-                                                Width="1.6*" />
+                                                Width="1.5*" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColBorrowDate}"
                                                 Binding="{Binding BorrowedDateDisplay}"
-                                                Width="110" />
+                                                Width="105" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColDueDate}"
                                                 Binding="{Binding DueDateDisplay}"
-                                                Width="110" />
+                                                Width="105" />
+                            <DataGridTextColumn Header="Gia hạn"
+                                                Binding="{Binding RenewalStatusDisplay}"
+                                                Width="85" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColReturnDate}"
                                                 Binding="{Binding ReturnedDateDisplay}"
-                                                Width="125" />
+                                                Width="120" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColStatus}"
                                                 Binding="{Binding LocalizedStatusDisplay}"
-                                                Width="115" />
+                                                Width="110" />
                             <DataGridTextColumn Header="{DynamicResource Str.Borrow.ColNotes}"
                                                 Binding="{Binding Notes}"
-                                                Width="1.1*" />
+                                                Width="1*" />
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -404,7 +461,101 @@
                 </StackPanel>
             </Border>
 
+            <!-- 5. BOOK RESERVATION / HOLD CARD (ĐẶT TRƯỚC SÁCH KHI HẾT BẢN SAO) -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel>
+                    <TextBlock Text="Đặt trước Sách khi Hết bản sao (Book Reservation / Hold)"
+                               Style="{StaticResource SectionHeaderTextStyle}" />
+                    <TextBlock Text="Khi một đầu sách có AvailableCopies == 0, độc giả có thể bấm 'Đặt trước (Reserve)'. Khi có người đem trả sách đó, hệ thống sẽ tự động giữ sách cho người đã đặt trước."
+                               Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                    <!-- Reserve Form for Out-of-Stock Books -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.4*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Chọn đầu sách đang hết bản sao (AvailableCopies = 0):"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <ComboBox ItemsSource="{Binding OutOfStockBooksForReservation}"
+                                      SelectedItem="{Binding SelectedBookToReserve}"
+                                      DisplayMemberPath="PickerDisplay" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Ghi chú đặt trước (Tùy chọn):"
+                                       Style="{StaticResource FieldLabelTextStyle}" />
+                            <TextBox Text="{Binding ReservationNotesInput, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <Button Grid.Column="4"
+                                Content="Đặt trước (Reserve)"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding ReserveBookCommand}"
+                                IsEnabled="{Binding CanSubmitReservation}"
+                                VerticalAlignment="Bottom" />
+                    </Grid>
+
+                    <!-- Reservations DataGrid -->
+                    <DataGrid ItemsSource="{Binding ReservationsList}"
+                              SelectedItem="{Binding SelectedReservation}"
+                              MinHeight="160"
+                              MaxHeight="280">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã đặt trước"
+                                                Binding="{Binding ReservationCode}"
+                                                Width="115" />
+                            <DataGridTextColumn Header="Mã thẻ"
+                                                Binding="{Binding ReaderCardId}"
+                                                Width="115" />
+                            <DataGridTextColumn Header="Độc giả"
+                                                Binding="{Binding ReaderFullName}"
+                                                Width="140" />
+                            <DataGridTextColumn Header="Mã sách"
+                                                Binding="{Binding BookCode}"
+                                                Width="95" />
+                            <DataGridTextColumn Header="Tên sách"
+                                                Binding="{Binding BookTitle}"
+                                                Width="1.4*" />
+                            <DataGridTextColumn Header="Ngày đặt"
+                                                Binding="{Binding ReservedDateDisplay}"
+                                                Width="125" />
+                            <DataGridTextColumn Header="Hạn giữ sách"
+                                                Binding="{Binding HoldUntilDisplay}"
+                                                Width="125" />
+                            <DataGridTextColumn Header="Trạng thái"
+                                                Binding="{Binding LocalizedStatusDisplay}"
+                                                Width="195" />
+                            <DataGridTextColumn Header="Ghi chú"
+                                                Binding="{Binding Notes}"
+                                                Width="1*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Action Buttons for Selected Reservation -->
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="0,12,0,0">
+                        <Button Content="✓ Giao sách đã giữ / Lập phiếu mượn"
+                                Style="{StaticResource TealButtonStyle}"
+                                Command="{Binding FulfillReservationCommand}"
+                                Visibility="{Binding IsStaffCirculationManager, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                IsEnabled="{Binding CanFulfillSelectedReservation}"
+                                Margin="0,0,10,0" />
+
+                        <Button Content="✕ Hủy đặt trước"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding CancelReservationCommand}"
+                                IsEnabled="{Binding CanCancelSelectedReservation}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>
-

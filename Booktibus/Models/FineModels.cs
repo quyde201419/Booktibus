@@ -72,6 +72,14 @@ namespace Booktibus.Models
             IsOfficiallyRecorded &&
             string.Equals(FineStatus, "Unpaid", StringComparison.OrdinalIgnoreCase);
 
+        public bool CanBePaid =>
+            IsOfficiallyRecorded &&
+            string.Equals(FineStatus, "Unpaid", StringComparison.OrdinalIgnoreCase);
+
+        public string PaidDateDisplay => PaidAtLocal.HasValue
+            ? PaidAtLocal.Value.ToString("dd/MM/yyyy HH:mm")
+            : (LocalizationService.IsVietnamese ? "Chưa thanh toán" : "Unpaid");
+
         public string FormattedAmount => $"{Amount:N0} VNĐ";
 
         public string FormattedDailyRate => LocalizationService.IsVietnamese
@@ -213,5 +221,13 @@ namespace Booktibus.Models
 
         public string Reason { get; init; } = string.Empty;
     }
-}
 
+    public class PayFineRequest
+    {
+        public int FineId { get; init; }
+
+        public string PaymentMethod { get; init; } = "Tiền mặt";
+
+        public string Notes { get; init; } = string.Empty;
+    }
+}

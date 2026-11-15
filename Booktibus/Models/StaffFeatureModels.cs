@@ -79,9 +79,57 @@ namespace Booktibus.Models
 
         public string Notes { get; init; } = string.Empty;
 
+        public int RenewalCount { get; init; }
+
+        public bool HasActiveReservationOnBook { get; init; }
+
         public bool IsReturned => ReturnedAtLocal.HasValue || string.Equals(BorrowStatus, "Returned", StringComparison.OrdinalIgnoreCase);
 
-        public bool IsOverdue => !IsReturned && (string.Equals(BorrowStatus, "Overdue", StringComparison.OrdinalIgnoreCase) || DueAtLocal < DateTime.Now);
+        public bool IsOverdue => !IsReturned && (string.Equals(BorrowStatus, "Overdue", StringComparison.OrdinalIgnoreCase) || DueAtLocal.Date < DateTime.Now.Date);
+
+        public bool CanRenew => !IsReturned && !IsOverdue && RenewalCount < 2 && !HasActiveReservationOnBook;
+
+        public string RenewalStatusDisplay => LocalizationService.IsVietnamese
+            ? $"{RenewalCount}/2 lần"
+            : $"{RenewalCount}/2";
+
+        public string RenewalConstraintHint
+        {
+            get
+            {
+                if (IsReturned)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Phiếu mượn đã trả hoàn tất."
+                        : "Loan has already been returned.";
+                }
+
+                if (IsOverdue)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Không thể gia hạn: Sách đã quá hạn trả."
+                        : "Cannot renew: Loan is already overdue.";
+                }
+
+                if (RenewalCount >= 2)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Không thể gia hạn: Đã đạt tối đa 2/2 lần gia hạn."
+                        : "Cannot renew: Maximum 2/2 renewals reached.";
+                }
+
+                if (HasActiveReservationOnBook)
+                {
+                    return LocalizationService.IsVietnamese
+                        ? "Không thể gia hạn: Đầu sách đang có người đặt trước."
+                        : "Cannot renew: Another reader has reserved this book.";
+                }
+
+                return LocalizationService.IsVietnamese
+                    ? $"Đủ điều kiện gia hạn (Còn {2 - RenewalCount} lần gia hạn)."
+                    : $"Eligible for renewal ({2 - RenewalCount} renewal(s) remaining).";
+            }
+        }
 
         public string BorrowedDateDisplay => BorrowedAtLocal.ToString("dd/MM/yyyy HH:mm");
 
@@ -276,4 +324,3 @@ namespace Booktibus.Models
         public int ReturnedInPeriod { get; init; }
     }
 }
-

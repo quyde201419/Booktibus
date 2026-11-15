@@ -15,6 +15,8 @@ namespace Booktibus.Services
     /// </summary>
     public class LibraryManagementService
     {
+        public const int MaxRenewalsPerLoan = 2;
+
         private static readonly Regex UsernamePattern = new(@"^[a-zA-Z0-9._-]{4,50}$", RegexOptions.Compiled);
         private static readonly Regex EmailPattern = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
@@ -28,6 +30,43 @@ namespace Booktibus.Services
         public event EventHandler? ReadersChanged;
 
         public event EventHandler? AccountsChanged;
+
+        public static void EnsureCirculationSchema(SqlConnection conn)
+        {
+            const string sql = @"
+                IF COL_LENGTH(N'dbo.BorrowRecords', N'RenewalCount') IS NULL
+                BEGIN
+                    ALTER TABLE [dbo].[BorrowRecords]
+                    ADD [RenewalCount] INT NOT NULL CONSTRAINT [DF_BorrowRecords_RenewalCount] DEFAULT (0);
+                END;
+
+                IF OBJECT_ID(N'dbo.BookReservations', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[BookReservations]
+                    (
+                        [ReservationId]           INT           IDENTITY(1,1) NOT NULL,
+                        [ReservationCode]         NVARCHAR(30)  NOT NULL,
+                        [BookId]                  INT           NOT NULL,
+                        [UserId]                  INT           NOT NULL,
+                        [ReaderCardId]            NVARCHAR(30)  NOT NULL,
+                        [ReservedAtUtc]           DATETIME2(0)  NOT NULL CONSTRAINT [DF_BookReservations_ReservedAtUtc] DEFAULT (SYSUTCDATETIME()),
+                        [ReservationStatus]       NVARCHAR(30)  NOT NULL CONSTRAINT [DF_BookReservations_Status] DEFAULT (N'Pending'),
+                        [ReadyAtUtc]              DATETIME2(0)  NULL,
+                        [ExpiresAtUtc]            DATETIME2(0)  NULL,
+                        [FulfilledBorrowRecordId] INT           NULL,
+                        [Notes]                   NVARCHAR(400) NULL,
+
+                        CONSTRAINT [PK_BookReservations] PRIMARY KEY CLUSTERED ([ReservationId] ASC),
+                        CONSTRAINT [UQ_BookReservations_Code] UNIQUE NONCLUSTERED ([ReservationCode] ASC),
+                        CONSTRAINT [FK_BookReservations_Books] FOREIGN KEY ([BookId]) REFERENCES [dbo].[Books] ([BookId]),
+                        CONSTRAINT [FK_BookReservations_Users] FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([UserId]),
+                        CONSTRAINT [CK_BookReservations_StatusValid] CHECK ([ReservationStatus] IN (N'Pending', N'Ready', N'Fulfilled', N'Cancelled'))
+                    );
+                END;";
+
+            using SqlCommand cmd = new(sql, conn);
+            cmd.ExecuteNonQuery();
+        }
 
         public LibraryManagementService(
             SessionService sessionService,
@@ -147,6 +186,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
                 using SqlTransaction tx = conn.BeginTransaction();
 
                 // 1. Check duplicate BookCode on other books
@@ -270,6 +310,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
                 using SqlTransaction tx = conn.BeginTransaction();
 
                 // Integrity check: never delete a book that has any borrowing history in dbo.BorrowRecords
@@ -291,7 +332,16 @@ namespace Booktibus.Services
                     }
                 }
 
-                // Remove any ReaderFavorites pointing to this book before deleting the book
+                // Remove any ReaderFavorites or BookReservations pointing to this book before deleting the book
+                EnsureCirculationSchema(conn);
+
+                const string deleteResSql = "DELETE FROM [dbo].[BookReservations] WHERE [BookId] = @BookId;";
+                using (SqlCommand resCmd = new(deleteResSql, conn, tx))
+                {
+                    resCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                    resCmd.ExecuteNonQuery();
+                }
+
                 const string deleteFavsSql = "DELETE FROM [dbo].[ReaderFavorites] WHERE [BookId] = @BookId;";
                 using (SqlCommand favCmd = new(deleteFavsSql, conn, tx))
                 {
@@ -382,6 +432,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
 
                 const string sql = @"
                     SELECT
@@ -399,7 +450,13 @@ namespace Booktibus.Services
                         br.[DueAtUtc],
                         br.[ReturnedAtUtc],
                         br.[BorrowStatus],
-                        ISNULL(br.[Notes], N'')
+                        ISNULL(br.[Notes], N''),
+                        br.[RenewalCount],
+                        CASE WHEN EXISTS (
+                            SELECT 1 FROM [dbo].[BookReservations] rsv
+                            WHERE rsv.[BookId] = br.[BookId]
+                              AND rsv.[ReservationStatus] IN (N'Pending', N'Ready')
+                        ) THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS [HasActiveReservation]
                     FROM [dbo].[BorrowRecords] br
                     INNER JOIN [dbo].[Books] b ON b.[BookId] = br.[BookId]
                     INNER JOIN [dbo].[Users] u ON u.[UserId] = br.[UserId]
@@ -471,6 +528,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
                 using SqlTransaction tx = conn.BeginTransaction();
 
                 // 1. Verify Reader account & card status
@@ -561,25 +619,51 @@ namespace Booktibus.Services
                     bookCode = bRdr.GetString(2);
                 }
 
-                if (availableCopies <= 0)
+                // 3.5. Check if this reader has a 'Ready' (held) reservation for this book
+                const string checkReadyHoldSql = @"
+                    SELECT TOP (1) [ReservationId], [ReservationCode]
+                    FROM [dbo].[BookReservations] WITH (UPDLOCK)
+                    WHERE [BookId] = @BookId
+                      AND [UserId] = @UserId
+                      AND [ReservationStatus] = N'Ready'
+                    ORDER BY [ReservedAtUtc] ASC;";
+
+                int readyReservationId = 0;
+                string readyReservationCode = string.Empty;
+
+                using (SqlCommand holdCmd = new(checkReadyHoldSql, conn, tx))
+                {
+                    holdCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = request.BookId;
+                    holdCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = request.ReaderUserId;
+                    using SqlDataReader hRdr = holdCmd.ExecuteReader();
+                    if (hRdr.Read())
+                    {
+                        readyReservationId = hRdr.GetInt32(0);
+                        readyReservationCode = hRdr.GetString(1);
+                    }
+                }
+
+                if (availableCopies <= 0 && readyReservationId == 0)
                 {
                     tx.Rollback();
                     return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
-                        ? $"Đầu sách '{bookTitle}' ({bookCode}) hiện đã hết bản sao có sẵn (AvailableCopies = 0)."
-                        : $"Book '{bookTitle}' ({bookCode}) currently has no available copies (AvailableCopies = 0).");
+                        ? $"Đầu sách '{bookTitle}' ({bookCode}) hiện đã hết bản sao có sẵn (AvailableCopies = 0). Độc giả có thể bấm 'Đặt trước (Reserve)' để được giữ sách khi có người trả."
+                        : $"Book '{bookTitle}' ({bookCode}) currently has no available copies (AvailableCopies = 0). Readers can click 'Reserve' to hold the next returned copy.");
                 }
 
-                // 4. Generate unique RecordCode and insert BorrowRecord + decrement AvailableCopies
+                // 4. Generate unique RecordCode and insert BorrowRecord
                 string recordCode = GenerateNextBorrowRecordCode(conn, tx);
                 DateTime nowUtc = DateTime.UtcNow;
                 DateTime dueUtc = nowUtc.AddDays(request.LoanDays);
 
                 const string insertLoanSql = @"
                     INSERT INTO [dbo].[BorrowRecords]
-                        ([RecordCode], [UserId], [ReaderCardId], [BookId], [BorrowedAtUtc], [DueAtUtc], [ReturnedAtUtc], [BorrowStatus], [Notes])
+                        ([RecordCode], [UserId], [ReaderCardId], [BookId], [BorrowedAtUtc], [DueAtUtc], [ReturnedAtUtc], [BorrowStatus], [Notes], [RenewalCount])
+                    OUTPUT INSERTED.[BorrowRecordId]
                     VALUES
-                        (@RecordCode, @UserId, @ReaderCardId, @BookId, @BorrowedAtUtc, @DueAtUtc, NULL, N'Borrowed', @Notes);";
+                        (@RecordCode, @UserId, @ReaderCardId, @BookId, @BorrowedAtUtc, @DueAtUtc, NULL, N'Borrowed', @Notes, 0);";
 
+                int newBorrowRecordId;
                 using (SqlCommand insCmd = new(insertLoanSql, conn, tx))
                 {
                     insCmd.Parameters.Add("@RecordCode", SqlDbType.NVarChar, 30).Value = recordCode;
@@ -591,18 +675,54 @@ namespace Booktibus.Services
                     insCmd.Parameters.Add("@Notes", SqlDbType.NVarChar, 400).Value =
                         string.IsNullOrWhiteSpace(request.Notes) ? DBNull.Value : request.Notes.Trim();
 
-                    insCmd.ExecuteNonQuery();
+                    newBorrowRecordId = Convert.ToInt32(insCmd.ExecuteScalar());
                 }
 
-                const string decCopiesSql = @"
-                    UPDATE [dbo].[Books]
-                    SET [AvailableCopies] = [AvailableCopies] - 1
-                    WHERE [BookId] = @BookId;";
-
-                using (SqlCommand decCmd = new(decCopiesSql, conn, tx))
+                if (readyReservationId > 0)
                 {
-                    decCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = request.BookId;
-                    decCmd.ExecuteNonQuery();
+                    // Copy was already held on return (AvailableCopies was kept at 0 for this reservation), mark reservation Fulfilled
+                    const string fulfillSql = @"
+                        UPDATE [dbo].[BookReservations]
+                        SET [ReservationStatus]       = N'Fulfilled',
+                            [FulfilledBorrowRecordId] = @BorrowRecordId,
+                            [Notes]                   = ISNULL([Notes] + N' | ', N'') + N'Đã nhận sách theo phiếu mượn ' + @RecordCode
+                        WHERE [ReservationId] = @ReservationId;";
+
+                    using SqlCommand fulCmd = new(fulfillSql, conn, tx);
+                    fulCmd.Parameters.Add("@BorrowRecordId", SqlDbType.Int).Value = newBorrowRecordId;
+                    fulCmd.Parameters.Add("@RecordCode", SqlDbType.NVarChar, 30).Value = recordCode;
+                    fulCmd.Parameters.Add("@ReservationId", SqlDbType.Int).Value = readyReservationId;
+                    fulCmd.ExecuteNonQuery();
+                }
+                else
+                {
+                    // Also mark any Pending reservation of this same reader for this book as Fulfilled
+                    const string fulfillPendingSql = @"
+                        UPDATE [dbo].[BookReservations]
+                        SET [ReservationStatus]       = N'Fulfilled',
+                            [FulfilledBorrowRecordId] = @BorrowRecordId
+                        WHERE [BookId] = @BookId
+                          AND [UserId] = @UserId
+                          AND [ReservationStatus] = N'Pending';";
+
+                    using (SqlCommand fpCmd = new(fulfillPendingSql, conn, tx))
+                    {
+                        fpCmd.Parameters.Add("@BorrowRecordId", SqlDbType.Int).Value = newBorrowRecordId;
+                        fpCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = request.BookId;
+                        fpCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = request.ReaderUserId;
+                        fpCmd.ExecuteNonQuery();
+                    }
+
+                    const string decCopiesSql = @"
+                        UPDATE [dbo].[Books]
+                        SET [AvailableCopies] = [AvailableCopies] - 1
+                        WHERE [BookId] = @BookId;";
+
+                    using (SqlCommand decCmd = new(decCopiesSql, conn, tx))
+                    {
+                        decCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = request.BookId;
+                        decCmd.ExecuteNonQuery();
+                    }
                 }
 
                 tx.Commit();
@@ -641,6 +761,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
                 using SqlTransaction tx = conn.BeginTransaction();
 
                 const string lockLoanSql = @"
@@ -713,18 +834,69 @@ namespace Booktibus.Services
                     updCmd.ExecuteNonQuery();
                 }
 
-                const string incCopiesSql = @"
-                    UPDATE [dbo].[Books]
-                    SET [AvailableCopies] = CASE
-                        WHEN [AvailableCopies] + 1 <= [TotalCopies] THEN [AvailableCopies] + 1
-                        ELSE [TotalCopies]
-                    END
-                    WHERE [BookId] = @BookId;";
+                // Check if there is a reader waiting in the reservation queue (Pending) for this book
+                const string checkNextReservationSql = @"
+                    SELECT TOP (1)
+                        rsv.[ReservationId],
+                        rsv.[ReservationCode],
+                        rsv.[UserId],
+                        rsv.[ReaderCardId],
+                        u.[FullName]
+                    FROM [dbo].[BookReservations] rsv WITH (UPDLOCK)
+                    INNER JOIN [dbo].[Users] u ON u.[UserId] = rsv.[UserId]
+                    WHERE rsv.[BookId] = @BookId
+                      AND rsv.[ReservationStatus] = N'Pending'
+                    ORDER BY rsv.[ReservedAtUtc] ASC, rsv.[ReservationId] ASC;";
 
-                using (SqlCommand incCmd = new(incCopiesSql, conn, tx))
+                int heldReservationId = 0;
+                string heldReservationCode = string.Empty;
+                string heldReaderCardId = string.Empty;
+                string heldReaderName = string.Empty;
+
+                using (SqlCommand rsvCmd = new(checkNextReservationSql, conn, tx))
                 {
-                    incCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
-                    incCmd.ExecuteNonQuery();
+                    rsvCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                    using SqlDataReader rsvRdr = rsvCmd.ExecuteReader();
+                    if (rsvRdr.Read())
+                    {
+                        heldReservationId = rsvRdr.GetInt32(0);
+                        heldReservationCode = rsvRdr.GetString(1);
+                        heldReaderCardId = rsvRdr.GetString(3);
+                        heldReaderName = rsvRdr.GetString(4);
+                    }
+                }
+
+                if (heldReservationId > 0)
+                {
+                    // Hold the returned copy for the reader who reserved it (do not release into general AvailableCopies)
+                    const string holdForReaderSql = @"
+                        UPDATE [dbo].[BookReservations]
+                        SET [ReservationStatus] = N'Ready',
+                            [ReadyAtUtc]        = SYSUTCDATETIME(),
+                            [ExpiresAtUtc]      = DATEADD(DAY, 3, SYSUTCDATETIME()),
+                            [Notes]             = ISNULL([Notes] + N' | ', N'') + N'Sách vừa được trả (phiếu ' + @ReturnRecordCode + N') và đang được hệ thống giữ ưu tiên cho bạn.'
+                        WHERE [ReservationId] = @ReservationId;";
+
+                    using SqlCommand holdUpdCmd = new(holdForReaderSql, conn, tx);
+                    holdUpdCmd.Parameters.Add("@ReturnRecordCode", SqlDbType.NVarChar, 30).Value = recordCode;
+                    holdUpdCmd.Parameters.Add("@ReservationId", SqlDbType.Int).Value = heldReservationId;
+                    holdUpdCmd.ExecuteNonQuery();
+                }
+                else
+                {
+                    const string incCopiesSql = @"
+                        UPDATE [dbo].[Books]
+                        SET [AvailableCopies] = CASE
+                            WHEN [AvailableCopies] + 1 <= [TotalCopies] THEN [AvailableCopies] + 1
+                            ELSE [TotalCopies]
+                        END
+                        WHERE [BookId] = @BookId;";
+
+                    using (SqlCommand incCmd = new(incCopiesSql, conn, tx))
+                    {
+                        incCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                        incCmd.ExecuteNonQuery();
+                    }
                 }
 
                 int staffUserId = _sessionService.CurrentSession?.UserId ?? 1;
@@ -745,6 +917,13 @@ namespace Booktibus.Services
                 CatalogChanged?.Invoke(this, EventArgs.Empty);
                 ReadersChanged?.Invoke(this, EventArgs.Empty);
 
+                if (heldReservationId > 0)
+                {
+                    return ServiceOperationResult.Ok(LocalizationService.IsVietnamese
+                        ? $"[Ghi nhận trả sách & Giữ sách Đặt trước] Phiếu mượn '{recordCode}' đã trả. Bản sao sách này đã được hệ thống tự động GIỮ SÁCH (Hold: {heldReservationCode}) cho độc giả đã đặt trước: '{heldReaderName}' ({heldReaderCardId})."
+                        : $"[Book Returned & Held for Reservation] Loan '{recordCode}' returned. This copy is now automatically HELD ({heldReservationCode}) for reserving reader '{heldReaderName}' ({heldReaderCardId}).");
+                }
+
                 return ServiceOperationResult.Ok(LocalizationService.IsVietnamese
                     ? $"[Ghi nhận trả sách thành công] Phiếu mượn '{recordCode}' đã chuyển sang trạng thái Đã trả và cộng lại 1 bản sao vào kho."
                     : $"[Book Return Recorded] Loan '{recordCode}' marked as Returned and 1 copy restored to available inventory.");
@@ -756,6 +935,723 @@ namespace Booktibus.Services
                     ? $"Lỗi SQL Server khi ghi nhận trả sách: {ex.Message}"
                     : $"SQL Server error while recording book return: {ex.Message}");
             }
+        }
+
+        // =====================================================================
+        // 3.2B. LOAN RENEWAL (GIA HẠN MƯỢN SÁCH) & BOOK RESERVATION (ĐẶT TRƯỚC)
+        // =====================================================================
+
+        /// <summary>
+        /// Renews an active loan by adding 7 or 14 days to DueAtUtc.
+        /// Constraints:
+        /// 1. Loan is active and NOT overdue.
+        /// 2. Book is NOT reserved by anyone (Pending or Ready in dbo.BookReservations).
+        /// 3. Each loan can be renewed at most MaxRenewalsPerLoan (2) times.
+        /// Authorized for the Reader who owns the loan OR Staff (Librarian/Administrator).
+        /// </summary>
+        public ServiceOperationResult RenewBorrowLoan(int borrowRecordId, int extensionDays = 7)
+        {
+            if (_sessionService.CurrentSession is not { } session)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng đăng nhập để thực hiện gia hạn sách."
+                    : "Please sign in to renew a book loan.");
+            }
+
+            if (borrowRecordId <= 0)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn một phiếu mượn hợp lệ để gia hạn."
+                    : "Please select a valid loan record to renew.");
+            }
+
+            if (extensionDays != 7 && extensionDays != 14)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Số ngày gia hạn chỉ được phép chọn 7 ngày hoặc 14 ngày."
+                    : "Renewal duration must be either 7 days or 14 days.");
+            }
+
+            SyncOverdueBorrowRecords();
+
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+                EnsureCirculationSchema(conn);
+                using SqlTransaction tx = conn.BeginTransaction();
+
+                const string lockLoanSql = @"
+                    SELECT
+                        br.[RecordCode],
+                        br.[UserId],
+                        br.[BookId],
+                        b.[Title],
+                        b.[BookCode],
+                        br.[DueAtUtc],
+                        br.[ReturnedAtUtc],
+                        br.[BorrowStatus],
+                        br.[RenewalCount],
+                        ISNULL(br.[Notes], N'')
+                    FROM [dbo].[BorrowRecords] br WITH (UPDLOCK)
+                    INNER JOIN [dbo].[Books] b ON b.[BookId] = br.[BookId]
+                    WHERE br.[BorrowRecordId] = @BorrowRecordId;";
+
+                string recordCode;
+                int loanUserId;
+                int bookId;
+                string bookTitle;
+                string bookCode;
+                DateTime currentDueUtc;
+                bool isReturned;
+                string currentStatus;
+                int currentRenewalCount;
+                string existingNotes;
+
+                using (SqlCommand cmd = new(lockLoanSql, conn, tx))
+                {
+                    cmd.Parameters.Add("@BorrowRecordId", SqlDbType.Int).Value = borrowRecordId;
+                    using SqlDataReader rdr = cmd.ExecuteReader();
+                    if (!rdr.Read())
+                    {
+                        rdr.Close();
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? "Không tìm thấy phiếu mượn trong cơ sở dữ liệu."
+                            : "Loan record was not found.");
+                    }
+
+                    recordCode = rdr.GetString(0);
+                    loanUserId = rdr.GetInt32(1);
+                    bookId = rdr.GetInt32(2);
+                    bookTitle = rdr.GetString(3);
+                    bookCode = rdr.GetString(4);
+                    currentDueUtc = DateTime.SpecifyKind(rdr.GetDateTime(5), DateTimeKind.Utc);
+                    isReturned = !rdr.IsDBNull(6) || string.Equals(rdr.GetString(7), "Returned", StringComparison.OrdinalIgnoreCase);
+                    currentStatus = rdr.GetString(7);
+                    currentRenewalCount = rdr.GetInt32(8);
+                    existingNotes = rdr.GetString(9);
+                }
+
+                // Authorization check: Reader can only renew their own loan; Staff can renew any loan
+                bool isStaff = _authorizationService.HasPermission(AppPermission.ProcessCirculation);
+                if (!isStaff && session.UserId != loanUserId)
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? "[Chặn ở tầng Service] Bạn chỉ được phép gia hạn phiếu mượn của chính mình."
+                        : "[Blocked by Service Layer] You can only renew your own loan records.");
+                }
+
+                // Constraint 0: Cannot renew an already returned loan
+                if (isReturned)
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? $"Phiếu mượn '{recordCode}' đã được trả hoàn tất nên không thể gia hạn."
+                        : $"Loan '{recordCode}' has already been returned and cannot be renewed.");
+                }
+
+                // Constraint 1: Book must NOT be overdue
+                bool isOverdue = string.Equals(currentStatus, "Overdue", StringComparison.OrdinalIgnoreCase)
+                                 || currentDueUtc.Date < DateTime.UtcNow.Date;
+                if (isOverdue)
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? $"[Từ chối gia hạn] Phiếu mượn '{recordCode}' đã quá hạn trả ({currentDueUtc.ToLocalTime():dd/MM/yyyy}). Sách đã quá hạn không được phép gia hạn."
+                        : $"[Renewal Denied] Loan '{recordCode}' is already overdue (Due: {currentDueUtc.ToLocalTime():dd/MM/yyyy}). Overdue loans cannot be renewed.");
+                }
+
+                // Constraint 2: Maximum renewals per loan (1-2 times, max = 2)
+                if (currentRenewalCount >= MaxRenewalsPerLoan)
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? $"[Từ chối gia hạn] Phiếu mượn '{recordCode}' đã gia hạn đủ tối đa {currentRenewalCount}/{MaxRenewalsPerLoan} lần cho phép."
+                        : $"[Renewal Denied] Loan '{recordCode}' has already reached the maximum limit of {currentRenewalCount}/{MaxRenewalsPerLoan} renewals.");
+                }
+
+                // Constraint 3: Book must NOT be reserved by another reader
+                const string checkReservedSql = @"
+                    SELECT COUNT(1)
+                    FROM [dbo].[BookReservations] WITH (UPDLOCK)
+                    WHERE [BookId] = @BookId
+                      AND [ReservationStatus] IN (N'Pending', N'Ready');";
+
+                using (SqlCommand rsvCmd = new(checkReservedSql, conn, tx))
+                {
+                    rsvCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                    int activeHolds = Convert.ToInt32(rsvCmd.ExecuteScalar());
+                    if (activeHolds > 0)
+                    {
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? $"[Từ chối gia hạn] Đầu sách '{bookTitle}' ({bookCode}) hiện đang có {activeHolds} độc giả đặt trước (Reserve/Hold), nên không được phép gia hạn."
+                            : $"[Renewal Denied] Book '{bookTitle}' ({bookCode}) currently has {activeHolds} active reservation(s) by other readers and cannot be renewed.");
+                    }
+                }
+
+                DateTime newDueUtc = currentDueUtc.AddDays(extensionDays);
+                int newRenewalCount = currentRenewalCount + 1;
+                string actorLabel = isStaff ? $"Thủ thư {session.Username}" : $"Độc giả {session.Username}";
+                string renewalNote = $"Gia hạn lần {newRenewalCount}/{MaxRenewalsPerLoan} (+{extensionDays} ngày -> hạn mới {newDueUtc.ToLocalTime():dd/MM/yyyy} bởi {actorLabel})";
+                string updatedNotes = string.IsNullOrWhiteSpace(existingNotes)
+                    ? renewalNote
+                    : $"{existingNotes} | {renewalNote}";
+
+                if (updatedNotes.Length > 400)
+                {
+                    updatedNotes = updatedNotes[^400..];
+                }
+
+                const string updateRenewalSql = @"
+                    UPDATE [dbo].[BorrowRecords]
+                    SET [DueAtUtc]     = @NewDueAtUtc,
+                        [RenewalCount] = @NewRenewalCount,
+                        [Notes]        = @Notes
+                    WHERE [BorrowRecordId] = @BorrowRecordId;";
+
+                using (SqlCommand updCmd = new(updateRenewalSql, conn, tx))
+                {
+                    updCmd.Parameters.Add("@NewDueAtUtc", SqlDbType.DateTime2).Value = newDueUtc;
+                    updCmd.Parameters.Add("@NewRenewalCount", SqlDbType.Int).Value = newRenewalCount;
+                    updCmd.Parameters.Add("@Notes", SqlDbType.NVarChar, 400).Value = updatedNotes;
+                    updCmd.Parameters.Add("@BorrowRecordId", SqlDbType.Int).Value = borrowRecordId;
+                    updCmd.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+                CirculationChanged?.Invoke(this, EventArgs.Empty);
+
+                return ServiceOperationResult.Ok(LocalizationService.IsVietnamese
+                    ? $"[Gia hạn thành công] Phiếu mượn '{recordCode}' ('{bookTitle}') đã được cộng thêm {extensionDays} ngày. Hạn trả mới: {newDueUtc.ToLocalTime():dd/MM/yyyy} (Lần gia hạn: {newRenewalCount}/{MaxRenewalsPerLoan})."
+                    : $"[Loan Renewed] Loan '{recordCode}' ('{bookTitle}') extended by {extensionDays} days. New due date: {newDueUtc.ToLocalTime():dd/MM/yyyy} (Renewal {newRenewalCount}/{MaxRenewalsPerLoan}).");
+            }
+            catch (SqlException ex)
+            {
+                AppDiagnosticLogger.LogDatabaseException(nameof(LibraryManagementService), nameof(RenewBorrowLoan), ex, $"BorrowRecordId={borrowRecordId}");
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? $"Lỗi SQL Server khi gia hạn phiếu mượn: {ex.Message}"
+                    : $"SQL Server error while renewing loan: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Places a Book Reservation (Hold) when AvailableCopies == 0.
+        /// When another reader returns that book, ProcessBookReturn automatically holds the copy for the reserver.
+        /// </summary>
+        public ServiceOperationResult ReserveBook(int bookId, int? targetReaderUserId = null, string? notes = null)
+        {
+            if (_sessionService.CurrentSession is not { } session)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng đăng nhập để đặt trước sách."
+                    : "Please sign in to reserve a book.");
+            }
+
+            if (bookId <= 0)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn một đầu sách hợp lệ để đặt trước."
+                    : "Please select a valid book to reserve.");
+            }
+
+            bool isStaff = _authorizationService.HasPermission(AppPermission.ProcessCirculation);
+            int readerUserId = isStaff && targetReaderUserId.HasValue && targetReaderUserId.Value > 0
+                ? targetReaderUserId.Value
+                : session.UserId;
+
+            if (!isStaff && targetReaderUserId.HasValue && targetReaderUserId.Value != session.UserId)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "[Chặn ở tầng Service] Độc giả chỉ được đặt trước sách cho chính tài khoản của mình."
+                    : "[Blocked by Service Layer] Readers can only reserve books for their own account.");
+            }
+
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+                EnsureCirculationSchema(conn);
+                using SqlTransaction tx = conn.BeginTransaction();
+
+                // 1. Verify Reader card & active status
+                const string readerSql = @"
+                    SELECT r.[ReaderCardId], r.[MembershipStatus], u.[IsActive], u.[FullName]
+                    FROM [dbo].[Readers] r
+                    INNER JOIN [dbo].[Users] u ON u.[UserId] = r.[UserId]
+                    WHERE r.[UserId] = @UserId;";
+
+                string readerCardId;
+                string membershipStatus;
+                bool isUserActive;
+                string readerName;
+
+                using (SqlCommand readerCmd = new(readerSql, conn, tx))
+                {
+                    readerCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = readerUserId;
+                    using SqlDataReader rdr = readerCmd.ExecuteReader();
+                    if (!rdr.Read())
+                    {
+                        rdr.Close();
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? "Tài khoản chưa có thẻ độc giả hợp lệ để đặt trước sách."
+                            : "No valid reader card found for this account to place a reservation.");
+                    }
+
+                    readerCardId = rdr.GetString(0);
+                    membershipStatus = rdr.GetString(1);
+                    isUserActive = rdr.GetBoolean(2);
+                    readerName = rdr.GetString(3);
+                }
+
+                if (!isUserActive || !string.Equals(membershipStatus, "Active", StringComparison.OrdinalIgnoreCase))
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? $"Thẻ độc giả '{readerCardId}' hiện không ở trạng thái hoạt động hợp lệ."
+                        : $"Reader card '{readerCardId}' is not currently active.");
+                }
+
+                // 2. Lock book row and verify AvailableCopies == 0
+                const string bookSql = @"
+                    SELECT [BookCode], [Title], [AvailableCopies], [TotalCopies]
+                    FROM [dbo].[Books] WITH (UPDLOCK)
+                    WHERE [BookId] = @BookId;";
+
+                string bookCode;
+                string bookTitle;
+                int availableCopies;
+
+                using (SqlCommand bookCmd = new(bookSql, conn, tx))
+                {
+                    bookCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                    using SqlDataReader bRdr = bookCmd.ExecuteReader();
+                    if (!bRdr.Read())
+                    {
+                        bRdr.Close();
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? "Không tìm thấy đầu sách trong cơ sở dữ liệu."
+                            : "Book was not found in the database.");
+                    }
+
+                    bookCode = bRdr.GetString(0);
+                    bookTitle = bRdr.GetString(1);
+                    availableCopies = bRdr.GetInt32(2);
+                }
+
+                if (availableCopies > 0)
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? $"[Không cần đặt trước] Đầu sách '{bookTitle}' ({bookCode}) hiện vẫn còn {availableCopies} bản sao có sẵn trên kệ. Chỉ đặt trước khi AvailableCopies = 0."
+                        : $"[Reservation Not Needed] Book '{bookTitle}' ({bookCode}) currently has {availableCopies} available copy(ies). Reservations are only for out-of-stock books (AvailableCopies = 0).");
+                }
+
+                // 3. Check if reader is already borrowing this book
+                const string activeLoanSql = @"
+                    SELECT COUNT(1)
+                    FROM [dbo].[BorrowRecords] WITH (UPDLOCK)
+                    WHERE [UserId] = @UserId
+                      AND [BookId] = @BookId
+                      AND [ReturnedAtUtc] IS NULL;";
+
+                using (SqlCommand loanCmd = new(activeLoanSql, conn, tx))
+                {
+                    loanCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = readerUserId;
+                    loanCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                    if (Convert.ToInt32(loanCmd.ExecuteScalar()) > 0)
+                    {
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? $"Độc giả '{readerName}' ({readerCardId}) hiện đang mượn cuốn '{bookTitle}' nên không thể đặt trước chính cuốn sách đang giữ."
+                            : $"Reader '{readerName}' ({readerCardId}) is already borrowing '{bookTitle}' and cannot reserve it.");
+                    }
+                }
+
+                // 4. Check duplicate active reservation by the same reader for the same book
+                const string dupRsvSql = @"
+                    SELECT [ReservationCode], [ReservationStatus]
+                    FROM [dbo].[BookReservations] WITH (UPDLOCK)
+                    WHERE [UserId] = @UserId
+                      AND [BookId] = @BookId
+                      AND [ReservationStatus] IN (N'Pending', N'Ready');";
+
+                using (SqlCommand dupCmd = new(dupRsvSql, conn, tx))
+                {
+                    dupCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = readerUserId;
+                    dupCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                    using SqlDataReader dupRdr = dupCmd.ExecuteReader();
+                    if (dupRdr.Read())
+                    {
+                        string existingRsvCode = dupRdr.GetString(0);
+                        dupRdr.Close();
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? $"[Chặn đặt trước trùng lặp] Độc giả '{readerName}' đã có phiếu đặt trước '{existingRsvCode}' đang hiệu lực cho đầu sách này."
+                            : $"[Duplicate Reservation Blocked] Reader '{readerName}' already has an active reservation '{existingRsvCode}' for this book.");
+                    }
+                }
+
+                // 5. Generate ReservationCode and insert into dbo.BookReservations
+                const string nextSeqSql = "SELECT ISNULL(MAX([ReservationId]), 0) + 1 FROM [dbo].[BookReservations] WITH (TABLOCKX);";
+                int nextSeq;
+                using (SqlCommand seqCmd = new(nextSeqSql, conn, tx))
+                {
+                    nextSeq = Convert.ToInt32(seqCmd.ExecuteScalar());
+                }
+
+                string reservationCode = $"RSV-{DateTime.UtcNow.Year}-{nextSeq:D4}";
+                string defaultNote = string.IsNullOrWhiteSpace(notes)
+                    ? "Đặt trước khi hết bản sao (AvailableCopies = 0). Hệ thống sẽ tự động giữ sách khi có người trả."
+                    : notes.Trim();
+
+                const string insertRsvSql = @"
+                    INSERT INTO [dbo].[BookReservations]
+                        ([ReservationCode], [BookId], [UserId], [ReaderCardId], [ReservedAtUtc], [ReservationStatus], [Notes])
+                    VALUES
+                        (@ReservationCode, @BookId, @UserId, @ReaderCardId, SYSUTCDATETIME(), N'Pending', @Notes);";
+
+                using (SqlCommand insCmd = new(insertRsvSql, conn, tx))
+                {
+                    insCmd.Parameters.Add("@ReservationCode", SqlDbType.NVarChar, 30).Value = reservationCode;
+                    insCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                    insCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = readerUserId;
+                    insCmd.Parameters.Add("@ReaderCardId", SqlDbType.NVarChar, 30).Value = readerCardId;
+                    insCmd.Parameters.Add("@Notes", SqlDbType.NVarChar, 400).Value = defaultNote;
+                    insCmd.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+                CirculationChanged?.Invoke(this, EventArgs.Empty);
+                CatalogChanged?.Invoke(this, EventArgs.Empty);
+
+                return ServiceOperationResult.Ok(LocalizationService.IsVietnamese
+                    ? $"[Đặt trước thành công] Đã lập phiếu đặt trước {reservationCode} cho sách '{bookTitle}' ({bookCode}) — Độc giả: {readerName} ({readerCardId}). Khi có người trả sách, hệ thống sẽ tự động giữ bản sao cho bạn."
+                    : $"[Book Reserved] Created reservation {reservationCode} for '{bookTitle}' ({bookCode}) — Reader: {readerName} ({readerCardId}). The next returned copy will be automatically held for you.");
+            }
+            catch (SqlException ex)
+            {
+                AppDiagnosticLogger.LogDatabaseException(nameof(LibraryManagementService), nameof(ReserveBook), ex, $"BookId={bookId}");
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? $"Lỗi SQL Server khi đặt trước sách: {ex.Message}"
+                    : $"SQL Server error while reserving book: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Cancels a Pending or Ready reservation. If the reservation was in 'Ready' (held) status,
+        /// promotes the next Pending reservation in queue or restores 1 copy to AvailableCopies.
+        /// </summary>
+        public ServiceOperationResult CancelReservation(int reservationId)
+        {
+            if (_sessionService.CurrentSession is not { } session)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng đăng nhập để hủy đặt trước."
+                    : "Please sign in to cancel a reservation.");
+            }
+
+            if (reservationId <= 0)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn phiếu đặt trước cần hủy."
+                    : "Please select a reservation to cancel.");
+            }
+
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+                EnsureCirculationSchema(conn);
+                using SqlTransaction tx = conn.BeginTransaction();
+
+                const string getRsvSql = @"
+                    SELECT [ReservationCode], [BookId], [UserId], [ReservationStatus]
+                    FROM [dbo].[BookReservations] WITH (UPDLOCK)
+                    WHERE [ReservationId] = @ReservationId;";
+
+                string reservationCode;
+                int bookId;
+                int ownerUserId;
+                string status;
+
+                using (SqlCommand getCmd = new(getRsvSql, conn, tx))
+                {
+                    getCmd.Parameters.Add("@ReservationId", SqlDbType.Int).Value = reservationId;
+                    using SqlDataReader rdr = getCmd.ExecuteReader();
+                    if (!rdr.Read())
+                    {
+                        rdr.Close();
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? "Không tìm thấy phiếu đặt trước."
+                            : "Reservation record was not found.");
+                    }
+
+                    reservationCode = rdr.GetString(0);
+                    bookId = rdr.GetInt32(1);
+                    ownerUserId = rdr.GetInt32(2);
+                    status = rdr.GetString(3);
+                }
+
+                bool isStaff = _authorizationService.HasPermission(AppPermission.ProcessCirculation);
+                if (!isStaff && session.UserId != ownerUserId)
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? "[Chặn ở tầng Service] Bạn chỉ có thể hủy phiếu đặt trước của chính mình."
+                        : "[Blocked by Service Layer] You can only cancel your own reservations.");
+                }
+
+                if (!string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(status, "Ready", StringComparison.OrdinalIgnoreCase))
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? $"Phiếu đặt trước {reservationCode} hiện ở trạng thái '{status}' nên không thể hủy."
+                        : $"Reservation {reservationCode} is currently '{status}' and cannot be cancelled.");
+                }
+
+                const string cancelSql = @"
+                    UPDATE [dbo].[BookReservations]
+                    SET [ReservationStatus] = N'Cancelled',
+                        [Notes]             = ISNULL([Notes] + N' | ', N'') + N'Đã hủy đặt trước.'
+                    WHERE [ReservationId] = @ReservationId;";
+
+                using (SqlCommand cancelCmd = new(cancelSql, conn, tx))
+                {
+                    cancelCmd.Parameters.Add("@ReservationId", SqlDbType.Int).Value = reservationId;
+                    cancelCmd.ExecuteNonQuery();
+                }
+
+                // If this reservation was holding a returned copy ('Ready'), pass it to the next Pending reader or restore AvailableCopies
+                if (string.Equals(status, "Ready", StringComparison.OrdinalIgnoreCase))
+                {
+                    const string nextPendingSql = @"
+                        SELECT TOP (1) [ReservationId]
+                        FROM [dbo].[BookReservations] WITH (UPDLOCK)
+                        WHERE [BookId] = @BookId AND [ReservationStatus] = N'Pending'
+                        ORDER BY [ReservedAtUtc] ASC, [ReservationId] ASC;";
+
+                    int nextPendingId = 0;
+                    using (SqlCommand nextCmd = new(nextPendingSql, conn, tx))
+                    {
+                        nextCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                        object? nextObj = nextCmd.ExecuteScalar();
+                        if (nextObj is not null && nextObj != DBNull.Value)
+                        {
+                            nextPendingId = Convert.ToInt32(nextObj);
+                        }
+                    }
+
+                    if (nextPendingId > 0)
+                    {
+                        const string promoteSql = @"
+                            UPDATE [dbo].[BookReservations]
+                            SET [ReservationStatus] = N'Ready',
+                                [ReadyAtUtc]        = SYSUTCDATETIME(),
+                                [ExpiresAtUtc]      = DATEADD(DAY, 3, SYSUTCDATETIME())
+                            WHERE [ReservationId] = @NextId;";
+
+                        using SqlCommand promCmd = new(promoteSql, conn, tx);
+                        promCmd.Parameters.Add("@NextId", SqlDbType.Int).Value = nextPendingId;
+                        promCmd.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        const string restoreCopySql = @"
+                            UPDATE [dbo].[Books]
+                            SET [AvailableCopies] = CASE
+                                WHEN [AvailableCopies] + 1 <= [TotalCopies] THEN [AvailableCopies] + 1
+                                ELSE [TotalCopies]
+                            END
+                            WHERE [BookId] = @BookId;";
+
+                        using SqlCommand restCmd = new(restoreCopySql, conn, tx);
+                        restCmd.Parameters.Add("@BookId", SqlDbType.Int).Value = bookId;
+                        restCmd.ExecuteNonQuery();
+                    }
+                }
+
+                tx.Commit();
+                CirculationChanged?.Invoke(this, EventArgs.Empty);
+                CatalogChanged?.Invoke(this, EventArgs.Empty);
+
+                return ServiceOperationResult.Ok(LocalizationService.IsVietnamese
+                    ? $"[Hủy đặt trước] Đã hủy phiếu đặt trước {reservationCode} thành công."
+                    : $"[Reservation Cancelled] Successfully cancelled reservation {reservationCode}.");
+            }
+            catch (SqlException ex)
+            {
+                AppDiagnosticLogger.LogDatabaseException(nameof(LibraryManagementService), nameof(CancelReservation), ex, $"ReservationId={reservationId}");
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? $"Lỗi SQL Server khi hủy đặt trước: {ex.Message}"
+                    : $"SQL Server error while cancelling reservation: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Allows Staff (Librarian/Administrator) to issue a loan directly from a 'Ready' (held) reservation.
+        /// </summary>
+        public ServiceOperationResult FulfillReservation(int reservationId, int loanDays = 14)
+        {
+            if (!_authorizationService.TryAuthorizeOperation(AppPermission.ProcessCirculation, "FulfillReservation()", out string authMsg))
+            {
+                return ServiceOperationResult.Fail(authMsg);
+            }
+
+            if (reservationId <= 0)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn một phiếu đặt trước đang giữ sách (Ready) để giao sách."
+                    : "Please select a Ready reservation to fulfill.");
+            }
+
+            try
+            {
+                int readerUserId;
+                int bookId;
+                string reservationCode;
+                string status;
+
+                using (SqlConnection conn = new(DatabaseConfig.GetConnectionString()))
+                {
+                    conn.Open();
+                    EnsureCirculationSchema(conn);
+
+                    const string sql = @"
+                        SELECT [UserId], [BookId], [ReservationCode], [ReservationStatus]
+                        FROM [dbo].[BookReservations]
+                        WHERE [ReservationId] = @ReservationId;";
+
+                    using SqlCommand cmd = new(sql, conn);
+                    cmd.Parameters.Add("@ReservationId", SqlDbType.Int).Value = reservationId;
+                    using SqlDataReader rdr = cmd.ExecuteReader();
+                    if (!rdr.Read())
+                    {
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? "Không tìm thấy phiếu đặt trước."
+                            : "Reservation record was not found.");
+                    }
+
+                    readerUserId = rdr.GetInt32(0);
+                    bookId = rdr.GetInt32(1);
+                    reservationCode = rdr.GetString(2);
+                    status = rdr.GetString(3);
+                }
+
+                if (!string.Equals(status, "Ready", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? $"Phiếu đặt trước {reservationCode} hiện ở trạng thái '{status}' (Chưa có bản sao trả về để giữ sách)."
+                        : $"Reservation {reservationCode} is currently '{status}' (Book copy has not been returned/held yet).");
+                }
+
+                return CreateBorrowTransaction(new CreateBorrowLoanRequest
+                {
+                    ReaderUserId = readerUserId,
+                    BookId = bookId,
+                    LoanDays = Math.Clamp(loanDays, 1, 60),
+                    Notes = $"Nhận sách từ phiếu đặt trước {reservationCode}"
+                });
+            }
+            catch (SqlException ex)
+            {
+                AppDiagnosticLogger.LogDatabaseException(nameof(LibraryManagementService), nameof(FulfillReservation), ex, $"ReservationId={reservationId}");
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? $"Lỗi SQL Server khi giao sách đặt trước: {ex.Message}"
+                    : $"SQL Server error while fulfilling reservation: {ex.Message}");
+            }
+        }
+
+        public IReadOnlyList<BookReservationItemModel> GetReservationsForCurrentSession(out string? errorMessage)
+        {
+            errorMessage = null;
+            if (_sessionService.CurrentSession is not { } session)
+            {
+                return [];
+            }
+
+            bool isStaff = _authorizationService.HasPermission(AppPermission.ProcessCirculation);
+            List<BookReservationItemModel> items = new();
+
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+                EnsureCirculationSchema(conn);
+
+                const string sql = @"
+                    SELECT
+                        rsv.[ReservationId],
+                        rsv.[ReservationCode],
+                        rsv.[BookId],
+                        b.[BookCode],
+                        b.[Title],
+                        b.[Author],
+                        rsv.[UserId],
+                        u.[Username],
+                        u.[FullName],
+                        rsv.[ReaderCardId],
+                        rsv.[ReservedAtUtc],
+                        rsv.[ReadyAtUtc],
+                        rsv.[ExpiresAtUtc],
+                        rsv.[ReservationStatus],
+                        ISNULL(rsv.[Notes], N'')
+                    FROM [dbo].[BookReservations] rsv
+                    INNER JOIN [dbo].[Books] b ON b.[BookId] = rsv.[BookId]
+                    INNER JOIN [dbo].[Users] u ON u.[UserId] = rsv.[UserId]
+                    WHERE (@IsStaff = 1 OR rsv.[UserId] = @CurrentUserId)
+                    ORDER BY
+                        CASE rsv.[ReservationStatus]
+                            WHEN N'Ready' THEN 0
+                            WHEN N'Pending' THEN 1
+                            ELSE 2
+                        END ASC,
+                        rsv.[ReservedAtUtc] DESC;";
+
+                using SqlCommand cmd = new(sql, conn);
+                cmd.Parameters.Add("@IsStaff", SqlDbType.Bit).Value = isStaff;
+                cmd.Parameters.Add("@CurrentUserId", SqlDbType.Int).Value = session.UserId;
+
+                using SqlDataReader rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+                    DateTime reservedUtc = DateTime.SpecifyKind(rdr.GetDateTime(10), DateTimeKind.Utc);
+                    DateTime? readyLocal = rdr.IsDBNull(11) ? null : DateTime.SpecifyKind(rdr.GetDateTime(11), DateTimeKind.Utc).ToLocalTime();
+                    DateTime? expiresLocal = rdr.IsDBNull(12) ? null : DateTime.SpecifyKind(rdr.GetDateTime(12), DateTimeKind.Utc).ToLocalTime();
+
+                    items.Add(new BookReservationItemModel
+                    {
+                        ReservationId = rdr.GetInt32(0),
+                        ReservationCode = rdr.GetString(1),
+                        BookId = rdr.GetInt32(2),
+                        BookCode = rdr.GetString(3),
+                        BookTitle = rdr.GetString(4),
+                        BookAuthor = rdr.GetString(5),
+                        UserId = rdr.GetInt32(6),
+                        Username = rdr.GetString(7),
+                        ReaderFullName = rdr.GetString(8),
+                        ReaderCardId = rdr.GetString(9),
+                        ReservedAtLocal = reservedUtc.ToLocalTime(),
+                        ReadyAtLocal = readyLocal,
+                        ExpiresAtLocal = expiresLocal,
+                        ReservationStatus = rdr.GetString(13),
+                        Notes = rdr.GetString(14)
+                    });
+                }
+            }
+            catch (SqlException ex)
+            {
+                AppDiagnosticLogger.LogDatabaseException(nameof(LibraryManagementService), nameof(GetReservationsForCurrentSession), ex);
+                errorMessage = ex.Message;
+            }
+
+            return items;
         }
 
         // =====================================================================
@@ -890,6 +1786,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
                 using SqlTransaction tx = conn.BeginTransaction();
 
                 // Verify target account role: Librarian must never modify an Administrator account
@@ -1123,6 +2020,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
                 using SqlTransaction tx = conn.BeginTransaction();
 
                 const string checkUserSql = "SELECT COUNT(1) FROM [dbo].[Users] WHERE [Username] = @Username;";
@@ -1210,6 +2108,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
                 using SqlTransaction tx = conn.BeginTransaction();
 
                 const string getTargetSql = @"
@@ -1306,6 +2205,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
                 using SqlTransaction tx = conn.BeginTransaction();
 
                 const string getTargetSql = @"
@@ -1782,6 +2682,9 @@ namespace Booktibus.Services
                 returnedLocal = returnedUtc.ToLocalTime();
             }
 
+            int renewalCount = reader.FieldCount > 15 && !reader.IsDBNull(15) ? reader.GetInt32(15) : 0;
+            bool hasActiveReservation = reader.FieldCount > 16 && !reader.IsDBNull(16) && reader.GetBoolean(16);
+
             return new StaffBorrowRecordItemModel
             {
                 BorrowRecordId = reader.GetInt32(0),
@@ -1798,7 +2701,9 @@ namespace Booktibus.Services
                 DueAtLocal = dueUtc.ToLocalTime(),
                 ReturnedAtLocal = returnedLocal,
                 BorrowStatus = reader.GetString(13),
-                Notes = reader.GetString(14)
+                Notes = reader.GetString(14),
+                RenewalCount = renewalCount,
+                HasActiveReservationOnBook = hasActiveReservation
             };
         }
     }

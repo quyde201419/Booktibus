@@ -928,6 +928,132 @@ namespace Booktibus.Services
             }
         }
 
+        /// <summary>
+        /// Confirms payment collection for an existing unpaid fine (Mark as Paid).
+        /// Records the payment method (Tiền mặt / Chuyển khoản), sets FineStatus = 'Paid',
+        /// updates PaidAtUtc, and inserts an audit trail record into dbo.FineAuditLogs.
+        /// </summary>
+        public ServiceOperationResult MarkFineAsPaid(int fineId, string paymentMethod, string? notes = null)
+        {
+            if (!_authorizationService.TryAuthorizeOperation(AppPermission.ManageAllFines, "MarkFineAsPaid()", out string authMsg))
+            {
+                return ServiceOperationResult.Fail(authMsg);
+            }
+
+            if (fineId <= 0)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn khoản phạt hợp lệ cần thu tiền."
+                    : "Please select a valid fine record to mark as paid.");
+            }
+
+            string trimmedMethod = paymentMethod?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(trimmedMethod))
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng chọn hình thức thanh toán (Tiền mặt hoặc Chuyển khoản)."
+                    : "Please select a payment method (Cash or Bank Transfer).");
+            }
+
+            string normalizedMethod = trimmedMethod switch
+            {
+                var m when m.Contains("Chuyển khoản", StringComparison.OrdinalIgnoreCase) ||
+                           m.Contains("Transfer", StringComparison.OrdinalIgnoreCase) ||
+                           m.Contains("Bank", StringComparison.OrdinalIgnoreCase) => "Chuyển khoản",
+                _ => "Tiền mặt"
+            };
+
+            string trimmedNotes = notes?.Trim() ?? string.Empty;
+            int staffUserId = _sessionService.CurrentSession!.UserId;
+            string staffUsername = _sessionService.CurrentSession!.Username;
+
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+                using SqlTransaction tx = conn.BeginTransaction();
+
+                const string lockFineSql = @"
+                    SELECT [FineCode], [BorrowRecordId], [Amount], [FineStatus]
+                    FROM [dbo].[Fines] WITH (UPDLOCK)
+                    WHERE [FineId] = @FineId;";
+
+                string fineCode;
+                int borrowRecordId;
+                decimal currentAmount;
+                string currentStatus;
+
+                using (SqlCommand getCmd = new(lockFineSql, conn, tx))
+                {
+                    getCmd.Parameters.Add("@FineId", SqlDbType.Int).Value = fineId;
+                    using SqlDataReader rdr = getCmd.ExecuteReader();
+                    if (!rdr.Read())
+                    {
+                        rdr.Close();
+                        tx.Rollback();
+                        return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                            ? "Không tìm thấy khoản phạt trong cơ sở dữ liệu."
+                            : "Fine record was not found.");
+                    }
+
+                    fineCode = rdr.GetString(0);
+                    borrowRecordId = rdr.GetInt32(1);
+                    currentAmount = rdr.GetDecimal(2);
+                    currentStatus = rdr.GetString(3);
+                }
+
+                if (!string.Equals(currentStatus, "Unpaid", StringComparison.OrdinalIgnoreCase))
+                {
+                    tx.Rollback();
+                    return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                        ? $"Chỉ có thể thu tiền đối với khoản phạt đang ở trạng thái Chưa thanh toán (Khoản phạt {fineCode} hiện ở trạng thái: {currentStatus})."
+                        : $"Only Unpaid fines can be marked as Paid (Fine {fineCode} is currently: {currentStatus}).");
+                }
+
+                string paymentNote = string.IsNullOrWhiteSpace(trimmedNotes)
+                    ? $"Đã thu tiền phạt {currentAmount:N0} VNĐ ({normalizedMethod})."
+                    : $"Đã thu tiền phạt {currentAmount:N0} VNĐ ({normalizedMethod}). Ghi chú: {trimmedNotes}";
+
+                string auditReason = string.IsNullOrWhiteSpace(trimmedNotes)
+                    ? $"Xác nhận đã thu tiền phạt ({normalizedMethod}) số tiền {currentAmount:N0} VNĐ."
+                    : $"Xác nhận đã thu tiền phạt ({normalizedMethod}) số tiền {currentAmount:N0} VNĐ — {trimmedNotes}";
+
+                const string updateSql = @"
+                    UPDATE [dbo].[Fines]
+                    SET [FineStatus]       = N'Paid',
+                        [PaidAtUtc]        = SYSUTCDATETIME(),
+                        [UpdatedAtUtc]     = SYSUTCDATETIME(),
+                        [ResolvedByUserId] = @StaffUserId,
+                        [Notes]            = @Notes
+                    WHERE [FineId] = @FineId;";
+
+                using (SqlCommand updCmd = new(updateSql, conn, tx))
+                {
+                    updCmd.Parameters.Add("@StaffUserId", SqlDbType.Int).Value = staffUserId;
+                    updCmd.Parameters.Add("@Notes", SqlDbType.NVarChar, 500).Value = paymentNote;
+                    updCmd.Parameters.Add("@FineId", SqlDbType.Int).Value = fineId;
+                    updCmd.ExecuteNonQuery();
+                }
+
+                InsertAuditLog(conn, tx, fineId, borrowRecordId, "Paid", currentAmount, currentAmount,
+                    currentStatus, "Paid", auditReason, staffUserId, staffUsername);
+
+                tx.Commit();
+                FinesChanged?.Invoke(this, EventArgs.Empty);
+
+                return ServiceOperationResult.Ok(LocalizationService.IsVietnamese
+                    ? $"[Thu tiền phạt thành công] Đã xác nhận thanh toán khoản phạt {fineCode} ({currentAmount:N0} VNĐ • Hình thức: {normalizedMethod}) và chuyển trạng thái sang Đã thanh toán (Paid)."
+                    : $"[Payment Recorded] Fine {fineCode} ({currentAmount:N0} VND • Method: {normalizedMethod}) has been marked as Paid.");
+            }
+            catch (SqlException ex)
+            {
+                AppDiagnosticLogger.LogDatabaseException(nameof(FineManagementService), nameof(MarkFineAsPaid), ex, $"FineId={fineId}");
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? $"Lỗi SQL Server khi xác nhận thu tiền phạt: {ex.Message}"
+                    : $"SQL Server error while marking fine as paid: {ex.Message}");
+            }
+        }
+
         // =====================================================================
         // 5. TRANSACTIONAL HOOK FOR BOOK RETURN (ProcessBookReturn Integration)
         // =====================================================================
