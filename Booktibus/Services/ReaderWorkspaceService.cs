@@ -533,6 +533,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                LibraryManagementService.EnsureCirculationSchema(conn);
 
                 const string sql = @"
                     SELECT
@@ -545,7 +546,9 @@ namespace Booktibus.Services
                         ISNULL(r.[ReaderCardId], N'N/A'),
                         ISNULL(r.[PhoneNumber], N''),
                         ISNULL(r.[MembershipStatus], N'Active'),
-                        r.[RegisteredAtUtc]
+                        r.[RegisteredAtUtc],
+                        ISNULL(r.[MembershipTier], N'Standard'),
+                        r.[TierExpiresAtUtc]
                     FROM [dbo].[Users] u
                     LEFT JOIN [dbo].[Readers] r ON r.[UserId] = u.[UserId]
                     WHERE u.[UserId] = @UserId;";
@@ -567,6 +570,16 @@ namespace Booktibus.Services
                     ? createdUtc
                     : DateTime.SpecifyKind(reader.GetDateTime(9), DateTimeKind.Utc);
 
+                string tier = reader.FieldCount > 10 && !reader.IsDBNull(10) ? reader.GetString(10) : "Standard";
+                DateTime? tierExpiresUtc = reader.FieldCount > 11 && !reader.IsDBNull(11)
+                    ? DateTime.SpecifyKind(reader.GetDateTime(11), DateTimeKind.Utc)
+                    : null;
+
+                if (_sessionService.CurrentSession is { } currentSession && currentSession.UserId == targetUserId)
+                {
+                    currentSession.MembershipTier = tier;
+                }
+
                 return new ReaderProfileModel
                 {
                     UserId = reader.GetInt32(0),
@@ -577,6 +590,8 @@ namespace Booktibus.Services
                     ReaderCardId = reader.GetString(6),
                     PhoneNumber = reader.GetString(7),
                     MembershipStatus = reader.GetString(8),
+                    MembershipTier = tier,
+                    TierExpiresAtLocal = tierExpiresUtc?.ToLocalTime(),
                     RegisteredAtLocal = registeredUtc.ToLocalTime()
                 };
             }
@@ -685,6 +700,85 @@ namespace Booktibus.Services
                 return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
                     ? $"Không thể cập nhật hồ sơ: {ex.Message}"
                     : $"Failed to update profile: {ex.Message}");
+            }
+        }
+
+        public ServiceOperationResult UpgradeMembership(string targetTier, string paymentMethod, decimal amount)
+        {
+            if (_sessionService.CurrentSession is not { } currentSession)
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Vui lòng đăng nhập để nâng cấp gói thành viên."
+                    : "Please sign in to upgrade your membership.");
+            }
+
+            string tier = targetTier.Trim().ToUpperInvariant();
+            if (tier is not ("PRO" or "VIP"))
+            {
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? "Gói thành viên không hợp lệ (Chỉ hỗ trợ gói PRO hoặc VIP)."
+                    : "Invalid membership tier (Only PRO or VIP supported).");
+            }
+
+            int userId = currentSession.UserId;
+            string cardId = currentSession.ReaderCardId ?? $"RD-{userId:D4}";
+
+            try
+            {
+                using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
+                conn.Open();
+                LibraryManagementService.EnsureCirculationSchema(conn);
+
+                using SqlTransaction tx = conn.BeginTransaction();
+
+                // 1. Update reader tier
+                const string updateReaderSql = @"
+                    UPDATE [dbo].[Readers]
+                    SET [MembershipTier] = @Tier,
+                        [TierExpiresAtUtc] = DATEADD(month, 1, SYSUTCDATETIME())
+                    WHERE [UserId] = @UserId;";
+
+                using (SqlCommand uCmd = new(updateReaderSql, conn, tx))
+                {
+                    uCmd.Parameters.Add("@Tier", SqlDbType.NVarChar, 30).Value = tier;
+                    uCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                    uCmd.ExecuteNonQuery();
+                }
+
+                // 2. Insert into MembershipOrders
+                string orderCode = $"MEM-{DateTime.UtcNow.Year}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
+                const string orderSql = @"
+                    INSERT INTO [dbo].[MembershipOrders]
+                        ([OrderCode], [UserId], [ReaderCardId], [TierName], [Amount], [DurationMonths], [PaymentMethod], [PaymentStatus], [CreatedAtUtc])
+                    VALUES
+                        (@OrderCode, @UserId, @ReaderCardId, @TierName, @Amount, 1, @PaymentMethod, N'Paid', SYSUTCDATETIME());";
+
+                using (SqlCommand oCmd = new(orderSql, conn, tx))
+                {
+                    oCmd.Parameters.Add("@OrderCode", SqlDbType.NVarChar, 50).Value = orderCode;
+                    oCmd.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                    oCmd.Parameters.Add("@ReaderCardId", SqlDbType.NVarChar, 30).Value = cardId;
+                    oCmd.Parameters.Add("@TierName", SqlDbType.NVarChar, 30).Value = tier;
+                    oCmd.Parameters.Add("@Amount", SqlDbType.Decimal).Value = amount;
+                    oCmd.Parameters.Add("@PaymentMethod", SqlDbType.NVarChar, 50).Value = paymentMethod;
+                    oCmd.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+
+                currentSession.MembershipTier = tier;
+                ProfileUpdated?.Invoke(this, EventArgs.Empty);
+
+                return ServiceOperationResult.Ok(LocalizationService.IsVietnamese
+                    ? $"[Nâng cấp Thành công] Chúc mừng bạn đã trở thành Thành viên {tier} của Booktibus! Mã đơn: {orderCode}"
+                    : $"[Upgrade Successful] Congratulations! You are now a Booktibus {tier} Member! Order code: {orderCode}");
+            }
+            catch (SqlException ex)
+            {
+                AppDiagnosticLogger.LogDatabaseException(nameof(ReaderWorkspaceService), nameof(UpgradeMembership), ex, $"UserId={userId}, Tier={tier}");
+                return ServiceOperationResult.Fail(LocalizationService.IsVietnamese
+                    ? $"Không thể nâng cấp gói thành viên: {ex.Message}"
+                    : $"Failed to upgrade membership: {ex.Message}");
             }
         }
 

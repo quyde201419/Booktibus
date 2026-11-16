@@ -6,215 +6,527 @@
              xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:ReaderProfileViewModel}"
-             d:DesignHeight="700"
-             d:DesignWidth="1020">
+             d:DesignHeight="850"
+             d:DesignWidth="1050">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  Padding="28,20,28,24">
-        <StackPanel>
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Padding="28,20,28,24">
+            <StackPanel>
 
-            <!-- FEEDBACK BANNER (SUCCESS / ERROR) -->
-            <Border Visibility="{Binding HasFeedback, Converter={StaticResource BooleanToVisibilityConverter}}"
-                    Margin="0,0,0,18">
-                <Border.Style>
-                    <Style TargetType="Border" BasedOn="{StaticResource InfoNotificationBannerStyle}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsFeedbackSuccess}" Value="True">
-                                <Setter Property="Background" Value="{StaticResource Brush.Status.SuccessBg}" />
-                                <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Success}" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsFeedbackSuccess}" Value="False">
-                                <Setter Property="Background" Value="{StaticResource Brush.Status.DangerBg}" />
-                                <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Danger}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <TextBlock Text="{Binding FeedbackMessage}"
-                           FontWeight="SemiBold"
-                           FontSize="13"
-                           Foreground="{StaticResource Brush.Text.Primary}"
-                           TextWrapping="Wrap" />
-            </Border>
+                <!-- FEEDBACK BANNER (SUCCESS / ERROR) -->
+                <Border Visibility="{Binding HasFeedback, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Margin="0,0,0,18">
+                    <Border.Style>
+                        <Style TargetType="Border" BasedOn="{StaticResource InfoNotificationBannerStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsFeedbackSuccess}" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource Brush.Status.SuccessBg}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Success}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsFeedbackSuccess}" Value="False">
+                                    <Setter Property="Background" Value="{StaticResource Brush.Status.DangerBg}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource Brush.Status.Danger}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="{Binding FeedbackMessage}"
+                               FontWeight="SemiBold"
+                               FontSize="13"
+                               Foreground="{StaticResource Brush.Text.Primary}"
+                               TextWrapping="Wrap" />
+                </Border>
 
-            <!-- TWO-COLUMN LAYOUT: READ-ONLY IDENTITY CARD (LEFT) & EDITABLE PERSONAL CONTACT FORM (RIGHT) -->
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*" />
-                    <ColumnDefinition Width="20" />
-                    <ColumnDefinition Width="1.25*" />
-                </Grid.ColumnDefinitions>
+                <!-- TWO-COLUMN LAYOUT: READ-ONLY IDENTITY CARD (LEFT) & EDITABLE PERSONAL CONTACT FORM (RIGHT) -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="1.25*" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- LEFT: READ-ONLY LIBRARY CARD & ACCOUNT IDENTITY -->
-                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel>
-                        <TextBlock Text="{DynamicResource Str.Profile.IdentityCardTitle}"
-                                   Style="{StaticResource SectionHeaderTextStyle}" />
-                        <TextBlock Text="{DynamicResource Str.Profile.IdentityCardSubtitle}"
-                                   Style="{StaticResource SectionSubtitleTextStyle}" />
+                    <!-- LEFT: READ-ONLY LIBRARY CARD & ACCOUNT IDENTITY -->
+                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.Profile.IdentityCardTitle}"
+                                       Style="{StaticResource SectionHeaderTextStyle}" />
+                            <TextBlock Text="{DynamicResource Str.Profile.IdentityCardSubtitle}"
+                                       Style="{StaticResource SectionSubtitleTextStyle}" />
 
-                        <!-- Visual Library Card Header -->
-                        <Border Background="{StaticResource Brush.PrimaryNavy.Main}"
-                                CornerRadius="8"
-                                Padding="18,16"
-                                Margin="0,0,0,18">
-                            <StackPanel>
-                                <TextBlock Text="BOOKTIBUS OFFICIAL LIBRARY CARD"
-                                           Foreground="{StaticResource Brush.AccentGold.Light}"
-                                           FontSize="10"
-                                           FontWeight="Bold" />
-                                <TextBlock Text="{Binding ReaderCardId}"
-                                           FontFamily="{StaticResource Font.Monospace}"
-                                           FontSize="22"
-                                           FontWeight="Bold"
-                                           Foreground="{StaticResource Brush.Text.OnDark}"
-                                           Margin="0,6,0,4" />
-                                <TextBlock Text="{Binding Username}"
-                                           Foreground="{StaticResource Brush.Text.OnDarkMuted}"
-                                           FontSize="12.5"
+                            <!-- Visual Library Card Header -->
+                            <Border Background="{StaticResource Brush.PrimaryNavy.Main}"
+                                    CornerRadius="8"
+                                    Padding="18,16"
+                                    Margin="0,0,0,18">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="BOOKTIBUS OFFICIAL LIBRARY CARD"
+                                                   Foreground="{StaticResource Brush.AccentGold.Light}"
+                                                   FontSize="10"
+                                                   FontWeight="Bold" />
+                                        <Border HorizontalAlignment="Right"
+                                                Background="{StaticResource Brush.AccentGold.Main}"
+                                                CornerRadius="4"
+                                                Padding="6,2">
+                                            <TextBlock Text="{Binding MembershipTier}"
+                                                       FontSize="9.5"
+                                                       FontWeight="Bold"
+                                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock Text="{Binding ReaderCardId}"
+                                               FontFamily="{StaticResource Font.Monospace}"
+                                               FontSize="22"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.Text.OnDark}"
+                                               Margin="0,6,0,4" />
+                                    <TextBlock Text="{Binding Username}"
+                                               Foreground="{StaticResource Brush.Text.OnDarkMuted}"
+                                               FontSize="12.5"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding TierDisplayName}"
+                                               Foreground="{StaticResource Brush.AccentGold.Light}"
+                                               FontSize="11"
+                                               FontWeight="Bold"
+                                               Margin="0,4,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Read-only security fields -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Profile.LblUserId}"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
                                            FontWeight="SemiBold" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding UserId}"
+                                           FontFamily="{StaticResource Font.Monospace}"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Profile.LblUsername}"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Username}"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Profile.LblRole}"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Role}"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.AccentTeal.Main}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10" Visibility="{Binding IsReader, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Profile.LblReaderCard}"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ReaderCardId}"
+                                           FontFamily="{StaticResource Font.Monospace}"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10" Visibility="{Binding IsReader, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="Hạng gói thành viên:"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding TierDisplayName}"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.AccentGold.Hover}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,10" Visibility="{Binding IsReader, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Profile.LblStatus}"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding MembershipStatus}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource Brush.Status.Success}" />
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource Str.Profile.LblRegisteredAt}"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding RegisteredAtDisplay}"
+                                           Foreground="{StaticResource Brush.Text.Primary}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- RIGHT: EDITABLE PERSONAL CONTACT FORM -->
+                    <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Str.Profile.EditCardTitle}"
+                                       Style="{StaticResource SectionHeaderTextStyle}" />
+                            <TextBlock Text="{DynamicResource Str.Profile.EditCardSubtitle}"
+                                       Style="{StaticResource SectionSubtitleTextStyle}" />
+
+                            <!-- Full Name -->
+                            <StackPanel Margin="{StaticResource Spacing.FieldMargin}">
+                                <TextBlock Text="{DynamicResource Str.Profile.LblFullName}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <TextBox Text="{Binding FullNameInput, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
-                        </Border>
 
-                        <!-- Read-only security fields -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="190" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="{DynamicResource Str.Profile.LblUserId}"
-                                       Foreground="{StaticResource Brush.Text.Secondary}"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding UserId}"
-                                       FontFamily="{StaticResource Font.Monospace}"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
-                        </Grid>
+                            <!-- Email Address -->
+                            <StackPanel Margin="{StaticResource Spacing.FieldMargin}">
+                                <TextBlock Text="{DynamicResource Str.Profile.LblEmail}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <TextBox Text="{Binding EmailInput, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
 
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="190" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="{DynamicResource Str.Profile.LblUsername}"
-                                       Foreground="{StaticResource Brush.Text.Secondary}"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Username}"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
-                        </Grid>
+                            <!-- Phone Number -->
+                            <StackPanel Margin="0,0,0,22">
+                                <TextBlock Text="{DynamicResource Str.Profile.LblPhone}"
+                                           Style="{StaticResource FieldLabelTextStyle}" />
+                                <TextBox Text="{Binding PhoneNumberInput, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
 
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="190" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="{DynamicResource Str.Profile.LblRole}"
-                                       Foreground="{StaticResource Brush.Text.Secondary}"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Role}"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource Brush.AccentTeal.Main}" />
-                        </Grid>
+                            <!-- Save & Reload Buttons -->
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="{DynamicResource Str.Profile.BtnSave}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding SaveProfileCommand}"
+                                        Margin="0,0,12,0" />
+                                <Button Content="{DynamicResource Str.Profile.BtnReload}"
+                                        Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                        Command="{Binding ReloadProfileCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
 
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="190" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="{DynamicResource Str.Profile.LblReaderCard}"
-                                       Foreground="{StaticResource Brush.Text.Secondary}"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding ReaderCardId}"
-                                       FontFamily="{StaticResource Font.Monospace}"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="190" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="{DynamicResource Str.Profile.LblStatus}"
-                                       Foreground="{StaticResource Brush.Text.Secondary}"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding MembershipStatus}"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource Brush.Status.Success}" />
-                        </Grid>
+                <!-- ===================================================================
+                     3. GÓI DỊCH VỤ THÀNH VIÊN BOOKTIBUS (MEMBERSHIP TIERS - CHỈ DÀNH CHO ĐỘC GIẢ)
+                     =================================================================== -->
+                <Border Visibility="{Binding IsReader, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Style="{StaticResource CardBorderStyle}"
+                        Margin="0,20,0,0">
+                    <StackPanel>
+                        <TextBlock Text="GÓI DỊCH VỤ THÀNH VIÊN BOOKTIBUS (MEMBERSHIP TIERS)"
+                                   Style="{StaticResource SectionHeaderTextStyle}" />
+                        <TextBlock Text="Nâng cấp gói thành viên để tăng số lượng mượn sách, mở rộng thời hạn mượn và hưởng đặc quyền ưu tiên giữ sách."
+                                   Style="{StaticResource SectionSubtitleTextStyle}"
+                                   Margin="0,3,0,16" />
 
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="190" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="1*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="{DynamicResource Str.Profile.LblRegisteredAt}"
-                                       Foreground="{StaticResource Brush.Text.Secondary}"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding RegisteredAtDisplay}"
-                                       Foreground="{StaticResource Brush.Text.Primary}" />
+
+                            <!-- CARD 1: STANDARD TIER -->
+                            <Border Grid.Column="0"
+                                    Background="{StaticResource Brush.Background.Surface}"
+                                    BorderBrush="{StaticResource Brush.Border.Subtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="18">
+                                <StackPanel>
+                                    <Border Background="{StaticResource Brush.Background.App}"
+                                            CornerRadius="4"
+                                            Padding="8,4"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,0,0,10">
+                                        <TextBlock Text="TIÊU CHUẨN • MIỄN PHÍ"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource Brush.Text.Muted}" />
+                                    </Border>
+                                    <TextBlock Text="Thành viên Chuẩn"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                    <TextBlock Text="0 VNĐ"
+                                               FontSize="22"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.Text.Primary}"
+                                               Margin="0,6,0,12" />
+
+                                    <TextBlock Text="✓ Mượn tối đa 3 cuốn sách" FontSize="12" Margin="0,0,0,6" Foreground="{StaticResource Brush.Text.Secondary}" />
+                                    <TextBlock Text="✓ Thời hạn mượn: 14 ngày" FontSize="12" Margin="0,0,0,6" Foreground="{StaticResource Brush.Text.Secondary}" />
+                                    <TextBlock Text="✓ Gia hạn mượn: Tối đa 2 lần" FontSize="12" Margin="0,0,0,6" Foreground="{StaticResource Brush.Text.Secondary}" />
+                                    <TextBlock Text="✓ Đặt trước sách cơ bản" FontSize="12" Margin="0,0,0,16" Foreground="{StaticResource Brush.Text.Secondary}" />
+
+                                    <!-- Card 1 Button / Badge -->
+                                    <Border Visibility="{Binding IsStandard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Background="#E5E7EB"
+                                            CornerRadius="6"
+                                            Padding="12,10"
+                                            HorizontalAlignment="Stretch">
+                                        <TextBlock Text="✓ ĐANG SỬ DỤNG (MẶC ĐỊNH)"
+                                                   Foreground="{StaticResource Brush.Text.Secondary}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Center" />
+                                    </Border>
+                                    <Border Visibility="{Binding IsStandard, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"
+                                            Background="#F3F4F6"
+                                            CornerRadius="6"
+                                            Padding="12,10"
+                                            HorizontalAlignment="Stretch">
+                                        <TextBlock Text="Gói cơ bản"
+                                                   Foreground="{StaticResource Brush.Text.Muted}"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Center" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- CARD 2: PRO TIER -->
+                            <Border Grid.Column="2"
+                                    Background="#F4F8FD"
+                                    BorderThickness="2"
+                                    CornerRadius="8"
+                                    Padding="18">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="{StaticResource Brush.PrimaryNavy.Hover}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPro}" Value="True">
+                                                <Setter Property="BorderBrush" Value="#10B981" />
+                                                <Setter Property="BorderThickness" Value="2.5" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel>
+                                    <Border Background="{StaticResource Brush.PrimaryNavy.Main}"
+                                            CornerRadius="4"
+                                            Padding="8,4"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,0,0,10">
+                                        <TextBlock Text="PHỔ BIẾN NHẤT • PRO ★"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource Brush.AccentGold.Light}" />
+                                    </Border>
+                                    <TextBlock Text="Thành viên PRO"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                    <TextBlock Text="50,000 VNĐ / tháng"
+                                               FontSize="20"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                               Margin="0,6,0,12" />
+
+                                    <TextBlock Text="✓ Mượn tối đa 10 cuốn sách" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold" Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                    <TextBlock Text="✓ Thời hạn mượn: 30 ngày" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold" Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                    <TextBlock Text="✓ Gia hạn mượn: Tối đa 4 lần" FontSize="12" Margin="0,0,0,6" Foreground="{StaticResource Brush.Text.Secondary}" />
+                                    <TextBlock Text="✓ Ưu tiên giữ sách đặt trước" FontSize="12" Margin="0,0,0,16" Foreground="{StaticResource Brush.Text.Secondary}" />
+
+                                    <!-- Card 2 Button / Badge -->
+                                    <Border Visibility="{Binding IsPro, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Background="#10B981"
+                                            CornerRadius="6"
+                                            Padding="12,10"
+                                            HorizontalAlignment="Stretch">
+                                        <TextBlock Text="✓ ĐÃ KÍCH HOẠT (GÓI HIỆN TẠI)"
+                                                   Foreground="White"
+                                                   FontWeight="Bold"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Center" />
+                                    </Border>
+                                    <Button Visibility="{Binding IsPro, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"
+                                            Content="{Binding ProButtonText}"
+                                            Command="{Binding UpgradeToProCommand}"
+                                            IsEnabled="{Binding CanUpgradePro}"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- CARD 3: VIP TIER -->
+                            <Border Grid.Column="4"
+                                    Background="#FFFDF6"
+                                    BorderThickness="2"
+                                    CornerRadius="8"
+                                    Padding="18">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="{StaticResource Brush.AccentGold.Hover}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsVip}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource Brush.AccentGold.Main}" />
+                                                <Setter Property="BorderThickness" Value="2.5" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <StackPanel>
+                                    <Border Background="{StaticResource Brush.AccentGold.Hover}"
+                                            CornerRadius="4"
+                                            Padding="8,4"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,0,0,10">
+                                        <TextBlock Text="ĐẶC QUYỀN CAO CẤP • VIP 👑"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="White" />
+                                    </Border>
+                                    <TextBlock Text="Thành viên VIP"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                    <TextBlock Text="100,000 VNĐ / tháng"
+                                               FontSize="20"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource Brush.AccentGold.Hover}"
+                                               Margin="0,6,0,12" />
+
+                                    <TextBlock Text="✓ Mượn tối đa 25 cuốn sách" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold" Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                    <TextBlock Text="✓ Thời hạn mượn: 60 ngày" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold" Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                    <TextBlock Text="✓ Gia hạn không giới hạn" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold" Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                    <TextBlock Text="✓ Miễn giảm 50% tiền phạt quá hạn" FontSize="12" Margin="0,0,0,16" Foreground="{StaticResource Brush.Text.Secondary}" />
+
+                                    <!-- Card 3 Button / Badge -->
+                                    <Border Visibility="{Binding IsVip, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Background="{StaticResource Brush.AccentGold.Hover}"
+                                            CornerRadius="6"
+                                            Padding="12,10"
+                                            HorizontalAlignment="Stretch">
+                                        <TextBlock Text="👑 ĐÃ KÍCH HOẠT (GÓI HIỆN TẠI)"
+                                                   Foreground="White"
+                                                   FontWeight="Bold"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Center" />
+                                    </Border>
+                                    <Button Visibility="{Binding IsVip, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"
+                                            Content="{Binding VipButtonText}"
+                                            Command="{Binding UpgradeToVipCommand}"
+                                            IsEnabled="{Binding CanUpgradeVip}"
+                                            Style="{StaticResource GoldAccentButtonStyle}"
+                                            HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Border>
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- RIGHT: EDITABLE PERSONAL CONTACT FORM -->
-                <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel>
-                        <TextBlock Text="{DynamicResource Str.Profile.EditCardTitle}"
-                                   Style="{StaticResource SectionHeaderTextStyle}" />
-                        <TextBlock Text="{DynamicResource Str.Profile.EditCardSubtitle}"
-                                   Style="{StaticResource SectionSubtitleTextStyle}" />
+            </StackPanel>
+        </ScrollViewer>
 
-                        <!-- Full Name -->
-                        <StackPanel Margin="{StaticResource Spacing.FieldMargin}">
-                            <TextBlock Text="{DynamicResource Str.Profile.LblFullName}"
-                                       Style="{StaticResource FieldLabelTextStyle}" />
-                            <TextBox Text="{Binding FullNameInput, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
+        <!-- ===================================================================
+             MEMBERSHIP UPGRADE MODAL (PayOS VietQR Integration)
+             =================================================================== -->
+        <Border Background="#80000000"
+                Visibility="{Binding IsUpgradeModalOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Style="{StaticResource CardBorderStyle}"
+                    Width="480"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="24,20">
+                <StackPanel>
+                    <TextBlock Text="{Binding UpgradeTierTitle}"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,6" />
 
-                        <!-- Email Address -->
-                        <StackPanel Margin="{StaticResource Spacing.FieldMargin}">
-                            <TextBlock Text="{DynamicResource Str.Profile.LblEmail}"
-                                       Style="{StaticResource FieldLabelTextStyle}" />
-                            <TextBox Text="{Binding EmailInput, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
+                    <TextBlock Text="Cổng thanh toán PayOS • Ngân hàng Quân Đội (MB Bank)"
+                               FontSize="11.5"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource Brush.Text.Muted}"
+                               Margin="0,0,0,12" />
 
-                        <!-- Phone Number -->
-                        <StackPanel Margin="0,0,0,22">
-                            <TextBlock Text="{DynamicResource Str.Profile.LblPhone}"
-                                       Style="{StaticResource FieldLabelTextStyle}" />
-                            <TextBox Text="{Binding PhoneNumberInput, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
+                    <!-- QR CODE IMAGE -->
+                    <Border Background="{StaticResource Brush.Background.Surface}"
+                            BorderBrush="{StaticResource Brush.Border.Subtle}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="8"
+                            HorizontalAlignment="Center"
+                            Margin="0,0,0,10">
+                        <Image Source="{Binding UpgradeQrImageSource}"
+                               Width="280"
+                               Height="360"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Border>
 
-                        <!-- Save & Reload Buttons -->
-                        <StackPanel Orientation="Horizontal">
-                            <Button Content="{DynamicResource Str.Profile.BtnSave}"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    Command="{Binding SaveProfileCommand}"
-                                    Margin="0,0,12,0" />
-                            <Button Content="{DynamicResource Str.Profile.BtnReload}"
-                                    Style="{StaticResource SecondaryOutlineButtonStyle}"
-                                    Command="{Binding ReloadProfileCommand}" />
-                        </StackPanel>
+                    <TextBlock Text="{Binding UpgradePriceDisplay}"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               TextAlignment="Center"
+                               Foreground="{StaticResource Brush.AccentGold.Hover}"
+                               Margin="0,0,0,4" />
+
+                    <TextBlock Text="{Binding UpgradeNotes}"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Foreground="{StaticResource Brush.Text.Secondary}"
+                               Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Xác nhận Kích hoạt gói"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding ConfirmUpgradeCommand}"
+                                MinWidth="180"
+                                Margin="0,0,10,0" />
+                        <Button Content="Đóng cửa sổ"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding CloseUpgradeModalCommand}"
+                                MinWidth="110" />
                     </StackPanel>
-                </Border>
-            </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
 
-        </StackPanel>
-    </ScrollViewer>
+    </Grid>
 </UserControl>
-

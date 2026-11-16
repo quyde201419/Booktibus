@@ -44,7 +44,11 @@ namespace Booktibus.ViewModels
             InitializePagesAndSidebar();
 
             _sessionService.SessionChanged += OnSessionChanged;
-            _readerWorkspaceService.ProfileUpdated += (_, _) => OnPropertyChanged(nameof(CurrentAccountDisplayName));
+            _readerWorkspaceService.ProfileUpdated += (_, _) =>
+            {
+                OnPropertyChanged(nameof(CurrentAccountDisplayName));
+                OnPropertyChanged(nameof(CurrentAccountRoleBadge));
+            };
             LocalizationService.LanguageChanged += OnLanguageChanged;
         }
 
@@ -76,9 +80,14 @@ namespace Booktibus.ViewModels
                 {
                     UserRole.Administrator => "ADMINISTRATOR",
                     UserRole.Librarian => "LIBRARIAN",
-                    UserRole.Reader => string.IsNullOrWhiteSpace(session.ReaderCardId)
-                        ? "READER"
-                        : $"READER • {session.ReaderCardId}",
+                    UserRole.Reader => session.MembershipTier switch
+                    {
+                        "PRO" => $"READER [PRO ★] • {session.ReaderCardId}",
+                        "VIP" => $"READER [VIP 👑] • {session.ReaderCardId}",
+                        _ => string.IsNullOrWhiteSpace(session.ReaderCardId)
+                            ? "READER"
+                            : $"READER • {session.ReaderCardId}"
+                    },
                     _ => "USER"
                 };
             }

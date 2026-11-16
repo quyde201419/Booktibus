@@ -1,8 +1,12 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Booktibus.Commands;
 using Booktibus.Models;
 using Booktibus.Services;
+using QRCoder;
 
 namespace Booktibus.ViewModels
 {
@@ -99,6 +103,8 @@ namespace Booktibus.ViewModels
             ClosePayDialogCommand = new RelayCommand(() => IsPayDialogOpen = false);
             OpenPayOSDialogCommand = new RelayCommand(ExecuteOpenPayOSDialog, () => SelectedFine?.CanBePaid == true);
             ClosePayOSDialogCommand = new RelayCommand(ExecuteClosePayOSDialog);
+            OpenPayOSBrowserCommand = new RelayCommand(ExecuteOpenPayOSBrowser);
+            ConfirmPaymentSuccessCommand = new RelayCommand(ExecuteConfirmPaymentSuccess);
             OpenAdjustDialogCommand = new RelayCommand(ExecuteOpenAdjustDialog, () => SelectedFine?.CanBeAdjustedOrWaived == true && IsStaffMode);
             SubmitAdjustCommand = new RelayCommand(ExecuteSubmitAdjust);
             CloseAdjustDialogCommand = new RelayCommand(() => IsAdjustDialogOpen = false);
@@ -284,6 +290,14 @@ namespace Booktibus.ViewModels
             set => SetProperty(ref _isPayOSDialogOpen, value);
         }
 
+        private ImageSource? _payOSQrImageSource;
+
+        public ImageSource? PayOSQrImageSource
+        {
+            get => _payOSQrImageSource;
+            set => SetProperty(ref _payOSQrImageSource, value);
+        }
+
         public string PayOSQrImageUrl
         {
             get => _payOSQrImageUrl;
@@ -334,6 +348,8 @@ namespace Booktibus.ViewModels
         public ICommand ClosePayDialogCommand { get; }
         public ICommand OpenPayOSDialogCommand { get; }
         public ICommand ClosePayOSDialogCommand { get; }
+        public ICommand OpenPayOSBrowserCommand { get; }
+        public ICommand ConfirmPaymentSuccessCommand { get; }
         public ICommand OpenAdjustDialogCommand { get; }
         public ICommand SubmitAdjustCommand { get; }
         public ICommand CloseAdjustDialogCommand { get; }
@@ -524,24 +540,110 @@ namespace Booktibus.ViewModels
 
             PayOSPaymentNotice = "Đang kết nối PayOS và tạo mã VietQR...";
             PayOSQrImageUrl = string.Empty;
+            PayOSQrImageSource = LoadUserVietQr();
             PayOSCheckoutUrl = string.Empty;
             IsPayOSDialogOpen = true;
 
             var result = await _payOSService.CreateFinePaymentLinkAsync(SelectedFine);
             if (result != null)
             {
-                // Generate VietQR quick URL directly with order parameters for immediate scanning
-                int amountInt = (int)Math.Round(SelectedFine.Amount);
-                string memo = $"BTB FINE {SelectedFine.FineId}";
-                PayOSQrImageUrl = !string.IsNullOrWhiteSpace(result.QrCode)
-                    ? $"https://img.vietqr.io/image/MB-0387887153-compact2.png?amount={amountInt}&addInfo={Uri.EscapeDataString(memo)}&accountName=MAI%20XUAN%20QUY"
-                    : $"https://img.vietqr.io/image/MB-0387887153-compact2.png?amount={amountInt}&addInfo={Uri.EscapeDataString(memo)}&accountName=MAI%20XUAN%20QUY";
                 PayOSCheckoutUrl = result.CheckoutUrl;
-                PayOSPaymentNotice = "Vui lòng mở ứng dụng Ngân hàng (MB, VCB, MoMo,...) quét mã VietQR bên dưới để thanh toán.";
+                string qrContent = !string.IsNullOrWhiteSpace(result.QrCode) ? result.QrCode : result.CheckoutUrl;
+                PayOSQrImageSource = LoadUserVietQr() ?? GenerateQrImage(qrContent);
+                PayOSPaymentNotice = "Vui lòng mở ứng dụng Ngân hàng (MB, VCB, MoMo,...) quét mã VietQR MB Bank bên dưới để thanh toán.";
             }
             else
             {
-                PayOSPaymentNotice = "Không thể tạo liên kết thanh toán PayOS. Vui lòng thử lại sau.";
+                PayOSQrImageSource = LoadUserVietQr();
+                PayOSPaymentNotice = "Vui lòng mở ứng dụng Ngân hàng hoặc MoMo quét mã VietQR MB Bank bên dưới để chuyển khoản.";
+            }
+        }
+
+        private void ExecuteConfirmPaymentSuccess()
+        {
+            if (SelectedFine is null || !SelectedFine.FineId.HasValue)
+            {
+                return;
+            }
+
+            ServiceOperationResult result = _fineService.MarkFineAsPaid(
+                SelectedFine.FineId.Value,
+                "Chuyển khoản MB Bank (VietQR)",
+                $"Giao dịch VietQR khớp lệnh: BTB FINE {SelectedFine.FineId}");
+
+            if (result.IsSuccess)
+            {
+                IsPayOSDialogOpen = false;
+                _payOSService.StopPolling();
+                string msg = $"[Thanh toán thành công] Khoản phạt {SelectedFine.FineCode} ({SelectedFine.Amount:N0} VNĐ) đã được gạch nợ thành công!";
+                SetFeedback(msg, isError: false);
+                _statusFeedbackCallback(msg);
+                LoadFines();
+            }
+            else
+            {
+                SetFeedback(result.Message, isError: true);
+            }
+        }
+
+        private static BitmapImage? LoadUserVietQr()
+        {
+            try
+            {
+                BitmapImage bmp = new();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri("pack://application:,,,/Assets/my_vietqr.jpg", UriKind.Absolute);
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void ExecuteOpenPayOSBrowser()
+        {
+            if (!string.IsNullOrWhiteSpace(PayOSCheckoutUrl))
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = PayOSCheckoutUrl,
+                        UseShellExecute = true
+                    });
+                }
+                catch
+                {
+                    // Ignore launch failures if default browser handler is absent
+                }
+            }
+        }
+
+        private static BitmapImage? GenerateQrImage(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            try
+            {
+                using QRCodeGenerator qrGenerator = new();
+                using QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.M);
+                using PngByteQRCode qrCode = new(qrCodeData);
+                byte[] qrCodeBytes = qrCode.GetGraphic(20);
+
+                BitmapImage bmp = new();
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.StreamSource = new MemoryStream(qrCodeBytes);
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
+            catch
+            {
+                return null;
             }
         }
 

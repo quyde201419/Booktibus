@@ -27,11 +27,17 @@ namespace Booktibus.Services
         private DispatcherTimer? _pollTimer;
 
         public event EventHandler<FineItemModel>? PaymentSucceeded;
+        public event EventHandler<string>? MembershipPaymentSucceeded;
         public event EventHandler<string>? PaymentStatusUpdated;
+
+        public PayOSPaymentService()
+        {
+            _fineManagementService = null!;
+        }
 
         public PayOSPaymentService(FineManagementService fineManagementService)
         {
-            _fineManagementService = fineManagementService ?? throw new ArgumentNullException(nameof(fineManagementService));
+            _fineManagementService = fineManagementService;
         }
 
         public async Task<PayOSPaymentLinkResult?> CreateFinePaymentLinkAsync(FineItemModel fine)
@@ -118,6 +124,132 @@ namespace Booktibus.Services
                 PaymentStatusUpdated?.Invoke(this, "Lỗi kết nối PayOS: " + ex.Message);
                 return null;
             }
+        }
+
+        public async Task<PayOSPaymentLinkResult?> CreateMembershipPaymentLinkAsync(string tier, int amount, int userId)
+        {
+            if (string.IsNullOrWhiteSpace(tier) || amount <= 0)
+            {
+                return null;
+            }
+
+            try
+            {
+                StopPolling();
+
+                long orderCode = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                string description = $"BTB {tier} {userId}";
+                if (description.Length > 25)
+                {
+                    description = description[..25];
+                }
+
+                string cancelUrl = "https://booktibus.local/cancel";
+                string returnUrl = "https://booktibus.local/success";
+
+                string dataToSign = $"amount={amount}&cancelUrl={cancelUrl}&description={description}&orderCode={orderCode}&returnUrl={returnUrl}";
+                string signature = CreateHmacSha256(dataToSign, ChecksumKey);
+
+                var payload = new
+                {
+                    orderCode = orderCode,
+                    amount = amount,
+                    description = description,
+                    cancelUrl = cancelUrl,
+                    returnUrl = returnUrl,
+                    signature = signature,
+                    items = new[]
+                    {
+                        new
+                        {
+                            name = $"Gói {tier}",
+                            quantity = 1,
+                            price = amount
+                        }
+                    }
+                };
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v2/payment-requests");
+                request.Headers.Add("x-client-id", ClientId);
+                request.Headers.Add("x-api-key", ApiKey);
+                request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                using var response = await HttpClient.SendAsync(request);
+                string responseJson = await response.Content.ReadAsStringAsync();
+
+                using JsonDocument doc = JsonDocument.Parse(responseJson);
+                JsonElement root = doc.RootElement;
+
+                string code = root.TryGetProperty("code", out var c) ? c.GetString() ?? "" : "";
+                if (code == "00" && root.TryGetProperty("data", out var dataElem))
+                {
+                    string checkoutUrl = dataElem.TryGetProperty("checkoutUrl", out var cu) ? cu.GetString() ?? "" : "";
+                    string qrCode = dataElem.TryGetProperty("qrCode", out var qr) ? qr.GetString() ?? "" : "";
+
+                    StartMembershipPolling(orderCode, tier);
+
+                    return new PayOSPaymentLinkResult
+                    {
+                        OrderCode = orderCode,
+                        CheckoutUrl = checkoutUrl,
+                        QrCode = qrCode
+                    };
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                AppDiagnosticLogger.LogException(nameof(PayOSPaymentService), nameof(CreateMembershipPaymentLinkAsync), ex);
+                return null;
+            }
+        }
+
+        private void StartMembershipPolling(long orderCode, string tier)
+        {
+            _pollTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(2)
+            };
+
+            _pollTimer.Tick += async (_, _) =>
+            {
+                try
+                {
+                    using var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/v2/payment-requests/{orderCode}");
+                    request.Headers.Add("x-client-id", ClientId);
+                    request.Headers.Add("x-api-key", ApiKey);
+
+                    using var response = await HttpClient.SendAsync(request);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string json = await response.Content.ReadAsStringAsync();
+                        using JsonDocument doc = JsonDocument.Parse(json);
+                        JsonElement root = doc.RootElement;
+
+                        if (root.TryGetProperty("code", out var c) && c.GetString() == "00" &&
+                            root.TryGetProperty("data", out var dataElem))
+                        {
+                            string status = dataElem.TryGetProperty("status", out var st) ? st.GetString() ?? "" : "";
+                            if (string.Equals(status, "PAID", StringComparison.OrdinalIgnoreCase))
+                            {
+                                StopPolling();
+                                PaymentStatusUpdated?.Invoke(this, $"Thanh toán thành công gói {tier} qua PayOS!");
+                                MembershipPaymentSucceeded?.Invoke(this, tier);
+                            }
+                            else if (string.Equals(status, "CANCELLED", StringComparison.OrdinalIgnoreCase))
+                            {
+                                StopPolling();
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            };
+
+            _pollTimer.Start();
         }
 
         private void StartPolling(long orderCode, FineItemModel fine)

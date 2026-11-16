@@ -295,11 +295,44 @@ namespace Booktibus.Models
 
         public int ReturnedLoans { get; init; }
 
+        public decimal TotalPaidFinesVnd { get; init; }
+
+        public decimal TotalUnpaidFinesVnd { get; init; }
+
+        public decimal TotalWaivedFinesVnd { get; init; }
+
+        public decimal TotalMembershipRevenueVnd { get; init; }
+
+        public decimal TotalLibraryRevenueVnd => TotalPaidFinesVnd + TotalMembershipRevenueVnd;
+
+        public int ProMembersCount { get; init; }
+
+        public int VipMembersCount { get; init; }
+
         public List<CategoryStatRowModel> CategoryBreakdown { get; init; } = new();
 
         public List<PeriodLoanStatRowModel> MonthlyLoanBreakdown { get; init; } = new();
 
+        public List<MonthlyRevenueStatRowModel> MonthlyRevenueBreakdown { get; init; } = new();
+
         public List<StaffBorrowRecordItemModel> RecentLoanTransactions { get; init; } = new();
+    }
+
+    public class MonthlyRevenueStatRowModel
+    {
+        public string PeriodLabel { get; init; } = string.Empty;
+
+        public decimal FineRevenueVnd { get; init; }
+
+        public decimal MembershipRevenueVnd { get; init; }
+
+        public decimal TotalRevenueVnd => FineRevenueVnd + MembershipRevenueVnd;
+
+        public string FineRevenueDisplay => $"{FineRevenueVnd:N0} VNĐ";
+
+        public string MembershipRevenueDisplay => $"{MembershipRevenueVnd:N0} VNĐ";
+
+        public string TotalRevenueDisplay => $"{TotalRevenueVnd:N0} VNĐ";
     }
 
     public class CategoryStatRowModel

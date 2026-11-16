@@ -401,6 +401,17 @@ namespace Booktibus.Models
 
         public string MembershipStatus { get; init; } = string.Empty;
 
+        public string MembershipTier { get; init; } = "Standard";
+
+        public DateTime? TierExpiresAtLocal { get; init; }
+
+        public string TierDisplayName => MembershipTier switch
+        {
+            "PRO" => "THÀNH VIÊN PRO ★",
+            "VIP" => "THÀNH VIÊN VIP 👑",
+            _ => "THÀNH VIÊN TIÊU CHUẨN (STANDARD)"
+        };
+
         public DateTime RegisteredAtLocal { get; init; }
     }
 

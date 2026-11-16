@@ -64,6 +64,8 @@ namespace Booktibus.Models
 
         public string? ReaderCardId { get; init; }
 
+        public string MembershipTier { get; set; } = "Standard";
+
         public DateTime SignedInAtLocal { get; init; } = DateTime.Now;
     }
 

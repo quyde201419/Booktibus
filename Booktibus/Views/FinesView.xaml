@@ -586,28 +586,52 @@
                             BorderBrush="{StaticResource Brush.Border.Subtle}"
                             BorderThickness="1"
                             CornerRadius="8"
-                            Padding="12"
+                            Padding="8"
                             HorizontalAlignment="Center"
-                            Margin="0,0,0,12">
-                        <Image Source="{Binding PayOSQrImageUrl}"
-                               Width="260"
-                               Height="260"
-                               Stretch="Uniform" />
+                            Margin="0,0,0,10">
+                        <Image Source="{Binding PayOSQrImageSource}"
+                               Width="280"
+                               Height="360"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
                     </Border>
 
-                    <TextBlock Text="{Binding PayOSPaymentNotice}"
+                    <TextBlock Text="{Binding SelectedFine.Amount, StringFormat='Số tiền cần thanh toán: {0:N0} VNĐ'}"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               TextAlignment="Center"
+                               Foreground="{StaticResource Brush.Status.Success}"
+                               Margin="0,0,0,3" />
+
+                    <TextBlock Text="{Binding SelectedFine.FineId, StringFormat='Nội dung chuyển khoản (bắt buộc): BTB FINE {0}'}"
                                FontSize="12"
                                FontWeight="SemiBold"
-                               TextWrapping="Wrap"
                                TextAlignment="Center"
                                Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                               Margin="0,0,0,12" />
+
+                    <TextBlock Text="{Binding PayOSPaymentNotice}"
+                               FontSize="11.5"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"
+                               Foreground="{StaticResource Brush.Text.Secondary}"
                                Margin="0,0,0,16" />
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Xác nhận đã chuyển khoản"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding ConfirmPaymentSuccessCommand}"
+                                MinWidth="180"
+                                Margin="0,0,10,0" />
+                        <Button Content="Mở PayOS Web"
+                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Command="{Binding OpenPayOSBrowserCommand}"
+                                MinWidth="120"
+                                Margin="0,0,10,0" />
                         <Button Content="Đóng cửa sổ"
                                 Style="{StaticResource SecondaryOutlineButtonStyle}"
                                 Command="{Binding ClosePayOSDialogCommand}"
-                                MinWidth="120" />
+                                MinWidth="100" />
                     </StackPanel>
                 </StackPanel>
             </Border>

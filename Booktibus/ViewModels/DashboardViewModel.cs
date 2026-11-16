@@ -378,6 +378,14 @@ namespace Booktibus.ViewModels
                         Subtitle = "Tự động phát hiện theo hạn trả thực tế",
                         AccentHex = "#B45309"
                     });
+                    MetricCards.Add(new DashboardMetricCardModel
+                    {
+                        Title = "DOANH THU THỰC THU (CSDL)",
+                        SampleValue = $"{liveStats.TotalLibraryRevenueVnd:N0} đ",
+                        SampleTag = "DOANH THU",
+                        Subtitle = $"Tiền phạt: {liveStats.TotalPaidFinesVnd:N0} đ • Gói thành viên: {liveStats.TotalMembershipRevenueVnd:N0} đ",
+                        AccentHex = "#059669"
+                    });
 
                     foreach (StaffBorrowRecordItemModel br in liveStats.RecentLoanTransactions)
                     {
@@ -438,6 +446,14 @@ namespace Booktibus.ViewModels
                         SampleTag = "LIVE SQL DB",
                         Subtitle = "Auto-detected from actual DueAtUtc",
                         AccentHex = "#B45309"
+                    });
+                    MetricCards.Add(new DashboardMetricCardModel
+                    {
+                        Title = "TOTAL REVENUE (DB)",
+                        SampleValue = $"{liveStats.TotalLibraryRevenueVnd:N0} VND",
+                        SampleTag = "REVENUE",
+                        Subtitle = $"Fines: {liveStats.TotalPaidFinesVnd:N0} VND • Memberships: {liveStats.TotalMembershipRevenueVnd:N0} VND",
+                        AccentHex = "#059669"
                     });
 
                     foreach (StaffBorrowRecordItemModel br in liveStats.RecentLoanTransactions)

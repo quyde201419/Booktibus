@@ -40,6 +40,38 @@ namespace Booktibus.Services
                     ADD [RenewalCount] INT NOT NULL CONSTRAINT [DF_BorrowRecords_RenewalCount] DEFAULT (0);
                 END;
 
+                IF COL_LENGTH(N'dbo.Readers', N'MembershipTier') IS NULL
+                BEGIN
+                    ALTER TABLE [dbo].[Readers]
+                    ADD [MembershipTier] NVARCHAR(30) NOT NULL CONSTRAINT [DF_Readers_MembershipTier] DEFAULT (N'Standard');
+                END;
+
+                IF COL_LENGTH(N'dbo.Readers', N'TierExpiresAtUtc') IS NULL
+                BEGIN
+                    ALTER TABLE [dbo].[Readers]
+                    ADD [TierExpiresAtUtc] DATETIME2(0) NULL;
+                END;
+
+                IF OBJECT_ID(N'dbo.MembershipOrders', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[MembershipOrders]
+                    (
+                        [OrderId]          INT           IDENTITY(1,1) NOT NULL,
+                        [OrderCode]        NVARCHAR(50)  NOT NULL,
+                        [UserId]           INT           NOT NULL,
+                        [ReaderCardId]     NVARCHAR(30)  NOT NULL,
+                        [TierName]         NVARCHAR(30)  NOT NULL,
+                        [Amount]           DECIMAL(18,2) NOT NULL,
+                        [DurationMonths]   INT           NOT NULL CONSTRAINT [DF_MemOrders_Duration] DEFAULT (1),
+                        [PaymentMethod]    NVARCHAR(50)  NOT NULL CONSTRAINT [DF_MemOrders_Method] DEFAULT (N'PayOS VietQR'),
+                        [PaymentStatus]    NVARCHAR(30)  NOT NULL CONSTRAINT [DF_MemOrders_Status] DEFAULT (N'Paid'),
+                        [CreatedAtUtc]     DATETIME2(0)  NOT NULL CONSTRAINT [DF_MemOrders_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+                        CONSTRAINT [PK_MembershipOrders] PRIMARY KEY CLUSTERED ([OrderId] ASC),
+                        CONSTRAINT [UQ_MembershipOrders_OrderCode] UNIQUE NONCLUSTERED ([OrderCode] ASC),
+                        CONSTRAINT [FK_MembershipOrders_Users] FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([UserId])
+                    );
+                END;
+
                 IF OBJECT_ID(N'dbo.BookReservations', N'U') IS NULL
                 BEGIN
                     CREATE TABLE [dbo].[BookReservations]
@@ -2405,6 +2437,7 @@ namespace Booktibus.Services
             {
                 using SqlConnection conn = new(DatabaseConfig.GetConnectionString());
                 conn.Open();
+                EnsureCirculationSchema(conn);
 
                 const string summarySql = @"
                     SELECT
@@ -2415,9 +2448,17 @@ namespace Booktibus.Services
                         (SELECT COUNT(1) FROM [dbo].[Users]) AS [TotalUsers],
                         (SELECT COUNT(1) FROM [dbo].[BorrowRecords] WHERE [ReturnedAtUtc] IS NULL) AS [ActiveBorrowed],
                         (SELECT COUNT(1) FROM [dbo].[BorrowRecords] WHERE [ReturnedAtUtc] IS NULL AND ([BorrowStatus] = N'Overdue' OR [DueAtUtc] < SYSUTCDATETIME())) AS [OverdueCount],
-                        (SELECT COUNT(1) FROM [dbo].[BorrowRecords] WHERE [ReturnedAtUtc] IS NOT NULL OR [BorrowStatus] = N'Returned') AS [ReturnedCount];";
+                        (SELECT COUNT(1) FROM [dbo].[BorrowRecords] WHERE [ReturnedAtUtc] IS NOT NULL OR [BorrowStatus] = N'Returned') AS [ReturnedCount],
+                        (SELECT ISNULL(SUM(CASE WHEN [FineStatus] = N'Paid' THEN [Amount] ELSE 0 END), 0) FROM [dbo].[Fines]) AS [TotalPaidFines],
+                        (SELECT ISNULL(SUM(CASE WHEN [FineStatus] = N'Unpaid' THEN [Amount] ELSE 0 END), 0) FROM [dbo].[Fines]) AS [TotalUnpaidFines],
+                        (SELECT ISNULL(SUM(CASE WHEN [FineStatus] = N'Waived' THEN [Amount] ELSE 0 END), 0) FROM [dbo].[Fines]) AS [TotalWaivedFines],
+                        (SELECT ISNULL(SUM(CASE WHEN [PaymentStatus] = N'Paid' THEN [Amount] ELSE 0 END), 0) FROM [dbo].[MembershipOrders]) AS [TotalMembershipRevenue],
+                        (SELECT COUNT(1) FROM [dbo].[Readers] WHERE [MembershipTier] = N'PRO') AS [ProCount],
+                        (SELECT COUNT(1) FROM [dbo].[Readers] WHERE [MembershipTier] = N'VIP') AS [VipCount];";
 
                 int totalTitles = 0, totalCopies = 0, availCopies = 0, totalReaders = 0, totalUsers = 0, activeBorrowed = 0, overdueCount = 0, returnedCount = 0;
+                decimal totalPaidFines = 0, totalUnpaidFines = 0, totalWaivedFines = 0, totalMembershipRev = 0;
+                int proCount = 0, vipCount = 0;
 
                 using (SqlCommand sumCmd = new(summarySql, conn))
                 using (SqlDataReader rdr = sumCmd.ExecuteReader())
@@ -2432,6 +2473,15 @@ namespace Booktibus.Services
                         activeBorrowed = rdr.GetInt32(5);
                         overdueCount = rdr.GetInt32(6);
                         returnedCount = rdr.GetInt32(7);
+                        if (rdr.FieldCount > 8)
+                        {
+                            totalPaidFines = rdr.GetDecimal(8);
+                            totalUnpaidFines = rdr.GetDecimal(9);
+                            totalWaivedFines = rdr.GetDecimal(10);
+                            totalMembershipRev = rdr.GetDecimal(11);
+                            proCount = rdr.GetInt32(12);
+                            vipCount = rdr.GetInt32(13);
+                        }
                     }
                 }
 
@@ -2487,6 +2537,49 @@ namespace Booktibus.Services
                     }
                 }
 
+                List<MonthlyRevenueStatRowModel> monthlyRevenueStats = new();
+                const string revSql = @"
+                    SELECT
+                        PeriodMonth,
+                        ISNULL(SUM(FineRev), 0) AS FineRev,
+                        ISNULL(SUM(MemRev), 0) AS MemRev
+                    FROM (
+                        SELECT FORMAT([PaidAtUtc], 'yyyy-MM') AS PeriodMonth, [Amount] AS FineRev, CAST(0 AS DECIMAL(18,2)) AS MemRev
+                        FROM [dbo].[Fines]
+                        WHERE [FineStatus] = N'Paid' AND [PaidAtUtc] IS NOT NULL
+                        UNION ALL
+                        SELECT FORMAT([CreatedAtUtc], 'yyyy-MM') AS PeriodMonth, CAST(0 AS DECIMAL(18,2)) AS FineRev, [Amount] AS MemRev
+                        FROM [dbo].[MembershipOrders]
+                        WHERE [PaymentStatus] = N'Paid'
+                    ) combined
+                    WHERE PeriodMonth IS NOT NULL
+                    GROUP BY PeriodMonth
+                    ORDER BY PeriodMonth DESC;";
+
+                using (SqlCommand revCmd = new(revSql, conn))
+                using (SqlDataReader revRdr = revCmd.ExecuteReader())
+                {
+                    while (revRdr.Read())
+                    {
+                        monthlyRevenueStats.Add(new MonthlyRevenueStatRowModel
+                        {
+                            PeriodLabel = revRdr.GetString(0),
+                            FineRevenueVnd = revRdr.GetDecimal(1),
+                            MembershipRevenueVnd = revRdr.GetDecimal(2)
+                        });
+                    }
+                }
+
+                if (monthlyRevenueStats.Count == 0 && (totalPaidFines > 0 || totalMembershipRev > 0))
+                {
+                    monthlyRevenueStats.Add(new MonthlyRevenueStatRowModel
+                    {
+                        PeriodLabel = DateTime.Now.ToString("yyyy-MM"),
+                        FineRevenueVnd = totalPaidFines,
+                        MembershipRevenueVnd = totalMembershipRev
+                    });
+                }
+
                 List<StaffBorrowRecordItemModel> recentLoans = new();
                 const string recentSql = @"
                     SELECT TOP (10)
@@ -2530,8 +2623,15 @@ namespace Booktibus.Services
                     ActiveBorrowedLoans = activeBorrowed,
                     OverdueLoans = overdueCount,
                     ReturnedLoans = returnedCount,
+                    TotalPaidFinesVnd = totalPaidFines,
+                    TotalUnpaidFinesVnd = totalUnpaidFines,
+                    TotalWaivedFinesVnd = totalWaivedFines,
+                    TotalMembershipRevenueVnd = totalMembershipRev,
+                    ProMembersCount = proCount,
+                    VipMembersCount = vipCount,
                     CategoryBreakdown = categories,
                     MonthlyLoanBreakdown = monthlyStats,
+                    MonthlyRevenueBreakdown = monthlyRevenueStats,
                     RecentLoanTransactions = recentLoans
                 };
             }

@@ -6,55 +6,51 @@
              xmlns:viewModels="clr-namespace:Booktibus.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:LibraryReportsViewModel}"
-             d:DesignWidth="1120"
-             d:DesignHeight="780">
+             d:DesignWidth="1180"
+             d:DesignHeight="950">
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
                   Padding="28,20,28,24">
         <StackPanel>
 
-            <!-- 1. HEADER BANNER -->
+            <!-- 1. HEADER BANNER (Fixed Layout: Header on top, buttons in WrapPanel below to prevent text vertical-wrapping) -->
             <Border Style="{StaticResource InfoNotificationBannerStyle}"
                     Margin="0,0,0,18">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="{DynamicResource Str.Reports.BannerTitle}"
-                                   FontWeight="Bold"
-                                   FontSize="13.5"
-                                   Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
-                        <TextBlock Text="{DynamicResource Str.Reports.BannerDesc}"
-                                   Style="{StaticResource CaptionTextStyle}"
-                                   Margin="0,3,0,0" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource Str.Reports.BannerTitle}"
+                               FontWeight="Bold"
+                               FontSize="14"
+                               Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                    <TextBlock Text="{DynamicResource Str.Reports.BannerDesc}"
+                               Style="{StaticResource CaptionTextStyle}"
+                               Margin="0,3,0,12" />
+
+                    <WrapPanel Orientation="Horizontal">
                         <Button Content="{DynamicResource Str.Reports.ExportBooks}"
                                 Command="{Binding ExportBooksInventoryCommand}"
                                 Style="{StaticResource SecondaryOutlineButtonStyle}"
-                                Margin="0,0,8,0"
+                                Margin="0,0,10,6"
                                 Padding="12,6" />
                         <Button Content="{DynamicResource Str.Reports.ExportFines}"
                                 Command="{Binding ExportUnpaidFinesCommand}"
                                 Style="{StaticResource SecondaryOutlineButtonStyle}"
-                                Margin="0,0,8,0"
+                                Margin="0,0,10,6"
                                 Padding="12,6" />
                         <Button Content="{DynamicResource Str.Reports.ExportMonthly}"
                                 Command="{Binding ExportMonthlyLoanStatsCommand}"
                                 Style="{StaticResource SecondaryOutlineButtonStyle}"
-                                Margin="0,0,8,0"
+                                Margin="0,0,10,6"
                                 Padding="12,6" />
                         <Button Content="{DynamicResource Str.Reports.BtnRefresh}"
                                 Command="{Binding RefreshReportsCommand}"
                                 Style="{StaticResource PrimaryButtonStyle}"
+                                Margin="0,0,10,6"
                                 Padding="14,6" />
-                    </StackPanel>
-                </Grid>
+                    </WrapPanel>
+                </StackPanel>
             </Border>
 
-            <!-- 2. REAL-TIME SQL SERVER KPI CARDS -->
+            <!-- 2. REAL-TIME SQL SERVER CIRCULATION KPI CARDS -->
             <UniformGrid Columns="3" Rows="2" Margin="0,0,0,18">
                 <Border Style="{StaticResource MetricSummaryCardStyle}" Margin="0,0,14,14">
                     <StackPanel>
@@ -147,10 +143,171 @@
                 </Border>
             </UniformGrid>
 
-            <!-- 3. BREAKDOWN TABLES: BOOKS BY CATEGORY + MONTHLY CIRCULATION -->
-            <Grid>
+            <!-- ===================================================================
+                 3. FINANCIAL & REVENUE ANALYTICS (STAGE 8 & 9 REVENUE INTEGRATION)
+                 =================================================================== -->
+            <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,18">
+                <StackPanel>
+                    <Grid Margin="0,0,0,14">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="BÁO CÁO THU NGÂN &amp; DOANH THU THỰC TẾ (REVENUE &amp; FINANCIALS)"
+                                       Style="{StaticResource SectionHeaderTextStyle}" />
+                            <TextBlock Text="Tổng hợp toàn diện dòng tiền từ Tiền phạt quá hạn (PayOS / MB Bank) và Doanh thu nâng cấp Gói Thành viên PRO / VIP."
+                                       Style="{StaticResource SectionSubtitleTextStyle}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Financial Summary Cards -->
+                    <UniformGrid Columns="4" Rows="1" Margin="0,0,0,16">
+                        <!-- Total Revenue -->
+                        <Border Background="#F4F8FD"
+                                BorderBrush="{StaticResource Brush.PrimaryNavy.Hover}"
+                                BorderThickness="1.5"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,12,0">
+                            <StackPanel>
+                                <TextBlock Text="TỔNG THỰC THU (DOANH THU)"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}" />
+                                <TextBlock Text="{Binding TotalLibraryRevenueDisplay}"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                           Margin="0,6,0,4" />
+                                <TextBlock Text="Tiền phạt + Gói thành viên"
+                                           Style="{StaticResource CaptionTextStyle}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Fine Revenue Paid -->
+                        <Border Background="#F0FDF4"
+                                BorderBrush="{StaticResource Brush.Status.Success}"
+                                BorderThickness="1.5"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,12,0">
+                            <StackPanel>
+                                <TextBlock Text="TIỀN PHẠT ĐÃ THU"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.Status.Success}" />
+                                <TextBlock Text="{Binding TotalPaidFinesDisplay}"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.Status.Success}"
+                                           Margin="0,6,0,4" />
+                                <TextBlock Text="dbo.Fines (Paid qua PayOS)"
+                                           Style="{StaticResource CaptionTextStyle}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Membership Revenue -->
+                        <Border Background="#FFFDF6"
+                                BorderBrush="{StaticResource Brush.AccentGold.Hover}"
+                                BorderThickness="1.5"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,12,0">
+                            <StackPanel>
+                                <TextBlock Text="DOANH THU GÓI PRO / VIP"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.AccentGold.Hover}" />
+                                <TextBlock Text="{Binding TotalMembershipRevenueDisplay}"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.AccentGold.Hover}"
+                                           Margin="0,6,0,4" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="PRO: " FontSize="11" Foreground="{StaticResource Brush.Text.Muted}" />
+                                    <TextBlock Text="{Binding ProMembersCount}" FontSize="11" FontWeight="Bold" Margin="0,0,8,0" />
+                                    <TextBlock Text="VIP: " FontSize="11" Foreground="{StaticResource Brush.Text.Muted}" />
+                                    <TextBlock Text="{Binding VipMembersCount}" FontSize="11" FontWeight="Bold" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Unpaid Fines Debt -->
+                        <Border Background="#FEF2F2"
+                                BorderBrush="{StaticResource Brush.Status.Danger}"
+                                BorderThickness="1.5"
+                                CornerRadius="8"
+                                Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="NỢ PHẠT CHƯA THU"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.Status.Danger}" />
+                                <TextBlock Text="{Binding TotalUnpaidFinesDisplay}"
+                                           FontSize="22"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource Brush.Status.Danger}"
+                                           Margin="0,6,0,4" />
+                                <TextBlock Text="dbo.Fines (Status = Unpaid)"
+                                           Style="{StaticResource CaptionTextStyle}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- Visual Financial Progress / Ratio Bar -->
+                    <Border Background="{StaticResource Brush.Background.App}"
+                            CornerRadius="8"
+                            Padding="16"
+                            Margin="0,0,0,4">
+                        <StackPanel>
+                            <TextBlock Text="BIỂU ĐỒ PHÂN BỔ TỶ LỆ DÒNG TIỀN THỰC THU &amp; CÔNG NỢ"
+                                       FontSize="11.5"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource Brush.PrimaryNavy.Main}"
+                                       Margin="0,0,0,8" />
+
+                            <Grid Height="16" Margin="0,0,0,10">
+                                <ProgressBar Value="{Binding PaidFinesRatio, Mode=OneWay}"
+                                             Maximum="100"
+                                             Foreground="#10B981"
+                                             Background="#E5E7EB"
+                                             Height="16" />
+                            </Grid>
+
+                            <WrapPanel Orientation="Horizontal">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
+                                    <Border Width="12" Height="12" Background="#10B981" CornerRadius="3" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Tiền phạt đã thu: " FontSize="11.5" Foreground="{StaticResource Brush.Text.Secondary}" />
+                                    <TextBlock Text="{Binding TotalPaidFinesDisplay}" FontSize="11.5" FontWeight="Bold" Foreground="#10B981" />
+                                    <TextBlock Text=" (" FontSize="11.5" />
+                                    <TextBlock Text="{Binding PaidFinesRatio}" FontSize="11.5" FontWeight="Bold" />
+                                    <TextBlock Text="%)" FontSize="11.5" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
+                                    <Border Width="12" Height="12" Background="#D97706" CornerRadius="3" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Gói thành viên PRO/VIP: " FontSize="11.5" Foreground="{StaticResource Brush.Text.Secondary}" />
+                                    <TextBlock Text="{Binding TotalMembershipRevenueDisplay}" FontSize="11.5" FontWeight="Bold" Foreground="#D97706" />
+                                    <TextBlock Text=" (" FontSize="11.5" />
+                                    <TextBlock Text="{Binding MembershipRevenueRatio}" FontSize="11.5" FontWeight="Bold" />
+                                    <TextBlock Text="%)" FontSize="11.5" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="12" Height="12" Background="#EF4444" CornerRadius="3" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="Tiền phạt chưa thu (Nợ): " FontSize="11.5" Foreground="{StaticResource Brush.Text.Secondary}" />
+                                    <TextBlock Text="{Binding TotalUnpaidFinesDisplay}" FontSize="11.5" FontWeight="Bold" Foreground="#EF4444" />
+                                    <TextBlock Text=" (" FontSize="11.5" />
+                                    <TextBlock Text="{Binding UnpaidFinesRatio}" FontSize="11.5" FontWeight="Bold" />
+                                    <TextBlock Text="%)" FontSize="11.5" />
+                                </StackPanel>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- 4. BREAKDOWN TABLES: REVENUE BY MONTH + BOOKS BY CATEGORY + MONTHLY CIRCULATION -->
+            <Grid Margin="0,0,0,18">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.15*" />
+                    <ColumnDefinition Width="1*" />
                     <ColumnDefinition Width="18" />
                     <ColumnDefinition Width="1*" />
                 </Grid.ColumnDefinitions>
@@ -171,20 +328,20 @@
                         </Grid>
 
                         <DataGrid ItemsSource="{Binding CategoryStats}"
-                                  MinHeight="280">
+                                  MinHeight="250">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{DynamicResource Str.Reports.ColCategory}"
                                                     Binding="{Binding CategoryName}"
                                                     Width="*" />
                                 <DataGridTextColumn Header="{DynamicResource Str.Reports.ColTitleCount}"
                                                     Binding="{Binding TitleCount}"
-                                                    Width="115" />
+                                                    Width="110" />
                                 <DataGridTextColumn Header="{DynamicResource Str.Reports.ColTotalCopies}"
                                                     Binding="{Binding TotalCopiesSum}"
-                                                    Width="115" />
+                                                    Width="110" />
                                 <DataGridTextColumn Header="{DynamicResource Str.Reports.ColAvailCopies}"
                                                     Binding="{Binding AvailableCopiesSum}"
-                                                    Width="125" />
+                                                    Width="115" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
@@ -206,27 +363,58 @@
                         </Grid>
 
                         <DataGrid ItemsSource="{Binding MonthlyLoanStats}"
-                                  MinHeight="280">
+                                  MinHeight="250">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{DynamicResource Str.Reports.ColPeriod}"
                                                     Binding="{Binding PeriodLabel}"
                                                     Width="*" />
                                 <DataGridTextColumn Header="{DynamicResource Str.Reports.ColTotalLoans}"
                                                     Binding="{Binding TotalLoansInPeriod}"
-                                                    Width="125" />
+                                                    Width="115" />
                                 <DataGridTextColumn Header="{DynamicResource Str.Reports.ColActiveLoans}"
                                                     Binding="{Binding ActiveOrOverdueInPeriod}"
-                                                    Width="135" />
+                                                    Width="125" />
                                 <DataGridTextColumn Header="{DynamicResource Str.Reports.ColReturnedLoans}"
                                                     Binding="{Binding ReturnedInPeriod}"
-                                                    Width="120" />
+                                                    Width="110" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
                 </Border>
             </Grid>
 
+            <!-- 5. MONTHLY REVENUE & FINANCIAL BREAKDOWN TABLE -->
+            <Border Style="{StaticResource CardBorderStyle}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="BẢNG THỐNG KÊ DOANH THU &amp; THU CHI THEO THÁNG (REVENUE BY MONTH)"
+                                       Style="{StaticResource SectionHeaderTextStyle}" />
+                            <TextBlock Text="Lưu chuyển dòng tiền thực tế thu được từ tiền phạt quá hạn và gói thành viên theo từng tháng."
+                                       Style="{StaticResource SectionSubtitleTextStyle}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <DataGrid ItemsSource="{Binding MonthlyRevenueStats}"
+                              MinHeight="180">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Kỳ thống kê (Tháng)"
+                                                Binding="{Binding PeriodLabel}"
+                                                Width="160" />
+                            <DataGridTextColumn Header="Tiền phạt đã thu (VNĐ)"
+                                                Binding="{Binding FineRevenueDisplay}"
+                                                Width="*" />
+                            <DataGridTextColumn Header="Doanh thu Gói PRO/VIP (VNĐ)"
+                                                Binding="{Binding MembershipRevenueDisplay}"
+                                                Width="*" />
+                            <DataGridTextColumn Header="Tổng doanh thu tháng (VNĐ)"
+                                                Binding="{Binding TotalRevenueDisplay}"
+                                                Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>
-
